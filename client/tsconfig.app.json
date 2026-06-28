@@ -24,6 +24,7 @@
       "@/*": ["./src/*"],
       "@shared/*": ["./src/shared/*"],
       "@pages/*": ["./src/pages/*"],
+      "@routes/*": ["./src/routes/*"],
       "@features/*": ["./src/features/*"],
       "@config/*": ["./src/config/*"]
     }

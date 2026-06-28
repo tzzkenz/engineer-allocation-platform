@@ -5,6 +5,7 @@
       "@/*": ["./src/*"],
       "@shared/*": ["./src/shared/*"],
       "@features/*": ["./src/features/*"],
+      "@routes/*": ["./src/routes/*"],
       "@config/*": ["./src/config/*"],
       "@pages/*": ["./src/pages/*"]
     }
