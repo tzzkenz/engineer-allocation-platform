@@ -1,11 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from features.system_role.router import router
+
+
 app = FastAPI(
     title="Employee CRUD API",
-    description="Documentation for CRUD API of a simple employee app",
+    description="Documentation for CRUD API of Engineer Allocation Platform",
     version="1.0.0",
 )
+app.include_router(router)
 
 app.add_middleware(
     CORSMiddleware,

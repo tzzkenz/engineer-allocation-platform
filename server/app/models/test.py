@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from app.core import Base
+from core import Base
 
 
 class Test(Base):

@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 import enum
 
-from app.models import Entity
+from models import Entity
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Date, Enum as SQLEnum, Integer, Text
