@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from models import SystemRole
 from features.system_role.repository import SystemRoleRepository
+from exceptions import ConflictException
 
 
 class SystemRoleService:
@@ -23,7 +24,7 @@ class SystemRoleService:
         name = name.strip()
         existing = await self.repo.get_by_name(name)
         if existing is not None:
-            raise Exception("Name already exists")
+            raise ConflictException("Name already exists")
         try:
             role = await self.repo.create(name)
             await self.repo.db.commit()
@@ -41,7 +42,7 @@ class SystemRoleService:
         name = name.strip()
         existing = await self.repo.get_by_name(name)
         if existing is not None and existing.id != role_id:
-            raise Exception("Name already exists")
+            raise ConflictException("Name already exists")
 
         try:
             role = await self.repo.update(role, name)
