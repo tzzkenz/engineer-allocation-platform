@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from models import SystemRole
 from features.system_role.repository import SystemRoleRepository
-from exceptions import ConflictException
+from exceptions import ConflictException, IntegrityException, NotFoundException
 
 
 class SystemRoleService:
@@ -14,7 +14,7 @@ class SystemRoleService:
     async def get(self, role_id: int) -> SystemRole:
         role = await self.repo.get_by_id(role_id)
         if role is None:
-            raise Exception("Not found")
+            raise NotFoundException("Employee not found in DB")
         return role
 
     async def list(self) -> list[SystemRole]:
@@ -31,7 +31,7 @@ class SystemRoleService:
             return role
         except IntegrityError:
             await self.repo.db.rollback()
-            raise Exception("SystemRole", "name", name)
+            raise IntegrityException("SystemRole", "name", name)
 
     async def update(self, role_id: int, name: str | None) -> SystemRole:
         role = await self.get(role_id)
@@ -49,15 +49,15 @@ class SystemRoleService:
             await self.repo.db.commit()
             await self.repo.db.refresh(role)
             return role
-        except Exception:
+        except IntegrityError:
             await self.repo.db.rollback()
-            raise Exception("Something went wrong")
+            raise IntegrityException("Something went wrong")
 
     async def delete(self, role_id: int) -> None:
         role = await self.get(role_id)
         try:
             await self.repo.soft_delete(role)
             await self.repo.db.commit()
-        except Exception:
+        except IntegrityError:
             await self.repo.db.rollback()
-            raise Exception("Something went wrong")
+            raise IntegrityException("Something went wrong")

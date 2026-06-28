@@ -24,3 +24,7 @@ class UnauthorizedException(AppException):
 
 class ForbiddenException(AppException):
     "ForbiddenException"
+
+
+class IntegrityException(AppException):
+    """IntegrityException"""
