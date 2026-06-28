@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from app.models import Entity
+from models import Entity
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
