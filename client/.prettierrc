@@ -4,6 +4,7 @@
     "^react$",
     "^react-dom(/.*)?$",
     "<THIRD_PARTY_MODULES>",
+    "^@pages(/.*)?$",
     "^@features(/.*)?$",
     "^@shared(/.*)?$",
     "^\\.\\.(?!/?$)",
