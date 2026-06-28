@@ -23,7 +23,7 @@ repos:
       - id: check-commit-msg
         name: check commit message
         language: pygrep
-        entry: "^(feat|fix|docs|test|refactor|build|perf|format): .*$"
+        entry: "^(feat|fix|docs|test|refactor|build|chore|perf|format): .*$"
         args: [--negate, --multiline]
         stages: [commit-msg]
         always_run: true
