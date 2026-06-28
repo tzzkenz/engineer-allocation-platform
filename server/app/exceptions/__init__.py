@@ -26,5 +26,5 @@ class ForbiddenException(AppException):
     "ForbiddenException"
 
 
-class IntegrityException(AppException):
-    """IntegrityException"""
+class UnknownException(AppException):
+    """Exceptions that aren't explicitly defined"""

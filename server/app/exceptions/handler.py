@@ -3,12 +3,12 @@ from fastapi.responses import JSONResponse
 
 from exceptions import (
     AppException,
-    IntegrityException,
     NotFoundException,
     ConflictException,
     BadRequestException,
     UnauthorizedException,
     ForbiddenException,
+    UnknownException,
 )
 
 
@@ -18,7 +18,7 @@ _STATUS_MAP: dict[type[AppException], int] = {
     BadRequestException: status.HTTP_400_BAD_REQUEST,
     UnauthorizedException: status.HTTP_401_UNAUTHORIZED,
     ForbiddenException: status.HTTP_403_FORBIDDEN,
-    IntegrityException: status.HTTP_422_UNPROCESSABLE_CONTENT,
+    UnknownException: status.HTTP_500_INTERNAL_SERVER_ERROR,
 }
 
 
