@@ -1,75 +1,40 @@
-# React + TypeScript + Vite
+## Project Structure
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Frontend
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The frontend follows the **Feature-Sliced Design (FSD)** architecture, which organizes the application by business features while keeping shared code centralized.
 
 ```
+client/
+└── src/
+    ├── features/      # Business features and their UI, hooks, services, etc.
+    ├── shared/        # Shared components, utilities, hooks, API client, constants
+    ├── tests/         # Test utilities and global test setup
+    ├── App.tsx
+    ├── main.tsx
+    └── vite-env.d.ts
+```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Folder Responsibilities
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Folder      | Purpose                                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `features/` | Contains self-contained business features. Each feature owns its components, hooks, API calls, validation, and types.     |
+| `shared/`   | Reusable code shared across multiple features, such as UI components, utilities, API client, hooks, constants, and types. |
+| `tests/`    | Shared testing utilities, mocks, setup files, and custom render helpers for Vitest.                                       |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Example Feature
 
 ```
+features/
+└── authentication/
+    ├── api/
+    ├── components/
+    ├── hooks/
+    ├── schemas/
+    ├── types/
+    ├── utils/
+    └── index.ts
+```
+
+Each feature should be as independent as possible and expose its public API through an `index.ts` file.
