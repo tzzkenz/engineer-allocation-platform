@@ -10,13 +10,18 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       {
-        path: "employee-profile",
+        path: "profile",
         element: <EmployeeProfile />,
       },
       {
-        path:"employee-create",
-        element:<EmployeeCreate/>,
-      }
+        path:"employee",
+        children:[
+          {
+            path:"create",
+            element:<EmployeeCreate/>,
+          }
+        ]
+      },
       {
         path: "projects",
         children: [
