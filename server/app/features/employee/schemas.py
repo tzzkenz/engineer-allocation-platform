@@ -1,48 +1,46 @@
 from datetime import date, datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-
-
-# Shared base
+from enum import Enum
 
 
 class EmployeeBase(BaseModel):
-    name: str = Field(min_length=1, max_length=255)
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
+    name: str = Field(..., min_length=1, max_length=255)
     email: EmailStr
-    experience: int = Field(ge=0, description="Years of experience")
+    experience: int = Field(..., ge=0)
     date_of_joining: date
-    strengths: list[str] | None = None
     system_role_id: int
 
 
-# Input schemas
-
-
 class EmployeeCreate(EmployeeBase):
-    password: str = Field(min_length=8, max_length=128)
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
+    password: str = Field(..., min_length=8, max_length=128)
 
 
 class EmployeeUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
     name: str | None = Field(default=None, min_length=1, max_length=255)
     email: EmailStr | None = None
     experience: int | None = Field(default=None, ge=0)
     date_of_joining: date | None = None
-    strengths: list[str] | None = None
     system_role_id: int | None = None
 
 
 class EmployeeUpdateSelf(BaseModel):
     experience: int | None = Field(default=None, ge=0)
-    strengths: list[str] | None = None
 
 
 class PasswordChange(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
     current_password: str
-    new_password: str = Field(min_length=8, max_length=128)
+    new_password: str = Field(..., min_length=8, max_length=128)
 
 
-# Output schemas
-
-
+#Response
 class EmployeeResponse(EmployeeBase):
     id: int
     created_at: datetime
