@@ -17,7 +17,7 @@ class AuthService:
         self.repo = repo
 
     async def login(self, payload: LoginRequest):
-        employee = await self.repo.get_by_email(payload.email)
+        employee = await self.repo.get_by_email(payload.username)
 
         if employee is None:
             raise UnauthorizedException("Invalid email or password")
@@ -25,10 +25,10 @@ class AuthService:
             raise UnauthorizedException("Invalid email or password")
 
         access_token = create_access_token(
-            {"id": employee.id, "role": employee.system_role_id}
+            {"id": employee.id, "system_role_id": employee.system_role_id}
         )
         refresh_token = create_refresh_token(
-            {"id": employee.id, "role": employee.system_role_id}
+            {"id": employee.id, "system_role_id": employee.system_role_id}
         )
 
         return {
