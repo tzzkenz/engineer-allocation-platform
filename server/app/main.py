@@ -10,6 +10,7 @@ from features.employee.router import router as employee_router
 from features.skill.router import router as skill_router
 from features.auth.router import router as auth_router
 from features.requirement.router import router as requirement_router
+from features.project_role.router import router as project_role_router
 
 from exceptions.handler import register_exception_handlers
 
@@ -25,6 +26,7 @@ app.include_router(feedback_router)
 app.include_router(skill_router)
 app.include_router(auth_router)
 app.include_router(requirement_router)
+app.include_router(project_role_router)
 
 
 app.add_middleware(

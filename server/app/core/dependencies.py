@@ -17,6 +17,8 @@ from features.auth.repository import AuthRepository
 from features.auth.service import AuthService
 from features.requirement.repository import RequirementRepository
 from features.requirement.service import RequirementService
+from features.project_role.repository import ProjectRoleRepository
+from features.project_role.service import ProjectRoleService
 
 
 def get_system_role_service(db: AsyncSession = Depends(get_db)) -> SystemRoleService:
@@ -45,3 +47,7 @@ def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
 
 def get_requirement_service(db: AsyncSession = Depends(get_db)) -> RequirementService:
     return RequirementService(RequirementRepository(db))
+
+
+def get_project_role_service(db: AsyncSession = Depends(get_db)) -> ProjectRoleService:
+    return ProjectRoleService(ProjectRoleRepository(db))
