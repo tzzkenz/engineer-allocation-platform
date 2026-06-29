@@ -100,3 +100,27 @@ class RequirementRepository:
         self.db.add(stack_request)
         await self.db.flush()
         return stack_request
+
+    async def list_stacks_by_request(
+        self, request_id: int
+    ) -> list[ProjectStackRequirementRequest]:
+        stmt = select(ProjectStackRequirementRequest).where(
+            ProjectStackRequirementRequest.project_requirement_request_id == request_id
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
+    async def get_stack_request_by_id(
+        self, stack_request_id: int
+    ) -> ProjectStackRequirementRequest | None:
+        stmt = select(ProjectStackRequirementRequest).where(
+            ProjectStackRequirementRequest.id == stack_request_id
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def delete_stack_request(
+        self, stack_request: ProjectStackRequirementRequest
+    ) -> None:
+        await self.db.delete(stack_request)
+        await self.db.flush()

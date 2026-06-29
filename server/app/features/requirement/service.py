@@ -119,3 +119,31 @@ class RequirementService:
         except Exception:
             await self.repo.db.rollback()
             raise UnknownException("Failed to create requirement request")
+
+    async def list_stacks(self, request_id: int):
+        request = await self.repo.get_by_id(request_id)
+        if request is None:
+            raise NotFoundException("Requirement request not found")
+
+        return await self.repo.list_stacks_by_request(request_id)
+
+    async def remove_stack(self, request_id: int, stack_request_id: int) -> None:
+        request = await self.repo.get_by_id(request_id)
+        if request is None:
+            raise NotFoundException("Requirement request not found")
+
+        stack_request = await self.repo.get_stack_request_by_id(stack_request_id)
+        if stack_request is None:
+            raise NotFoundException("Stack requirement not found")
+
+        if stack_request.project_requirement_request_id != request_id:
+            raise NotFoundException(
+                "Stack requirement not found under this requirement request"
+            )
+
+        try:
+            await self.repo.delete_stack_request(stack_request)
+            await self.repo.db.commit()
+        except Exception:
+            await self.repo.db.rollback()
+            raise UnknownException("Failed to delete stack requirement")
