@@ -24,8 +24,12 @@ class AuthService:
         if not verify_password(payload.password, employee.password_hash):
             raise UnauthorizedException("Invalid email or password")
 
-        access_token = create_access_token({"id": employee.id, "role": employee.role})
-        refresh_token = create_refresh_token({"id": employee.id, "role": employee.role})
+        access_token = create_access_token(
+            {"id": employee.id, "role": employee.system_role_id}
+        )
+        refresh_token = create_refresh_token(
+            {"id": employee.id, "role": employee.system_role_id}
+        )
 
         return {
             "access_token": access_token,

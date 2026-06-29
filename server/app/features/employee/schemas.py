@@ -1,6 +1,5 @@
 from datetime import date, datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from enum import Enum
 
 
 class EmployeeBase(BaseModel):
@@ -40,12 +39,12 @@ class PasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
 
-#Response
+# Response
 class EmployeeResponse(EmployeeBase):
     id: int
+    system_role_id: int
     created_at: datetime
     updated_at: datetime
-
     model_config = ConfigDict(from_attributes=True)
 
 
