@@ -6,7 +6,7 @@ import AppSidebar from "../sidebar/AppSidebar";
 
 export function AppLayout() {
   return (
-    <SidebarProvider defaultOpen style={{ "--sidebar-width": "14rem" }}>
+    <SidebarProvider defaultOpen>
       <div className=" w-full flex h-screen overflow-hidden ">
         <AppSidebar />
 
