@@ -18,8 +18,7 @@ class TokenResponse(BaseModel):
 
 class TokenPayload(BaseModel):
     id: int
-    email: EmailStr
-    role: str
+    system_role_id: int
 
 
 class RefreshRequest(BaseModel):
