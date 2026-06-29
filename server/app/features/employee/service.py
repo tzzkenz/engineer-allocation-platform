@@ -6,10 +6,17 @@ from sqlalchemy.exc import IntegrityError
 from features.auth.utils import hash_password, verify_password
 from features.employee.repository import EmployeeRepository
 from models.employee import Employee
+from models.employee_skill import EmployeeSkill  # FIXED: Missing import added
 from exceptions import (
     NotFoundException,
     ConflictException,
     BadRequestException,
+)
+from features.employee.schemas import (
+    EmployeeSkillAddMultiple,
+    EmployeeSkillResponse,
+    UpdateInterest,
+    UpdateProficiency,
 )
 
 
@@ -115,3 +122,85 @@ class EmployeeService:
         except Exception:
             await self.repo.db.rollback()
             raise BadRequestException("Something went wrong while changing the password")
+
+    async def add_skills(self, employee_id: int, payload: EmployeeSkillAddMultiple) -> None:
+        await self.get(employee_id)
+        
+        skills_to_add = []
+        for item in payload.skills:
+            existing = await self.repo.get_employee_skill(employee_id, item.skill_id)
+            if existing is not None:
+                continue
+            
+            skill_link = EmployeeSkill(
+                employee_id=employee_id,
+                skill_id=item.skill_id,
+                proficiency=item.proficiency,
+                is_interest=item.is_interest
+            )
+            skills_to_add.append(skill_link)
+
+        try:
+            await self.repo.add_employee_skills(skills_to_add)
+            await self.repo.db.commit()
+        except IntegrityError:
+            await self.repo.db.rollback()
+            raise ConflictException("Database violation occurred. Verify that all skill IDs exist.")
+
+    async def update_skill_proficiency(self, employee_id: int, skill_id: int, payload: UpdateProficiency) -> None:
+        await self.get(employee_id)
+        employee_skill = await self.repo.get_employee_skill(employee_id, skill_id)
+        if employee_skill is None:
+            raise NotFoundException("Skill connection not found for this employee")
+
+        employee_skill.proficiency = payload.proficiency
+        try:
+            await self.repo.update_employee_skill(employee_skill)
+            await self.repo.db.commit()
+        except Exception:
+            await self.repo.db.rollback()
+            raise BadRequestException("Failed to update proficiency value")
+
+    async def update_skill_interest(self, employee_id: int, skill_id: int, payload: UpdateInterest) -> None:
+        await self.get(employee_id)
+        employee_skill = await self.repo.get_employee_skill(employee_id, skill_id)
+        if employee_skill is None:
+            raise NotFoundException("Skill connection not found for this employee")
+
+        employee_skill.is_interest = payload.is_interest
+        try:
+            await self.repo.update_employee_skill(employee_skill)
+            await self.repo.db.commit()
+        except Exception:
+            await self.repo.db.rollback()
+            raise BadRequestException("Failed to update interest flag")
+
+    async def remove_skill(self, employee_id: int, skill_id: int) -> None:
+        await self.get(employee_id)
+        employee_skill = await self.repo.get_employee_skill(employee_id, skill_id)
+        if employee_skill is None:
+            raise NotFoundException("Skill connection not found for this employee")
+
+        try:
+            await self.repo.remove_employee_skill(employee_skill)
+            await self.repo.db.commit()
+        except Exception:
+            await self.repo.db.rollback()
+            raise BadRequestException("Failed to remove skill linkage")
+        
+    async def get_skills(self, employee_id: int) -> "list[EmployeeSkillResponse]":
+        await self.get(employee_id)
+        records = await self.repo.get_employee_skills(employee_id)
+        
+        return [
+            EmployeeSkillResponse(
+                skill_id=emp_skill.skill_id,
+                name=skill.name,
+                type=skill.type,
+                proficiency=emp_skill.proficiency,
+                is_interest=emp_skill.is_interest,
+                created_at=emp_skill.created_at,
+                updated_at=emp_skill.updated_at
+            )
+            for emp_skill, skill in records
+        ]

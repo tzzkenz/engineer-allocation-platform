@@ -4,9 +4,13 @@ from core.dependencies import get_employee_service
 from features.employee.schemas import (
     EmployeeCreate,
     EmployeeResponse,
+    EmployeeSkillAddMultiple,
+    EmployeeSkillResponse,
     EmployeeUpdate,
     EmployeeUpdateSelf,
     PasswordChange,
+    UpdateInterest,
+    UpdateProficiency,
 )
 from features.employee.service import EmployeeService
 
@@ -69,3 +73,51 @@ async def change_employee_password(
     service: EmployeeService = Depends(get_employee_service),
 ):
     await service.change_password(id, payload.model_dump())
+
+
+
+@router.post("/{id}/skills", status_code=status.HTTP_201_CREATED)
+async def add_employee_skills(
+    id: int,
+    payload: EmployeeSkillAddMultiple,
+    service: EmployeeService = Depends(get_employee_service),
+):
+    await service.add_skills(id, payload)
+    return {"message": "Skills assigned successfully"}
+
+
+@router.patch("/{id}/skills/{skill_id}/proficiency", status_code=status.HTTP_204_NO_CONTENT)
+async def update_skill_proficiency(
+    id: int,
+    skill_id: int,
+    payload: UpdateProficiency,
+    service: EmployeeService = Depends(get_employee_service),
+):
+    await service.update_skill_proficiency(id, skill_id, payload)
+
+
+@router.patch("/{id}/skills/{skill_id}/interest", status_code=status.HTTP_204_NO_CONTENT)
+async def update_skill_interest(
+    id: int,
+    skill_id: int,
+    payload: UpdateInterest,
+    service: EmployeeService = Depends(get_employee_service),
+):
+    await service.update_skill_interest(id, skill_id, payload)
+
+
+@router.delete("/{id}/skills/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_employee_skill(
+    id: int,
+    skill_id: int,
+    service: EmployeeService = Depends(get_employee_service),
+):
+    await service.remove_skill(id, skill_id)
+
+
+@router.get("/{id}/skills", response_model=list[EmployeeSkillResponse])
+async def get_employee_skills(
+    id: int,
+    service: EmployeeService = Depends(get_employee_service),
+):
+    return await service.get_skills(id)
