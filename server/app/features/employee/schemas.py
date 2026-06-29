@@ -1,6 +1,8 @@
 from datetime import date, datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
+from models.skill import SkillType
+
 
 class EmployeeBase(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
@@ -39,7 +41,7 @@ class PasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
 
-# Response
+
 class EmployeeResponse(EmployeeBase):
     id: int
     system_role_id: int
@@ -52,5 +54,33 @@ class EmployeeSummary(BaseModel):
     id: int
     name: str
     email: EmailStr
+
+    model_config = ConfigDict(from_attributes=True)
+
+class EmployeeSkillAddItem(BaseModel):
+    skill_id: int
+    proficiency: int = Field(default=0, ge=0, le=5)
+    is_interest: bool = False
+
+
+class EmployeeSkillAddMultiple(BaseModel):
+    skills: list[EmployeeSkillAddItem] = Field(..., min_length=1)
+
+
+class UpdateProficiency(BaseModel):
+    proficiency: int = Field(..., ge=0, le=5)
+
+
+class UpdateInterest(BaseModel):
+    is_interest: bool
+
+class EmployeeSkillResponse(BaseModel):
+    skill_id: int
+    name: str
+    type: SkillType
+    proficiency: int
+    is_interest: bool
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
