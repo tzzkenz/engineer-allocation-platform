@@ -2,6 +2,7 @@ import { AppLayout } from "@/app/layout/AppLayout";
 import { EmployeeProfile } from "@/pages/employee-profile/EmployeeProfile";
 import { ProjectList } from "@/pages/project-list/ProjectList";
 import { createBrowserRouter } from "react-router";
+import EmployeeCreate from "@/pages/employee-create/EmployeeCreate";
 
 const router = createBrowserRouter([
   {
@@ -9,8 +10,17 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       {
-        path: "employee-profile",
+        path: "profile",
         element: <EmployeeProfile />,
+      },
+      {
+        path:"employee",
+        children:[
+          {
+            path:"create",
+            element:<EmployeeCreate/>,
+          }
+        ]
       },
       {
         path: "projects",
