@@ -18,6 +18,8 @@ from core import Base
 # import models.associations  # noqa: F401
 # import models.department  # noqa: F401
 
+import models
+
 
 config = context.config
 
