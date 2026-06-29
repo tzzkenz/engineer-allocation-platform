@@ -46,10 +46,8 @@ class ProjectRequirementRequest(Entity):
     )
 
     fulfilled_requirement_id: Mapped[int | None] = mapped_column(
-        ForeignKey("project_requirements.id"), nullable=True, index=True
+        ForeignKey("project_requirement_requests.id"), nullable=True, index=True
     )
-
-    fulfilled_requirement = relationship("ProjectRequirement")
 
     requested_by_employee = relationship(
         "Employee", foreign_keys=[requested_by], back_populates="requested_requests"
@@ -59,15 +57,23 @@ class ProjectRequirementRequest(Entity):
         "Employee", foreign_keys=[resolved_by], back_populates="resolved_requests"
     )
 
+    project = relationship("Project", back_populates="requirement_requests")
+
+    project_role = relationship(
+        "ProjectRole", back_populates="project_requirement_requests"
+    )
+
+    assigned_employees = relationship(
+        "ProjectEmployee",
+        back_populates="project_requirement_request",
+        cascade="all, delete-orphan",
+    )
+
     stack_requests = relationship(
         "ProjectStackRequirementRequest",
         back_populates="project_requirement_request",
         cascade="all, delete-orphan",
     )
-
-    project = relationship("Project", back_populates="requirement_requests")
-
-    project_role = relationship("ProjectRole", back_populates="requirement_requests")
 
     __table_args__ = (
         CheckConstraint("requested_count > 0", name="ck_requested_count_positive"),

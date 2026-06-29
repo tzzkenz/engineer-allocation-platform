@@ -7,8 +7,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from app.core import settings
-from app.core import Base
+from core import settings
+from core import Base
+
 
 # Import every ORM module so each Table registers on Base.metadata.
 # `target_metadata` below is only as complete as these imports — a missing import

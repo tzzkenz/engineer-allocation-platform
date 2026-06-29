@@ -1,8 +1,8 @@
-"""initial schema
+"""init
 
-Revision ID: cc246aeb61d0
-Revises: 8eb419e30214
-Create Date: 2026-06-28 03:51:31.088408
+Revision ID: 03ec25e6a304
+Revises:
+Create Date: 2026-06-29 13:39:30.858852
 
 """
 
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "cc246aeb61d0"
-down_revision: Union[str, Sequence[str], None] = "8eb419e30214"
+revision: str = "03ec25e6a304"
+down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -54,6 +54,7 @@ def upgrade() -> None:
                 "DISCARDED",
                 name="statustype",
             ),
+            server_default="NOT_STARTED",
             nullable=False,
         ),
         sa.Column("start_date", sa.Date(), nullable=False),
@@ -76,8 +77,13 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "stacks",
+        "skills",
         sa.Column("name", sa.Text(), nullable=False),
+        sa.Column(
+            "type",
+            sa.Enum("STACK", "TECHNICAL", "NON_TECHNICAL", name="skilltype"),
+            nullable=False,
+        ),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column(
             "created_at",
@@ -119,7 +125,6 @@ def upgrade() -> None:
         sa.Column("email", sa.Text(), nullable=False),
         sa.Column("experience", sa.Integer(), nullable=False),
         sa.Column("date_of_joining", sa.Date(), nullable=False),
-        sa.Column("strengths", sa.JSON(), nullable=True),
         sa.Column("password_hash", sa.Text(), nullable=False),
         sa.Column("system_role_id", sa.Integer(), nullable=False),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -144,48 +149,6 @@ def upgrade() -> None:
         sa.UniqueConstraint("email"),
     )
     op.create_table(
-        "project_requirements",
-        sa.Column("project_id", sa.Integer(), nullable=False),
-        sa.Column("project_role_id", sa.Integer(), nullable=False),
-        sa.Column("required_count", sa.Integer(), nullable=False),
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.CheckConstraint("required_count > 0", name="ck_required_count_positive"),
-        sa.ForeignKeyConstraint(
-            ["project_id"],
-            ["projects.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["project_role_id"],
-            ["project_roles.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        op.f("ix_project_requirements_project_id"),
-        "project_requirements",
-        ["project_id"],
-        unique=False,
-    )
-    op.create_index(
-        op.f("ix_project_requirements_project_role_id"),
-        "project_requirements",
-        ["project_role_id"],
-        unique=False,
-    )
-    op.create_table(
         "audit_logs",
         sa.Column(
             "entity_name",
@@ -196,7 +159,7 @@ def upgrade() -> None:
                 "PROJECT_REQUIREMENT",
                 "PROJECT_REQUIREMENT_REQUEST",
                 "FEEDBACK",
-                "EMPLOYEE_STACK",
+                "EMPLOYEE_SKILL",
                 name="entityname",
             ),
             nullable=False,
@@ -238,11 +201,13 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_table(
-        "employee_stacks",
+        "employee_skills",
         sa.Column("employee_id", sa.Integer(), nullable=False),
-        sa.Column("stack_id", sa.Integer(), nullable=False),
+        sa.Column("skill_id", sa.Integer(), nullable=False),
         sa.Column("proficiency", sa.Integer(), nullable=False),
-        sa.Column("interest", sa.Integer(), nullable=False),
+        sa.Column(
+            "is_interest", sa.Boolean(), server_default=sa.text("false"), nullable=False
+        ),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column(
             "created_at",
@@ -257,29 +222,28 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.CheckConstraint("interest BETWEEN 0 AND 5", name="ck_interest_range"),
         sa.CheckConstraint("proficiency BETWEEN 0 AND 5", name="ck_proficiency_range"),
         sa.ForeignKeyConstraint(
             ["employee_id"],
             ["employees.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["stack_id"],
-            ["stacks.id"],
+            ["skill_id"],
+            ["skills.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("employee_id", "stack_id", name="uq_employee_stack"),
+        sa.UniqueConstraint("employee_id", "skill_id", name="uq_employee_stack"),
     )
     op.create_index(
-        op.f("ix_employee_stacks_employee_id"),
-        "employee_stacks",
+        op.f("ix_employee_skills_employee_id"),
+        "employee_skills",
         ["employee_id"],
         unique=False,
     )
     op.create_index(
-        op.f("ix_employee_stacks_stack_id"),
-        "employee_stacks",
-        ["stack_id"],
+        op.f("ix_employee_skills_skill_id"),
+        "employee_skills",
+        ["skill_id"],
         unique=False,
     )
     op.create_table(
@@ -323,77 +287,6 @@ def upgrade() -> None:
         op.f("ix_feedbacks_project_id"), "feedbacks", ["project_id"], unique=False
     )
     op.create_table(
-        "project_employees",
-        sa.Column("project_id", sa.Integer(), nullable=False),
-        sa.Column("employee_id", sa.Integer(), nullable=False),
-        sa.Column("project_role_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "is_shadow", sa.Boolean(), server_default=sa.text("false"), nullable=False
-        ),
-        sa.Column("date_assigned", sa.Date(), nullable=False),
-        sa.Column("date_exited", sa.Date(), nullable=True),
-        sa.Column("project_requirement_id", sa.Integer(), nullable=True),
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.CheckConstraint(
-            "date_exited IS NULL OR date_exited >= date_assigned",
-            name="ck_exit_after_assign",
-        ),
-        sa.ForeignKeyConstraint(
-            ["employee_id"],
-            ["employees.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["project_id"],
-            ["projects.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["project_requirement_id"],
-            ["project_requirements.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["project_role_id"],
-            ["project_roles.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        op.f("ix_project_employees_employee_id"),
-        "project_employees",
-        ["employee_id"],
-        unique=False,
-    )
-    op.create_index(
-        op.f("ix_project_employees_project_id"),
-        "project_employees",
-        ["project_id"],
-        unique=False,
-    )
-    op.create_index(
-        op.f("ix_project_employees_project_requirement_id"),
-        "project_employees",
-        ["project_requirement_id"],
-        unique=False,
-    )
-    op.create_index(
-        op.f("ix_project_employees_project_role_id"),
-        "project_employees",
-        ["project_role_id"],
-        unique=False,
-    )
-    op.create_table(
         "project_requirement_requests",
         sa.Column("project_id", sa.Integer(), nullable=False),
         sa.Column("project_role_id", sa.Integer(), nullable=False),
@@ -424,7 +317,7 @@ def upgrade() -> None:
         sa.CheckConstraint("requested_count > 0", name="ck_requested_count_positive"),
         sa.ForeignKeyConstraint(
             ["fulfilled_requirement_id"],
-            ["project_requirements.id"],
+            ["project_requirement_requests.id"],
         ),
         sa.ForeignKeyConstraint(
             ["project_id"],
@@ -475,9 +368,16 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_table(
-        "project_stack_requirements",
-        sa.Column("project_requirement_id", sa.Integer(), nullable=False),
-        sa.Column("stack_id", sa.Integer(), nullable=False),
+        "project_employees",
+        sa.Column("project_id", sa.Integer(), nullable=False),
+        sa.Column("employee_id", sa.Integer(), nullable=False),
+        sa.Column("project_role_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "is_shadow", sa.Boolean(), server_default=sa.text("false"), nullable=False
+        ),
+        sa.Column("date_assigned", sa.Date(), nullable=False),
+        sa.Column("date_exited", sa.Date(), nullable=True),
+        sa.Column("requirement_request_id", sa.Integer(), nullable=True),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column(
             "created_at",
@@ -492,27 +392,50 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["project_requirement_id"],
-            ["project_requirements.id"],
+        sa.CheckConstraint(
+            "date_exited IS NULL OR date_exited >= date_assigned",
+            name="ck_exit_after_assign",
         ),
         sa.ForeignKeyConstraint(
-            ["stack_id"],
-            ["stacks.id"],
+            ["employee_id"],
+            ["employees.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["project_id"],
+            ["projects.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["project_role_id"],
+            ["project_roles.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["requirement_request_id"],
+            ["project_requirement_requests.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("project_requirement_id", "stack_id", name="uq_req_stack"),
     )
     op.create_index(
-        op.f("ix_project_stack_requirements_project_requirement_id"),
-        "project_stack_requirements",
-        ["project_requirement_id"],
+        op.f("ix_project_employees_employee_id"),
+        "project_employees",
+        ["employee_id"],
         unique=False,
     )
     op.create_index(
-        op.f("ix_project_stack_requirements_stack_id"),
-        "project_stack_requirements",
-        ["stack_id"],
+        op.f("ix_project_employees_project_id"),
+        "project_employees",
+        ["project_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_project_employees_project_role_id"),
+        "project_employees",
+        ["project_role_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_project_employees_requirement_request_id"),
+        "project_employees",
+        ["requirement_request_id"],
         unique=False,
     )
     op.create_table(
@@ -539,7 +462,7 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(
             ["stack_id"],
-            ["stacks.id"],
+            ["skills.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
@@ -558,21 +481,12 @@ def upgrade() -> None:
         ["stack_id"],
         unique=False,
     )
-    op.drop_index(op.f("ix_test_id"), table_name="test")
-    op.drop_table("test")
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.create_table(
-        "test",
-        sa.Column("id", sa.INTEGER(), autoincrement=True, nullable=False),
-        sa.Column("name", sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.PrimaryKeyConstraint("id", name=op.f("test_pkey")),
-    )
-    op.create_index(op.f("ix_test_id"), "test", ["id"], unique=False)
     op.drop_index(
         op.f("ix_project_stack_requirement_requests_stack_id"),
         table_name="project_stack_requirement_requests",
@@ -583,14 +497,19 @@ def downgrade() -> None:
     )
     op.drop_table("project_stack_requirement_requests")
     op.drop_index(
-        op.f("ix_project_stack_requirements_stack_id"),
-        table_name="project_stack_requirements",
+        op.f("ix_project_employees_requirement_request_id"),
+        table_name="project_employees",
     )
     op.drop_index(
-        op.f("ix_project_stack_requirements_project_requirement_id"),
-        table_name="project_stack_requirements",
+        op.f("ix_project_employees_project_role_id"), table_name="project_employees"
     )
-    op.drop_table("project_stack_requirements")
+    op.drop_index(
+        op.f("ix_project_employees_project_id"), table_name="project_employees"
+    )
+    op.drop_index(
+        op.f("ix_project_employees_employee_id"), table_name="project_employees"
+    )
+    op.drop_table("project_employees")
     op.drop_index(
         op.f("ix_project_requirement_requests_resolved_by"),
         table_name="project_requirement_requests",
@@ -612,39 +531,17 @@ def downgrade() -> None:
         table_name="project_requirement_requests",
     )
     op.drop_table("project_requirement_requests")
-    op.drop_index(
-        op.f("ix_project_employees_project_role_id"), table_name="project_employees"
-    )
-    op.drop_index(
-        op.f("ix_project_employees_project_requirement_id"),
-        table_name="project_employees",
-    )
-    op.drop_index(
-        op.f("ix_project_employees_project_id"), table_name="project_employees"
-    )
-    op.drop_index(
-        op.f("ix_project_employees_employee_id"), table_name="project_employees"
-    )
-    op.drop_table("project_employees")
     op.drop_index(op.f("ix_feedbacks_project_id"), table_name="feedbacks")
     op.drop_index(op.f("ix_feedbacks_created_by"), table_name="feedbacks")
     op.drop_table("feedbacks")
-    op.drop_index(op.f("ix_employee_stacks_stack_id"), table_name="employee_stacks")
-    op.drop_index(op.f("ix_employee_stacks_employee_id"), table_name="employee_stacks")
-    op.drop_table("employee_stacks")
+    op.drop_index(op.f("ix_employee_skills_skill_id"), table_name="employee_skills")
+    op.drop_index(op.f("ix_employee_skills_employee_id"), table_name="employee_skills")
+    op.drop_table("employee_skills")
     op.drop_index(op.f("ix_audit_logs_changed_by_id"), table_name="audit_logs")
     op.drop_table("audit_logs")
-    op.drop_index(
-        op.f("ix_project_requirements_project_role_id"),
-        table_name="project_requirements",
-    )
-    op.drop_index(
-        op.f("ix_project_requirements_project_id"), table_name="project_requirements"
-    )
-    op.drop_table("project_requirements")
     op.drop_table("employees")
     op.drop_table("system_roles")
-    op.drop_table("stacks")
+    op.drop_table("skills")
     op.drop_table("projects")
     op.drop_table("project_roles")
     # ### end Alembic commands ###

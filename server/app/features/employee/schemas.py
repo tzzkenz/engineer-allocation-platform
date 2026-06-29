@@ -1,5 +1,3 @@
-# app/schemas/employee.py
-
 from datetime import date, datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
