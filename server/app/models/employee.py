@@ -3,7 +3,7 @@ from datetime import date
 from models import Entity
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import JSON, Date, ForeignKey, Integer, Text
+from sqlalchemy import Date, ForeignKey, Integer, Text
 
 
 class Employee(Entity):
@@ -13,7 +13,6 @@ class Employee(Entity):
     email: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     experience: Mapped[int] = mapped_column(Integer, nullable=False)
     date_of_joining: Mapped[date] = mapped_column(Date, nullable=False)
-    strengths: Mapped[list[str]] = mapped_column(JSON, nullable=True)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     system_role_id: Mapped[int] = mapped_column(ForeignKey("system_roles.id"))
 
@@ -21,7 +20,11 @@ class Employee(Entity):
     audit_logs = relationship("AuditLog", back_populates="changed_by")
 
     employee_stacks = relationship(
-        "EmployeeStack", back_populates="employee", cascade="all, delete-orphan"
+        "EmployeeSkill", back_populates="employee", cascade="all, delete-orphan"
+    )
+
+    employee_skills = relationship(
+        "EmployeeSkill", back_populates="employee", cascade="all, delete-orphan"
     )
 
     feedbacks = relationship("Feedback", back_populates="creator")
