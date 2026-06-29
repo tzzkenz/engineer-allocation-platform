@@ -1,7 +1,7 @@
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models import Entity
+from app.models import Entity
 
 
 class ProjectStackRequirement(Entity):

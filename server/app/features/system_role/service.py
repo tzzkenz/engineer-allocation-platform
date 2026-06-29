@@ -2,8 +2,8 @@
 
 from sqlalchemy.exc import IntegrityError
 
-from models import SystemRole
-from features.system_role.repository import SystemRoleRepository
+from app.models import SystemRole
+from app.features.system_role.repository import SystemRoleRepository
 
 
 class SystemRoleService:

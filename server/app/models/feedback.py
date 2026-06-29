@@ -3,7 +3,7 @@ import enum
 from sqlalchemy import ForeignKey, Text, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models import Entity
+from app.models import Entity
 
 
 class FeedbackType(enum.Enum):

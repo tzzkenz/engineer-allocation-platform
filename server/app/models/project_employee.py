@@ -1,6 +1,6 @@
 from datetime import date
 
-from models import Entity
+from app.models import Entity
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Boolean, CheckConstraint, Date, ForeignKey

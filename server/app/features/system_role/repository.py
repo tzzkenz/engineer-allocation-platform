@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.system_role import SystemRole
+from app.models.system_role import SystemRole
 
 
 class SystemRoleRepository:

@@ -1,6 +1,6 @@
 import enum
 
-from models import Entity
+from app.models import Entity
 
 from sqlalchemy import Enum as SQLEnum, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
