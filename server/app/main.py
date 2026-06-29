@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from features.system_role.router import router
-
+from exceptions.handler import register_exception_handlers
 
 app = FastAPI(
     title="Employee CRUD API",
@@ -19,6 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+register_exception_handlers(app)
 
 
 @app.get("/health", tags=["Health Check"])
