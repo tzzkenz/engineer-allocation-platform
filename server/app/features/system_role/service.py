@@ -1,5 +1,3 @@
-# app/services/system_role_service.py
-
 from sqlalchemy.exc import IntegrityError
 
 from models import SystemRole
