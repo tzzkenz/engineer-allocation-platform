@@ -19,7 +19,9 @@ class Project(Entity):
     __tablename__ = "projects"
 
     name: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[StatusType] = mapped_column(SQLEnum(StatusType), nullable=False)
+    status: Mapped[StatusType] = mapped_column(
+        SQLEnum(StatusType), nullable=False, server_default="'NOT_STARTED'"
+    )
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     duration: Mapped[int] = mapped_column(Integer, nullable=False)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -30,10 +32,6 @@ class Project(Entity):
 
     feedbacks = relationship(
         "Feedback", back_populates="project", cascade="all, delete-orphan"
-    )
-
-    requirements = relationship(
-        "ProjectRequirement", back_populates="project", cascade="all, delete-orphan"
     )
 
     requirement_requests = relationship(

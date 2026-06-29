@@ -12,14 +12,14 @@ class ProjectStackRequirementRequest(Entity):
     )
 
     stack_id: Mapped[int] = mapped_column(
-        ForeignKey("stacks.id"), nullable=False, index=True
-    )
+        ForeignKey("skills.id"), nullable=False, index=True
+    )  # stacks_id is the id from skills who has type stack
 
     project_requirement_request = relationship(
         "ProjectRequirementRequest", back_populates="stack_requests"
     )
 
-    stack = relationship("Stack", back_populates="stack_requests")
+    stack = relationship("Skill", back_populates="stack_requests")
 
     __table_args__ = (
         UniqueConstraint(
