@@ -19,9 +19,7 @@ class EmployeeRepository:
         return result.scalar_one_or_none()
 
     async def get_by_email(self, email: str) -> Employee | None:
-        stmt = select(Employee).where(
-            Employee.email == email, Employee.deleted_at.is_(None)
-        )
+        stmt = select(Employee).where(Employee.email == email)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -37,6 +35,9 @@ class EmployeeRepository:
         return employee
 
     async def update(self, employee: Employee, update_data: dict[str, Any]) -> Employee:
+        if employee.deleted_at is not None:
+            raise ValueError("Cannot update a soft-deleted employee")
+
         for field, value in update_data.items():
             setattr(employee, field, value)
         await self.db.flush()

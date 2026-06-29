@@ -5,6 +5,7 @@ from features.employee.schemas import (
     EmployeeCreate,
     EmployeeResponse,
     EmployeeUpdate,
+    EmployeeUpdateSelf,
     PasswordChange,
 )
 from features.employee.service import EmployeeService
@@ -42,6 +43,15 @@ async def update_employee(
     service: EmployeeService = Depends(get_employee_service),
 ):
     return await service.update(id, payload.model_dump())
+
+
+@router.patch("/{id}/me", response_model=EmployeeResponse)
+async def update_employee_self(
+    id: int,
+    payload: EmployeeUpdateSelf,
+    service: EmployeeService = Depends(get_employee_service),
+):
+    return await service.update(id, payload.model_dump(exclude_none=True))
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
