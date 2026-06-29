@@ -4,8 +4,13 @@ import { ProjectList } from "@/pages/project-list/ProjectList";
 import { createBrowserRouter } from "react-router";
 import EmployeeCreate from "@/pages/employee-create/EmployeeCreate";
 import EmployeeEdit from "@/pages/employee-edit/EmployeeEdit";
+import Login from "@/pages/login/Login";
 
 const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <Login />,
+  },
   {
     path: "/",
     element: <AppLayout />,
