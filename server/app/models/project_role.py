@@ -1,7 +1,7 @@
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models import Entity
+from models import Entity
 
 
 class ProjectRole(Entity):

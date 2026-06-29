@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, status
 
-from app.core.dependencies import get_employee_service
-from app.features.employee.schemas import (
+from core.dependencies import get_employee_service
+from features.employee.schemas import (
     EmployeeCreate,
     EmployeeResponse,
     EmployeeUpdate,
     PasswordChange,
 )
-from app.features.employee.service import EmployeeService
+from features.employee.service import EmployeeService
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
@@ -50,6 +50,7 @@ async def delete_employee(
     service: EmployeeService = Depends(get_employee_service),
 ):
     await service.delete(id)
+
 
 @router.patch("/{id}/password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_employee_password(

@@ -1,4 +1,4 @@
-from app.models import Entity
+from models import Entity
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import CheckConstraint, ForeignKey, Integer, UniqueConstraint

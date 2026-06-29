@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, status
 
-from app.core.dependencies import get_system_role_service
-from app.features.system_role.schemas import (
+from core.dependencies import get_system_role_service
+from features.system_role.schemas import (
     SystemRoleCreate,
     SystemRolePatch,
     SystemRoleResponse,
 )
-from app.features.system_role.service import SystemRoleService
+from features.system_role.service import SystemRoleService
 
 router = APIRouter(prefix="/system_roles", tags=["System Roles"])
 
