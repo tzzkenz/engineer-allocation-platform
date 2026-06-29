@@ -1,6 +1,7 @@
 import { AppLayout } from "@/app/layout/AppLayout";
 import { EmployeeProfile } from "@/pages/employee-profile/EmployeeProfile";
 import { createBrowserRouter } from "react-router";
+import EmployeeCreate from "@/pages/employee-create/EmployeeCreate";
 
 const router = createBrowserRouter([
   {
@@ -11,6 +12,10 @@ const router = createBrowserRouter([
         path: "employee-profile",
         element: <EmployeeProfile />,
       },
+      {
+        path:"employee-create",
+        element:<EmployeeCreate/>,
+      }
     ],
   },
 ]);

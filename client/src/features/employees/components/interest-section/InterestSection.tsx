@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 
 const InterestSection = ({ interests }) => {
   return (
-    <Card className="flex-1 gap-0">
+    <Card className=" h-full gap-0">
       <CardHeader className="px-8 pt-8 pb-0 border-b-0">
         <CardTitle className="text-lg font-normal">Areas of Interest</CardTitle>
         <CardAction>
