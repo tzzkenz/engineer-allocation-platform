@@ -26,7 +26,8 @@
       "@pages/*": ["./src/pages/*"],
       "@routes/*": ["./src/routes/*"],
       "@features/*": ["./src/features/*"],
-      "@config/*": ["./src/config/*"]
+      "@config/*": ["./src/config/*"],
+      "@entities/*": ["./src/entities/*"]
     }
   },
   "include": ["src"]
