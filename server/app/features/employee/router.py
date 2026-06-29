@@ -50,7 +50,6 @@ async def delete_employee(
     service: EmployeeService = Depends(get_employee_service),
 ):
     await service.delete(id)
-    return {"message": f"Employee {id} marked as deleted."}
 
 @router.patch("/{id}/password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_employee_password(
@@ -59,4 +58,3 @@ async def change_employee_password(
     service: EmployeeService = Depends(get_employee_service),
 ):
     await service.change_password(id, payload.model_dump())
-    return {"message": f"Password Changed for Employee ID: {id}"}
