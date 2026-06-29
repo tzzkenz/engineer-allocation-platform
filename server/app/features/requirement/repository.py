@@ -12,6 +12,16 @@ class RequirementRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    async def get_by_project_id(
+        self, project_id: int
+    ) -> ProjectRequirementRequest | None:
+        stmt = select(ProjectRequirementRequest).where(
+            ProjectRequirementRequest.project_id == project_id,
+            ProjectRequirementRequest.deleted_at.is_(None),
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
     async def get_by_id(self, request_id: int) -> ProjectRequirementRequest | None:
         stmt = select(ProjectRequirementRequest).where(
             ProjectRequirementRequest.id == request_id,

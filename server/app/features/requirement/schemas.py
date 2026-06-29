@@ -6,7 +6,6 @@ from models.project_requirement_request import RequestStatus
 
 
 class RequirementCreate(BaseModel):
-    project_id: int
     project_role_id: int
     requested_count: int
     requested_by: int

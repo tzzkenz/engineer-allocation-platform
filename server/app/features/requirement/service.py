@@ -14,8 +14,13 @@ class RequirementService:
     def __init__(self, repo: RequirementRepository):
         self.repo = repo
 
-    async def get(self, request_id: int) -> ProjectRequirementRequest:
-        request = await self.repo.get_by_id(request_id)
+    async def get(
+        self, request_id: int | None = None, project_id: int | None = None
+    ) -> ProjectRequirementRequest:
+        if project_id is not None:
+            request = await self.repo.get_by_project_id(project_id)
+        else:
+            request = await self.repo.get_by_id(request_id)
         if request is None:
             raise NotFoundException("Requirement request not found")
         return request

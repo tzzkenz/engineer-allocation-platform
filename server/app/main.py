@@ -3,9 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from features.system_role.router import router as system_role_router
 from features.project.router import router as project_router
-
 from features.feedback.router import router as feedback_router
-
 from features.employee.router import router as employee_router
 from features.skill.router import router as skill_router
 from features.auth.router import router as auth_router
