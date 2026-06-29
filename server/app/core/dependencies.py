@@ -9,6 +9,8 @@ from features.project.service import ProjectService
 from features.project.repository import ProjectRepository
 from features.employee.repository import EmployeeRepository
 from features.employee.service import EmployeeService
+from features.skill.repository import SkillRepository
+from features.skill.service import SkillService
 
 
 def get_system_role_service(db: AsyncSession = Depends(get_db)) -> SystemRoleService:
@@ -19,3 +21,6 @@ def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
     return ProjectService(ProjectRepository(db))
 def get_employee_service(db: AsyncSession = Depends(get_db)) -> "EmployeeService":
     return EmployeeService(EmployeeRepository(db))
+
+def get_skill_service(db: AsyncSession = Depends(get_db)) -> "SkillService":
+    return SkillService(SkillRepository(db))
