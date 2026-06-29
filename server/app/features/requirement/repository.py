@@ -6,6 +6,8 @@ from models.project_requirement_request import (
     ProjectRequirementRequest,
     RequestStatus,
 )
+from models.project_stack_requirement_request import ProjectStackRequirementRequest
+from models.skill import Skill
 
 
 class RequirementRepository:
@@ -82,3 +84,19 @@ class RequirementRepository:
     async def soft_delete(self, request: ProjectRequirementRequest) -> None:
         request.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()
+
+    async def get_stack_by_id(self, stack_id: id) -> Skill | None:
+        stmt = select(Skill).where(
+            Skill.id == stack_id,
+            Skill.deleted_at.is_(None),
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def add_stack_to_request(self, request_id, stack_id):
+        stack_request = ProjectStackRequirementRequest(
+            stack_id=stack_id, project_requirement_request_id=request_id
+        )
+        self.db.add(stack_request)
+        await self.db.flush()
+        return stack_request

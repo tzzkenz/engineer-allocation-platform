@@ -5,6 +5,8 @@ from features.requirement.schemas import (
     RequirementCreate,
     RequirementResponse,
     RequirementUpdate,
+    StackRequirementCreate,
+    StackRequirementResponse,
 )
 from features.requirement.service import RequirementService
 
@@ -36,7 +38,7 @@ async def get_requirements_for_project(
     return await service.get(project_id=project_id)
 
 
-@router.get("/{request_id}", response_model=RequirementResponse)
+@router.get("/requirements/{request_id}", response_model=RequirementResponse)
 async def get_requirement(
     request_id: int,
     service: RequirementService = Depends(get_requirement_service),
@@ -44,14 +46,14 @@ async def get_requirement(
     return await service.get(request_id=request_id)
 
 
-@router.get("/", response_model=list[RequirementResponse])
+@router.get("/requirements", response_model=list[RequirementResponse])
 async def list_requirements(
     service: RequirementService = Depends(get_requirement_service),
 ):
     return await service.list()
 
 
-@router.patch("/{request_id}", response_model=RequirementResponse)
+@router.patch("/requirements/{request_id}", response_model=RequirementResponse)
 async def update_requirement(
     request_id: int,
     payload: RequirementUpdate,
@@ -65,9 +67,22 @@ async def update_requirement(
     )
 
 
-@router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/requirements/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_requirement(
     request_id: int,
     service: RequirementService = Depends(get_requirement_service),
 ):
     await service.delete(request_id)
+
+
+@router.post(
+    "/requirements/{request_id}/stacks",
+    response_model=StackRequirementResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_stack_requirement(
+    request_id: int,
+    payload: StackRequirementCreate,
+    service: RequirementService = Depends(get_requirement_service),
+):
+    return await service.add_stack(request_id=request_id, stack_id=payload.stack_id)

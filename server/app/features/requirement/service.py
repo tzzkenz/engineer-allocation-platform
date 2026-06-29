@@ -7,7 +7,13 @@ from models.project_requirement_request import (
     RequestStatus,
 )
 from features.requirement.repository import RequirementRepository
-from exceptions import NotFoundException, ConflictException, UnknownException
+from exceptions import (
+    BadRequestException,
+    NotFoundException,
+    ConflictException,
+    UnknownException,
+)
+from models.skill import SkillType
 
 
 class RequirementService:
@@ -88,3 +94,28 @@ class RequirementService:
         except Exception:
             await self.repo.db.rollback()
             raise UnknownException("Failed to delete requirement request")
+
+    async def add_stack(self, request_id: id, stack_id: id):
+        request = await self.repo.get_by_id(request_id)
+
+        if request is None:
+            raise NotFoundException("Requirement request not found")
+
+        skill = await self.repo.get_stack_by_id(stack_id)
+        if skill is None:
+            raise NotFoundException("Stack not found")
+
+        if skill.type != SkillType.STACK:
+            raise BadRequestException("The given skill is not a stack")
+
+        try:
+            stack_request = await self.repo.add_stack_to_request(request_id, stack_id)
+            await self.repo.db.commit()
+            return stack_request
+        except IntegrityError:
+            await self.repo.db.rollback()
+            raise ConflictException("Invalid foreign key or constraint violation")
+
+        except Exception:
+            await self.repo.db.rollback()
+            raise UnknownException("Failed to create requirement request")

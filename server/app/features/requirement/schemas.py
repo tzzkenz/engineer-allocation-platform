@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -30,3 +30,16 @@ class RequirementResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class StackRequirementCreate(BaseModel):
+    stack_id: int
+
+
+class StackRequirementResponse(BaseModel):
+    id: int
+    project_requirement_request_id: int
+    stack_id: int
+    name: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
