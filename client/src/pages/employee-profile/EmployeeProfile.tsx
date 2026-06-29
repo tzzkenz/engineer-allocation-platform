@@ -14,7 +14,7 @@ export function EmployeeProfile() {
   const employee = mockEmployee;
 
   return (
-    <>
+    <div className="w-full">
       <div className="flex items-end justify-between py-4 mb-6">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-bold tracking-[0.55px] mb-2">
@@ -93,6 +93,6 @@ export function EmployeeProfile() {
 
         <InterestSection interests={employee.interests} />
       </div>
-    </>
+    </div>
   );
 }

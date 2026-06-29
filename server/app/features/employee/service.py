@@ -6,6 +6,11 @@ from sqlalchemy.exc import IntegrityError
 from features.auth.utils import hash_password, verify_password
 from features.employee.repository import EmployeeRepository
 from models.employee import Employee
+from exceptions import (
+    NotFoundException,
+    ConflictException,
+    BadRequestException,
+)
 
 
 def _coerce_date(value: Any) -> date:
@@ -15,7 +20,7 @@ def _coerce_date(value: Any) -> date:
         return value.date()
     if isinstance(value, str):
         return date.fromisoformat(value)
-    raise ValueError("date_of_joining must be a valid date")
+    raise BadRequestException("date_of_joining must be a valid date")
 
 
 class EmployeeService:
@@ -25,7 +30,7 @@ class EmployeeService:
     async def get(self, employee_id: int) -> Employee:
         employee = await self.repo.get_by_id(employee_id)
         if employee is None:
-            raise Exception("Employee not found")
+            raise NotFoundException("Employee not found")
         return employee
 
     async def list(self) -> list[Employee]:
@@ -41,10 +46,9 @@ class EmployeeService:
             )
 
         existing = await self.repo.get_by_email(employee_data["email"])
-        if existing is not None:
-            raise Exception("Email already registered")
+        if existing is not None and existing.deleted_at is None:
+            raise ConflictException("Email already registered")
 
-        # Safely extract plain text password, hash it, and map to password_hash
         plain_password = employee_data.pop("password")
         employee_data["password_hash"] = hash_password(plain_password)
 
@@ -54,26 +58,25 @@ class EmployeeService:
             return employee
         except IntegrityError:
             await self.repo.db.rollback()
-            raise Exception(
+            raise ConflictException(
                 "Database integrity violation occurred while creating employee"
             )
 
     async def update(self, employee_id: int, update_data: dict[str, Any]) -> Employee:
         employee = await self.get(employee_id)
 
-        # Filter out fields that weren't provided in the patch payload
         filtered_updates = {k: v for k, v in update_data.items() if v is not None}
 
         if "email" in filtered_updates:
             filtered_updates["email"] = str(filtered_updates["email"]).strip().lower()
             existing = await self.repo.get_by_email(filtered_updates["email"])
+            if existing is not None and existing.id != employee_id and existing.deleted_at is None:
+                raise ConflictException("Email already in use by another employee")
 
         if "date_of_joining" in filtered_updates:
             filtered_updates["date_of_joining"] = _coerce_date(
                 filtered_updates["date_of_joining"]
             )
-            if existing is not None and existing.id != employee_id:
-                raise Exception("Email already in use by another employee")
 
         try:
             employee = await self.repo.update(employee, filtered_updates)
@@ -82,7 +85,7 @@ class EmployeeService:
             return employee
         except Exception:
             await self.repo.db.rollback()
-            raise Exception("Something went wrong during employee update")
+            raise BadRequestException("Something went wrong during employee update")
 
     async def delete(self, employee_id: int) -> None:
         employee = await self.get(employee_id)
@@ -91,22 +94,19 @@ class EmployeeService:
             await self.repo.db.commit()
         except Exception:
             await self.repo.db.rollback()
-            raise Exception("Something went wrong during employee deletion")
+            raise BadRequestException("Something went wrong during employee deletion")
 
     async def change_password(
         self, employee_id: int, passwords: dict[str, Any]
     ) -> None:
         employee = await self.get(employee_id)
 
-        # Verify that the current password is correct
         if not verify_password(passwords["current_password"], employee.password_hash):
-            raise Exception("Incorrect current password")
+            raise BadRequestException("Incorrect current password")
 
-        # Prevent reusing the exact same password if desired, or simply map it
         if passwords["current_password"] == passwords["new_password"]:
-            raise Exception("New password cannot be the same as the current password")
+            raise BadRequestException("New password cannot be the same as the current password")
 
-        # Hash the new password and update the model row field
         update_data = {"password_hash": hash_password(passwords["new_password"])}
 
         try:
@@ -114,4 +114,4 @@ class EmployeeService:
             await self.repo.db.commit()
         except Exception:
             await self.repo.db.rollback()
-            raise Exception("Something went wrong while changing the password")
+            raise BadRequestException("Something went wrong while changing the password")
