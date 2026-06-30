@@ -30,6 +30,5 @@ class EmployeeSkill(Entity):
     skill = relationship("Skill", back_populates="employee_skills")
 
     __table_args__ = (
-        UniqueConstraint("employee_id", "skill_id", name="uq_employee_stack"),
         CheckConstraint("proficiency BETWEEN 0 AND 5", name="ck_proficiency_range"),
     )

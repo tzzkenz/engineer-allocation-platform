@@ -11,10 +11,6 @@ class ProjectRole(Entity):
 
     project_employees = relationship("ProjectEmployee", back_populates="project_role")
 
-    requirement_requests = relationship(
-        "ProjectRequirementRequest", back_populates="project_role"
-    )
-
     project_requirement_requests = relationship(
         "ProjectRequirementRequest", back_populates="project_role"
     )

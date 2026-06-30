@@ -13,19 +13,28 @@ import { cn } from "@/shared/lib/utils";
 import { Eye, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router";
 
+import type { ProjectListResponse } from "@entities/project/types/apiTypes";
+
 import DurationCell from "../duration-cell/DurationCell";
 
-const ProjectTable = ({ employees, onViewClick }) => {
+type ProjectTableProps = {
+  employees: ProjectListResponse;
+  onViewClick: (projectId: number) => void;
+};
+
+const ProjectTableHeads = ["Project Name", "Status", "Duration", "Engineers", "Actions"];
+
+const ProjectTable = ({ employees, onViewClick }: ProjectTableProps) => {
   const navigate = useNavigate();
   return (
-    <Table>
+    <Table className=" text-left">
       <TableHeader>
         <TableRow>
-          <TableHead>Project Name</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Duration</TableHead>
-          <TableHead>Engineers</TableHead>
-          <TableHead className=" text-right">Actions</TableHead>
+          {ProjectTableHeads.map((head) => (
+            <TableHead key={head} className={cn(head === "Actions" && "text-right")}>
+              {head}
+            </TableHead>
+          ))}
         </TableRow>
       </TableHeader>
 
@@ -36,25 +45,25 @@ const ProjectTable = ({ employees, onViewClick }) => {
             className=" cursor-pointer group transition-colors"
             onClick={() => navigate(`/projects/${project.id}`)}
           >
-            <TableCell className="px-6 py-4">
+            <TableCell className="pr-6 py-4">
               <div className="flex items-center gap-3">
                 <div>
                   <p className="text-[16px] font-bold  leading-6">{project.name}</p>
-                  <p className="text-[11px] opacity-60 leading-3.5">{project.subtitle}</p>
+                  {/* <p className="text-[11px] opacity-60 leading-3.5">{project.description}</p> */}
                 </div>
               </div>
             </TableCell>
 
-            <TableCell className="px-6 py-4">
+            <TableCell className="pr-6 py-4">
               <StatusBadge status={project.status} />
             </TableCell>
 
-            <TableCell className="px-6 py-5">
+            <TableCell className="pr-6 py-5">
               <DurationCell project={project} />
             </TableCell>
 
-            <TableCell className="px-6 py-4">
-              {project.engineers.length === 0 ? (
+            <TableCell className="pr-6 py-4">
+              {/* {project.engineers.length === 0 ? (
                 <span
                   className={cn(
                     "text-[13px] font-bold italic",
@@ -67,11 +76,11 @@ const ProjectTable = ({ employees, onViewClick }) => {
                 <span className="text-[13px] font-bold">
                   {project.engineers.length} / {project.maxEngineers}
                 </span>
-              )}
+              )} */}
             </TableCell>
 
             {/* Actions */}
-            <TableCell className="px-4 py-4">
+            <TableCell className="pr-4 py-4">
               <div className="flex items-center justify-end gap-1  transition-opacity">
                 <Tooltip>
                   <TooltipTrigger asChild>

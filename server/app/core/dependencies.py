@@ -15,6 +15,12 @@ from features.skill.repository import SkillRepository
 from features.skill.service import SkillService
 from features.auth.repository import AuthRepository
 from features.auth.service import AuthService
+from features.requirement.repository import RequirementRepository
+from features.requirement.service import RequirementService
+from features.project_role.repository import ProjectRoleRepository
+from features.project_role.service import ProjectRoleService
+from features.audit.repository import AuditLogRepository
+from features.audit.service import AuditLogService
 
 
 def get_system_role_service(db: AsyncSession = Depends(get_db)) -> SystemRoleService:
@@ -26,7 +32,7 @@ def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
 
 
 def get_employee_service(db: AsyncSession = Depends(get_db)) -> EmployeeService:
-    return EmployeeService(EmployeeRepository(db))
+    return EmployeeService(EmployeeRepository(db), AuditLogRepository(db))
 
 
 def get_feedback_service(db: AsyncSession = Depends(get_db)) -> FeedbackService:
@@ -39,3 +45,15 @@ def get_skill_service(db: AsyncSession = Depends(get_db)) -> SkillService:
 
 def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
     return AuthService(AuthRepository(db))
+
+
+def get_requirement_service(db: AsyncSession = Depends(get_db)) -> RequirementService:
+    return RequirementService(RequirementRepository(db))
+
+
+def get_project_role_service(db: AsyncSession = Depends(get_db)) -> ProjectRoleService:
+    return ProjectRoleService(ProjectRoleRepository(db))
+
+
+def get_audit_log_service(db: AsyncSession = Depends(get_db)) -> AuditLogService:
+    return AuditLogService(AuditLogRepository(db))

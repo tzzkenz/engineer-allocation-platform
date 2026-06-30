@@ -53,6 +53,7 @@ const AppSidebar = () => {
                     <SidebarMenuButton
                       asChild
                       data-active={isActive}
+                      isActive={isActive}
                       className={cn(
                         "h-auto rounded-sm px-3 py-2.5 text-sm font-medium gap-3 transition-all duration-150",
                         isActive
@@ -62,7 +63,7 @@ const AppSidebar = () => {
                               "data-[active=true]:bg-primary data-[active=true]:text-secondary",
                               "shadow-[0_4px_12px_rgba(70,72,212,0.25)]",
                             ]
-                          : ["bg-transparent", "hover:bg-secondary hover:text-secondary-foreground"]
+                          : ["bg-none ", "hover:bg-secondary hover:text-secondary-foreground"]
                       )}
                     >
                       <NavLink to={item.href} end={item.end ?? false}>

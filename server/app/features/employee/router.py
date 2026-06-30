@@ -13,6 +13,8 @@ from features.employee.schemas import (
     UpdateProficiency,
 )
 from features.employee.service import EmployeeService
+from features.auth.dependencies import get_current_user
+from features.auth.schemas import TokenPayload
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
@@ -36,8 +38,9 @@ async def get_employee(
 async def create_employee(
     payload: EmployeeCreate,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.create(payload.model_dump())
+    return await service.create(payload.model_dump(),current_user.id)
 
 
 @router.patch("/{id}", response_model=EmployeeResponse)
@@ -45,34 +48,36 @@ async def update_employee(
     id: int,
     payload: EmployeeUpdate,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(id, payload.model_dump())
+    return await service.update(id, payload.model_dump(),current_user.id)
 
 
-@router.patch("/{id}/me", response_model=EmployeeResponse)
+@router.patch("/me", response_model=EmployeeResponse)
 async def update_employee_self(
-    id: int,
     payload: EmployeeUpdateSelf,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(id, payload.model_dump(exclude_none=True))
+    return await service.update(current_user.id, payload.model_dump(exclude_none=True),current_user.id)
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_employee(
     id: int,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.delete(id)
+    await service.delete(id,current_user.id)
 
 
-@router.patch("/{id}/password", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_employee_password(
-    id: int,
     payload: PasswordChange,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.change_password(id, payload.model_dump())
+    await service.change_password(current_user.id, payload.model_dump(),current_user.id)
 
 
 
