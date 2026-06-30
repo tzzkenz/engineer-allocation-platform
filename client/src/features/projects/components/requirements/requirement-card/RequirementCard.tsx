@@ -15,10 +15,13 @@ import {
 
 import { type Requirement } from "../../../data/data";
 import { SectionCard, SectionCardInner, SectionHeader } from "../../section/SectionCard";
+import RequirementForm from "../requirement-form-dlalog/requirement-form/RequirementFormDialog";
+import RequirementFormDialog from "../requirement-form-dlalog/requirement-form/RequirementFormDialog";
 import { RequirementTable } from "../requirement-table/RequirementTable";
 
 interface RequirementsCardProps {
   requirements: Requirement[];
+  projectId: string;
 }
 
 export function RequirementsCard({ requirements }: RequirementsCardProps) {
@@ -57,35 +60,8 @@ export function RequirementsCard({ requirements }: RequirementsCardProps) {
       </SectionCard>
 
       {/* Raise Request dialog */}
-      <Dialog open={raiseOpen} onOpenChange={setRaiseOpen}>
-        <DialogContent className="rounded-3xl max-w-md border-border-strong">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-foreground">
-              Raise a Request
-            </DialogTitle>
-          </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <FormInput label="Role" placeholder="e.g. Developer" />
-            <FormInput label="Required Count" type="number" placeholder="1" />
-            <FormInput label="Required Skills" placeholder="e.g. Python, React" />
-          </div>
-
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="ghost" className="rounded-xl">
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
-              onClick={() => setRaiseOpen(false)}
-            >
-              Raise Request
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RequirementFormDialog isOpen={raiseOpen} onOpenChange={setRaiseOpen} />
     </>
   );
 }
