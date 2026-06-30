@@ -1,3 +1,4 @@
+import { TechStackTag } from "@/entities/project/components/TechStack";
 import type { RequirementResponse } from "@/entities/project/types/apiTypes";
 import { REQUIREMENT_NAME_TO_LABEL } from "@/features/projects/utils/status";
 import { Button } from "@/shared/components/ui/button";
@@ -34,15 +35,9 @@ export const RequirementTable = ({ requirements, onAssign }: RequirementTablePro
             <TableCell>{req.project_role_id}</TableCell>
 
             <TableCell>
-              {/* {req.expertise.length > 0 ? (
-                <div>
-                  {req.expertise.map((expertise) => (
-                    <TechStackTag key={expertise} tech={expertise} />
-                  ))}
-                </div>
-              ) : (
-                <span>{req.role === "QA" ? "Manual Testing" : "—"}</span>
-              )} */}
+              {req.stack_requests.map((stack) => (
+                <TechStackTag key={stack.id} tech={stack.stack_name} />
+              ))}
             </TableCell>
 
             <TableCell>0 / {req.requested_count}</TableCell>

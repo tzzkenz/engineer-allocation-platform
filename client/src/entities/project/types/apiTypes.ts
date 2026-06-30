@@ -1,3 +1,4 @@
+import type { Skill, StackRequest } from "@/entities/config/types/apiTypes";
 import type { EmployeeResponse } from "@/entities/employee/types/apiTypes";
 
 export type ProjectStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "STOPPED" | "DISCARDED";
@@ -23,7 +24,7 @@ export type RequirementResponse = {
   requested_count: number;
   requested_by: number;
   status: RequirementStatus;
-  stack_ids: number[];
+  stack_requests: StackRequest[];
   created_at: string;
   updated_at: string;
 };

@@ -15,6 +15,13 @@ export type Skill = {
   description: string | null;
 };
 
+export type StackRequest = {
+  id: number;
+  project_requirement_request_id: number;
+  stack_id: number;
+  stack_name: string;
+};
+
 export type SkillResponse = Skill;
 
 export type CreateSkillPayload = {
