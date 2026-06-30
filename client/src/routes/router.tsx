@@ -50,6 +50,10 @@ const router = createBrowserRouter([
             path: ":id",
             element: <ProjectDetails />,
           },
+          {
+            path: ":projectId/edit",
+            element: <ProjectCreate />,
+          },
         ],
       },
     ],

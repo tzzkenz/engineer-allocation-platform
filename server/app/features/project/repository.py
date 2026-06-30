@@ -1,11 +1,12 @@
 from datetime import datetime, timezone, date
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.project import Project, StatusType
 from models.project_employee import ProjectEmployee
+from models.project_requirement_request import ProjectRequirementRequest, RequestStatus
 
 
 class ProjectRepository:
@@ -89,3 +90,33 @@ class ProjectRepository:
         self.db.add(allocation)
         await self.db.flush()
         return allocation
+    
+    async def get_total_requested_count(self, project_id: int) -> int:
+        """
+        Sums up requested_count for a project where the request status is not REJECTED.
+        """
+        stmt = (
+            select(func.sum(ProjectRequirementRequest.requested_count))
+            .where(
+                ProjectRequirementRequest.project_id == project_id,
+                ProjectRequirementRequest.status != RequestStatus.REJECTED,
+                ProjectRequirementRequest.deleted_at.is_(None)
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar() or 0
+
+    async def get_active_allocation_count(self, project_id: int) -> int:
+        """
+        Counts current active allocations for a project where date_exited is None.
+        """
+        stmt = (
+            select(func.count(ProjectEmployee.id))
+            .where(
+                ProjectEmployee.project_id == project_id,
+                ProjectEmployee.date_exited.is_(None),
+                ProjectEmployee.deleted_at.is_(None)
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar() or 0
