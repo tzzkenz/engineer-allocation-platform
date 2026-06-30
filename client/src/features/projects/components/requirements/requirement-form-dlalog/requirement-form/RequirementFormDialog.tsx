@@ -24,7 +24,9 @@ const RequirementFormDialog = ({ projectId, isOpen, onOpenChange }: RequirementF
       },
     };
     createRequirement(payload);
+    onOpenChange(false);
   };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-3xl max-w-md border-border-strong">
