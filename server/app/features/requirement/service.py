@@ -42,6 +42,7 @@ class RequirementService:
         requested_by: int,
         stack_ids: list[int] | None = None,
     ) -> ProjectRequirementRequest:
+
         try:
             request = await self.repo.create(
                 project_id=project_id,
@@ -65,7 +66,12 @@ class RequirementService:
                     await self.repo.add_stack_to_request(request.id, stack_id)
 
             await self.repo.db.commit()
-            return request
+
+            return await self.repo.get_with_stacks(request.id)
+
+        except (NotFoundException, BadRequestException):
+            await self.repo.db.rollback()
+            raise
 
         except IntegrityError:
             await self.repo.db.rollback()
@@ -111,7 +117,7 @@ class RequirementService:
             await self.repo.db.rollback()
             raise UnknownException("Failed to delete requirement request")
 
-    async def add_stack(self, request_id: id, stack_id: id):
+    async def add_stack(self, request_id: int, stack_id: int):
         request = await self.repo.get_by_id(request_id)
 
         if request is None:
@@ -128,13 +134,14 @@ class RequirementService:
             stack_request = await self.repo.add_stack_to_request(request_id, stack_id)
             await self.repo.db.commit()
             return stack_request
+
         except IntegrityError:
             await self.repo.db.rollback()
             raise ConflictException("Invalid foreign key or constraint violation")
 
-        except Exception:
+        except Exception as e:
             await self.repo.db.rollback()
-            raise UnknownException("Failed to create requirement request")
+            raise UnknownException(str(e))
 
     async def list_stacks(self, request_id: int):
         request = await self.repo.get_by_id(request_id)

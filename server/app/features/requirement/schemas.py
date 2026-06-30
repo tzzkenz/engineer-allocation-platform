@@ -23,7 +23,6 @@ class StackRequirementResponse(BaseModel):
     id: int
     project_requirement_request_id: int
     stack_id: int
-    name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,7 +36,7 @@ class RequirementResponse(BaseModel):
     resolved_by: int | None
     resolved_at: datetime | None
     status: RequestStatus
-    stacks: list[StackRequirementResponse] = []
+    stack_requests: list[StackRequirementResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
 

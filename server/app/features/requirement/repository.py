@@ -18,25 +18,35 @@ class RequirementRepository:
 
     async def get_by_project_id(
         self, project_id: int
-    ) -> ProjectRequirementRequest | None:
-        stmt = select(ProjectRequirementRequest).where(
-            ProjectRequirementRequest.project_id == project_id,
-            ProjectRequirementRequest.deleted_at.is_(None),
+    ) -> list[ProjectRequirementRequest]:
+        stmt = (
+            select(ProjectRequirementRequest)
+            .where(
+                ProjectRequirementRequest.project_id == project_id,
+                ProjectRequirementRequest.deleted_at.is_(None),
+            )
+            .options(selectinload(ProjectRequirementRequest.stack_requests))  # ✅
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
     async def get_by_id(self, request_id: int) -> ProjectRequirementRequest | None:
-        stmt = select(ProjectRequirementRequest).where(
-            ProjectRequirementRequest.id == request_id,
-            ProjectRequirementRequest.deleted_at.is_(None),
+        stmt = (
+            select(ProjectRequirementRequest)
+            .where(
+                ProjectRequirementRequest.id == request_id,
+                ProjectRequirementRequest.deleted_at.is_(None),
+            )
+            .options(selectinload(ProjectRequirementRequest.stack_requests))  # ✅
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     async def list_all(self) -> list[ProjectRequirementRequest]:
-        stmt = select(ProjectRequirementRequest).where(
-            ProjectRequirementRequest.deleted_at.is_(None)
+        stmt = (
+            select(ProjectRequirementRequest)
+            .where(ProjectRequirementRequest.deleted_at.is_(None))
+            .options(selectinload(ProjectRequirementRequest.stack_requests))  # ✅
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -87,7 +97,7 @@ class RequirementRepository:
         request.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()
 
-    async def get_stack_by_id(self, stack_id: id) -> Skill | None:
+    async def get_stack_by_id(self, stack_id: int) -> Skill | None:
         stmt = select(Skill).where(
             Skill.id == stack_id,
             Skill.deleted_at.is_(None),
