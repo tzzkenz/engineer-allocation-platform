@@ -73,3 +73,10 @@ class ProjectEmployeeResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class ProjectStaffingStatusResponse(BaseModel):
+    project_id: int
+    total_requested: int
+    active_allocated: int
+    staffing_balance: int
+    status_label: str
