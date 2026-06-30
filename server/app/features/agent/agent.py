@@ -16,9 +16,9 @@ from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 
 from core.config import settings
-from features.agent.tools import build_employee_tools
 from features.employee.service import EmployeeService
 from features.project.service import ProjectService
+from features.agent.tools.employee_tools import build_employee_tools
 from features.agent.tools.project_tools import build_project_tools
 
 SYSTEM_PROMPT = """

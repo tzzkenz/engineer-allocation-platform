@@ -12,7 +12,7 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 async def list_projects(
     service: ProjectService = Depends(get_project_service),
 ):
-    return await service.list()
+    return await service.list_all()
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)

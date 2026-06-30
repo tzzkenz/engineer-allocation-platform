@@ -1,8 +1,10 @@
+from datetime import date, timedelta
+
 from sqlalchemy.exc import IntegrityError
 
 from exceptions import ConflictException, NotFoundException, UnknownException
 from features.project.repository import ProjectRepository
-from models.project import Project
+from models.project import Project, StatusType
 from features.project.schemas import ProjectCreate, ProjectUpdate
 
 
@@ -16,7 +18,7 @@ class ProjectService:
             raise NotFoundException("Project not found in DB")
         return project
 
-    async def list(self) -> list[Project]:
+    async def list_all(self) -> list[Project]:
         return await self.repo.list_all()
 
     async def create(self, data: ProjectCreate) -> Project:
@@ -96,3 +98,25 @@ class ProjectService:
         except Exception as e:
             await self.repo.db.rollback()
             raise UnknownException(str(e))
+
+    async def get_nearing_completion(self, days: int = 14) -> list[Project]:
+
+        projects = await self.repo.list_all()
+        today = date.today()
+        cutoff = today + timedelta(days=days)
+
+        result = []
+        for project in projects:
+            if (
+                project.status != StatusType.ONGOING
+                or project.start_date is None
+                or project.duration is None
+            ):
+                continue
+
+            end_date = project.start_date + timedelta(weeks=project.duration)
+
+            if today <= end_date <= cutoff:
+                result.append(project)
+
+        return result

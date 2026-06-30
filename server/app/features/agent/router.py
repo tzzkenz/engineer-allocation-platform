@@ -37,7 +37,7 @@ async def chat(
     agent = make_agent(
         employee_service,
         project_service,
-        requesting_role=current_user.systed_role_id,
+        requesting_role=current_user.system_role_id,
     )
 
     result = await agent.ainvoke(
