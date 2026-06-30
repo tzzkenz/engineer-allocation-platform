@@ -37,7 +37,7 @@ export function ProjectList() {
         description="Manage your projects and their associated tasks."
         additionalContent={
           <Button
-            onClick={() => navigate("/projects/create")}
+            onClick={() => navigate("/project/create")}
             className="gap-2 h-11 px-6 rounded-md"
           >
             <Plus className="w-3.5 h-3.5" />

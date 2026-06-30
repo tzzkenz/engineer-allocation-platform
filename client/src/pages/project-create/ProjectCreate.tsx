@@ -1,3 +1,8 @@
+import { useEffect } from "react";
+
+import { useGetProjectQuery } from "@/features/projects/services/projectApi";
+import { useCreateProjectMutation } from "@/features/projects/services/projectCreateApi";
+import { useEditProjectMutation } from "@/features/projects/services/projectEditApi";
 import { type ProjectCreateFormData, projectCreateSchema } from "@/schemas/projectCreate.schema";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -8,58 +13,72 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, CircleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { useCreateProjectMutation } from "@/features/projects/services/projectCreateApi";
 import { useParams } from "react-router";
-import { useEditProjectMutation } from "@/features/projects/services/projectEditApi";
+
 export default function ProjectCreate() {
-  const {projectId}=useParams();
-  const isEdit= !!projectId;
-  const [createProject, { isLoading: isCreateLoading }] =
-  useCreateProjectMutation();
-  const [editProject, { isLoading: isEditLoading }] =
-    useEditProjectMutation();
+  const { projectId } = useParams();
+  const isEdit = !!projectId;
+  const [createProject, { isLoading: isCreateLoading }] = useCreateProjectMutation();
+  const [editProject, { isLoading: isEditLoading }] = useEditProjectMutation();
+
+  const {
+    data: project,
+    isLoading: isProjectLoading,
+    isError,
+  } = useGetProjectQuery(projectId!, {
+    skip: !projectId,
+  });
+
   const isLoading = isCreateLoading || isEditLoading;
 
-    const navigate=useNavigate()
+  const navigate = useNavigate();
   const checkForm = useForm<ProjectCreateFormData>({
     resolver: zodResolver(projectCreateSchema),
     defaultValues: {
-  name:"",
-  duration: undefined,
-  start_date: undefined,
-  status: "NOT_STARTED",
-
+      name: "",
+      duration: undefined,
+      start_date: undefined,
+      status: "NOT_STARTED",
     },
   });
-  const onSubmit =async (data: ProjectCreateFormData) => {
+  const onSubmit = async (data: ProjectCreateFormData) => {
     console.log("onSubmit called");
-    console.log(data.name);
-    if(!isEdit){
-      try{
-        const response= await createProject(data).unwrap()
-        
-        console.log(response)
+    console.log(data);
+    if (!isEdit) {
+      try {
+        const response = await createProject(data).unwrap();
 
-        navigate('/projects')
-        }
-        catch(err){
-          console.log("failed")
-        }
+        console.log(response);
 
+        navigate(`/project/${response.id}`);
+      } catch (err) {
+        console.log("failed");
+      }
     }
-    if(isEdit){
-      try{
-        const response=await editProject({projectId, ...data}).unwrap()
-        console.log(response)
-        navigate('/projects')
-        }
-        catch(err){
-          console.log("failed")
-        }
-
+    if (isEdit) {
+      try {
+        const response = await editProject({ projectId, ...data }).unwrap();
+        console.log(response);
+        navigate(`/project/${projectId}`);
+      } catch (err) {
+        console.log("failed");
+      }
     }
-    
   };
+
+  useEffect(() => {
+    if (isProjectLoading || isError) return;
+
+    if (!project) return;
+
+    console.log("Runned");
+    checkForm.reset({
+      name: project.name,
+      duration: project.duration,
+      start_date: project.start_date,
+      status: project.status,
+    });
+  }, [checkForm, project, isProjectLoading, isError]);
   return (
     <>
       <PageSection
@@ -76,10 +95,13 @@ export default function ProjectCreate() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
-          <form className="space-y-8 " onSubmit={(e) => {
+          <form
+            className="space-y-8 "
+            onSubmit={(e) => {
               console.log(checkForm.formState.errors);
               checkForm.handleSubmit(onSubmit)(e);
-            }}>
+            }}
+          >
             <div className="md:grid grid-cols-2 gap-8 max-md:space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">PROJECT NAME</Label>
@@ -91,8 +113,8 @@ export default function ProjectCreate() {
                   {...checkForm.register("name")}
                 />
                 {checkForm.formState.errors.name && (
-                    <p className="text-sm text-red-500">{checkForm.formState.errors.name.message}</p>
-                  )}
+                  <p className="text-sm text-red-500">{checkForm.formState.errors.name.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -105,8 +127,7 @@ export default function ProjectCreate() {
                     placeholder="Select start and end dates"
                     className="h-12 pr-12"
                     {...checkForm.register("duration", {
-                      setValueAs: (value) =>
-                        value === "" ? undefined : Number(value),
+                      setValueAs: (value) => (value === "" ? undefined : Number(value)),
                     })}
                   />
 
@@ -120,22 +141,28 @@ export default function ProjectCreate() {
                 <Label htmlFor="start_date">START DATE (OPTIONAL)</Label>
 
                 <div className="relative">
-                  <Input id="start_date" type="date" placeholder="yyyy-mm-dd" className="h-12 pr-12"{...checkForm.register("start_date")} />
+                  <Input
+                    id="start_date"
+                    type="date"
+                    placeholder="yyyy-mm-dd"
+                    className="h-12 pr-12"
+                    {...checkForm.register("start_date")}
+                  />
 
                   <CalendarDays className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endDate">PROJECT STATUS</Label>
+                <Label htmlFor="status">PROJECT STATUS</Label>
 
                 <Input
                   id="status"
 
                   placeholder="Status of Project"
                   className="h-12"
-                  {...checkForm.register("start_date", {
-                    setValueAs: (value) => value === "" ? undefined : value,
+                  {...checkForm.register("status", {
+                    setValueAs: (value) => (value === "" ? undefined : value),
                   })}
                 />
               </div>
@@ -153,7 +180,13 @@ export default function ProjectCreate() {
               </Button>
 
               <Button type="submit" className="min-w-40 py-4 hover:scale-102 active:scale-97">
-                {isLoading ? "Creating....": "Create Project" }
+                {isEdit
+                  ? isLoading
+                    ? "Updating..."
+                    : "Update Project"
+                  : isLoading
+                    ? "Creating...."
+                    : "Create Project"}
               </Button>
             </div>
           </form>
