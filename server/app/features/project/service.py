@@ -250,3 +250,30 @@ class ProjectService:
         except Exception as e:
             await self.repo.db.rollback()
             raise UnknownException(f"Failed to allocate employees batch: {str(e)}")
+    
+
+    async def get_project_staffing_status(self, project_id: int) -> dict[str, Any]:
+        """
+        Calculates staffing metrics comparing active allocations vs non-rejected requirements.
+        """
+        await self.get(project_id)
+
+        total_requested = await self.repo.get_total_requested_count(project_id)
+        active_allocated = await self.repo.get_active_allocation_count(project_id)
+
+        staffing_balance = active_allocated - total_requested
+
+        if staffing_balance > 0:
+            status_label = f"Overstaffed by {staffing_balance}"
+        elif staffing_balance < 0:
+            status_label = f"Understaffed by {abs(staffing_balance)}"
+        else:
+            status_label = "Correctly Staffed"
+
+        return {
+            "project_id": project_id,
+            "total_requested": total_requested,
+            "active_allocated": active_allocated,
+            "staffing_balance": staffing_balance,
+            "status_label": status_label
+        }
