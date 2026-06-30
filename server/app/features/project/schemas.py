@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 from models.project import StatusType
@@ -7,9 +7,11 @@ from models.project import StatusType
 # Create Schema
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
-    start_date: date
-    duration: int = Field(ge=1, description="Expected duration in months")
-    status: StatusType
+    start_date: date | None = Field(default=None)
+    duration: int | None = Field(
+        default=None, ge=1, description="Expected duration in months"
+    )
+    status: StatusType = StatusType.NOT_STARTED
 
     @field_validator("start_date")
     @classmethod
@@ -38,12 +40,13 @@ class ProjectUpdate(BaseModel):
         return v
 
 
-# Response Schema
 class ProjectResponse(BaseModel):
     id: int
     name: str
     status: StatusType
-    start_date: date
-    duration: int
+    start_date: date | None = None
+    duration: int | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
