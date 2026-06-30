@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import {
   useCreateFeedbackMutation,
+  useDeleteFeedbackMutation,
   useUpdateFeedbackMutation,
 } from "@/features/projects/services/feedbackApi";
 import { MessageSquarePlus } from "lucide-react";
@@ -25,6 +26,8 @@ type ProjectNotesCardProps = {
 export function ProjectNotesCard({ projectId, notes }: ProjectNotesCardProps) {
   const [createNote, { isLoading: isNoteCreating }] = useCreateFeedbackMutation();
   const [updateNote, { isLoading: isNoteUpdating }] = useUpdateFeedbackMutation();
+  const [deleteNote, { isLoading: isNoteDeleting }] = useDeleteFeedbackMutation();
+
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
 
   const [pendingDelete, setPendingDelete] = useState<FeedbackResponse | null>(null);
@@ -32,6 +35,8 @@ export function ProjectNotesCard({ projectId, notes }: ProjectNotesCardProps) {
 
   const handleConfirmDelete = () => {
     if (!pendingDelete) return;
+
+    deleteNote(pendingDelete.id);
 
     setPendingDelete(null);
   };
@@ -48,6 +53,11 @@ export function ProjectNotesCard({ projectId, notes }: ProjectNotesCardProps) {
     setPendingEdit(note);
     console.log(note);
     setIsNoteDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setPendingEdit(null);
+    setIsNoteDialogOpen(false);
   };
 
   return (
@@ -73,7 +83,7 @@ export function ProjectNotesCard({ projectId, notes }: ProjectNotesCardProps) {
 
       <ProjectNoteDialog
         open={isNoteDialogOpen}
-        onOpenChange={setIsNoteDialogOpen}
+        onOpenChange={handleDialogClose}
         onSubmit={handleNoteSubmit}
         defaultValues={
           pendingEdit ? { note: pendingEdit.note, type: pendingEdit.feedback_type } : undefined
@@ -82,11 +92,11 @@ export function ProjectNotesCard({ projectId, notes }: ProjectNotesCardProps) {
 
       <DeleteConfirmationDialog
         title="Delete Note"
-        open={false}
+        open={!!pendingDelete}
         onOpenChange={(open) => !open && setPendingDelete(null)}
         onConfirm={handleConfirmDelete}
         description="Are you sure you want to delete this note ?"
-        isDeleting={false}
+        isDeleting={isNoteDeleting}
       />
     </>
   );

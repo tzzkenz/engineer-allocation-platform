@@ -58,8 +58,13 @@ const NotesTable = ({ notes, onEdit, onDelete }: ProjectNotesCardProps) => {
                     <Pencil className="h-4 w-4" />
                   </Button>
 
-                  <Button variant="ghost" size="icon" onClick={() => onDelete(note)}>
-                    <Trash2 className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    className=" hover:bg-red-100 text-red-600"
+                    size="icon"
+                    onClick={() => onDelete(note)}
+                  >
+                    <Trash2 className="h-4 w-4 " />
                   </Button>
                 </div>
               </TableCell>

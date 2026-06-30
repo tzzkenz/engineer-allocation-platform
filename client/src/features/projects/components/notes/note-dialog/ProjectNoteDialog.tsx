@@ -77,6 +77,7 @@ const ProjectNoteDialog = ({
     if (!nextOpen) {
       reset({
         note: defaultValues?.note ?? "",
+        type: defaultValues?.type ?? "GENERAL",
       });
     }
 
@@ -88,6 +89,7 @@ const ProjectNoteDialog = ({
 
     reset({
       note: "",
+      type: "GENERAL",
     });
 
     onOpenChange(false);
