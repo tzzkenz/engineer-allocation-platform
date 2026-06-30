@@ -10,10 +10,16 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { useCreateProjectMutation } from "@/features/projects/services/projectCreateApi";
 import { useParams } from "react-router";
+import { useEditProjectMutation } from "@/features/projects/services/projectEditApi";
 export default function ProjectCreate() {
   const {projectId}=useParams();
   const isEdit= !!projectId;
-  const [createProject,{isLoading}]=useCreateProjectMutation();
+  const [createProject, { isLoading: isCreateLoading }] =
+  useCreateProjectMutation();
+  const [editProject, { isLoading: isEditLoading }] =
+    useEditProjectMutation();
+  const isLoading = isCreateLoading || isEditLoading;
+
     const navigate=useNavigate()
   const checkForm = useForm<ProjectCreateFormData>({
     resolver: zodResolver(projectCreateSchema),
@@ -28,16 +34,31 @@ export default function ProjectCreate() {
   const onSubmit =async (data: ProjectCreateFormData) => {
     console.log("onSubmit called");
     console.log(data.name);
-    try{
-    const response= await createProject(data).unwrap()
-    
-    console.log(response)
+    if(!isEdit){
+      try{
+        const response= await createProject(data).unwrap()
+        
+        console.log(response)
 
-    navigate('/projects')
+        navigate('/projects')
+        }
+        catch(err){
+          console.log("failed")
+        }
+
     }
-    catch(err){
-      console.log("failed")
+    if(isEdit){
+      try{
+        const response=await editProject({projectId, ...data}).unwrap()
+        console.log(response)
+        navigate('/projects')
+        }
+        catch(err){
+          console.log("failed")
+        }
+
     }
+    
   };
   return (
     <>
@@ -111,7 +132,7 @@ export default function ProjectCreate() {
                 <Input
                   id="status"
 
-                  placeholder="Calculated from duration"
+                  placeholder="Status of Project"
                   className="h-12"
                   {...checkForm.register("start_date", {
                     setValueAs: (value) => value === "" ? undefined : value,
