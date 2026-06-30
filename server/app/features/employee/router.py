@@ -86,8 +86,9 @@ async def add_employee_skills(
     id: int,
     payload: EmployeeSkillAddMultiple,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.add_skills(id, payload)
+    await service.add_skills(id, payload,current_user.id)
     return {"message": "Skills assigned successfully"}
 
 
@@ -97,8 +98,9 @@ async def update_skill_proficiency(
     skill_id: int,
     payload: UpdateProficiency,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.update_skill_proficiency(id, skill_id, payload)
+    await service.update_skill_proficiency(id, skill_id, payload,current_user.id)
 
 
 @router.patch("/{id}/skills/{skill_id}/interest", status_code=status.HTTP_204_NO_CONTENT)
@@ -107,8 +109,9 @@ async def update_skill_interest(
     skill_id: int,
     payload: UpdateInterest,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.update_skill_interest(id, skill_id, payload)
+    await service.update_skill_interest(id, skill_id, payload,current_user.id)
 
 
 @router.delete("/{id}/skills/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
