@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     jwt_expiry_minutes: int
     jwt_secret: str
 
+    groq_api_key: str
+
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
 
 
