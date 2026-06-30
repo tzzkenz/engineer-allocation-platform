@@ -61,7 +61,7 @@ const employeeBaseApi = createApi({
   refetchOnMountOrArgChange: true,
   refetchOnReconnect: true,
   endpoints: () => ({}),
-  tagTypes: ["Project"],
+  tagTypes: ["Project", "ProjectRole", "Requirement", "Skill", "Feedback", "ASSIGN"],
 });
 
 export default employeeBaseApi;
