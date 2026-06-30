@@ -16,11 +16,29 @@ class FeedbackUpdate(BaseModel):
 
 
 # Response schemas
+
+
+class SystemRoleResponse(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EmployeeResponse(BaseModel):
+    id: int
+    name: str
+    role: SystemRoleResponse
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class FeedbackResponse(BaseModel):
     id: int
     note: str
     feedback_type: FeedbackType
     created_at: datetime
     updated_at: datetime | None = None
-    created_by: int
+    creator: EmployeeResponse
+
     model_config = ConfigDict(from_attributes=True)

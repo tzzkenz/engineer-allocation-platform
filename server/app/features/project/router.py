@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, status
 
-from core.dependencies import get_project_service
+from core.dependencies import get_employee_service, get_project_service
 from features.project.service import ProjectService
-from features.project.schemas import ProjectCreate, ProjectResponse, ProjectUpdate
+from features.project.schemas import ProjectCreate, ProjectEmployeeBatchCreate, ProjectEmployeeResponse, ProjectResponse, ProjectUpdate
+from features.auth.dependencies import get_current_user
+from features.auth.schemas import TokenPayload
+from features.employee.service import EmployeeService
 
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -46,3 +49,17 @@ async def delete_project(
     service: ProjectService = Depends(get_project_service),
 ):
     await service.delete(project_id)
+
+
+
+@router.post(
+    "/allocations", 
+    response_model=list[ProjectEmployeeResponse], 
+    status_code=status.HTTP_201_CREATED
+)
+async def allocate_employees_to_project(
+    payload: ProjectEmployeeBatchCreate,
+    service: ProjectService = Depends(get_project_service), 
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    return await service.allocate_employees_batch(payload, current_user.id)
