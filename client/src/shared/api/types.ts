@@ -14,11 +14,6 @@ export type LoginResponse={
   access_token:string;
   refresh_token:string;
 }
-export type ProjectStatus =
-  | "NOT_STARTED"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "ON_HOLD";
 
 export type CreateProjectRequest = {
   name: string;
