@@ -4,6 +4,7 @@ import type {
 } from "@/entities/employee/types/apiTypes";
 
 import type {
+  AssignEngineerPayload,
   CreateRequirementRequest,
   FeedbackResponse,
   Project,
@@ -77,7 +78,14 @@ const projectApi = employeeBaseApi.injectEndpoints({
       }),
       providesTags: (_result, _error, requestId) => [{ type: "Requirement", id: requestId }],
     }),
-
+    assignEmployee: builder.mutation<RequirementResponse, AssignEngineerPayload>({
+      query: (payload) => ({
+        url: "/projects/allocations",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["ASSIGN"],
+    }),
     createRequirement: builder.mutation<
       RequirementResponse,
       {
@@ -141,4 +149,5 @@ export const {
   useDeleteRequirementMutation,
   useGetProjectNotesQuery,
   useGetCandidatesQuery,
+  useAssignEmployeeMutation,
 } = projectApi;

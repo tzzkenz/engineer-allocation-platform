@@ -13,23 +13,9 @@ import EmployeeRow from "../employee-row/EmployeeRow";
 
 export type AvailabilityStatus = "available" | "busy" | "on_leave";
 
-export interface Engineer {
-  id: string;
-  initials: string;
-  avatarBg: string;
-  avatarText: string;
-  name: string;
-  email: string;
-  currentRole: string;
-  skills: string[];
-  experience: string;
-  activeProjects: number;
-  availability: AvailabilityStatus;
-}
-
 type Props = {
   employees: EmployeeResponse[];
-  onAssign: (engineer: Engineer) => void;
+  onAssign: (engineer: EmployeeResponse) => void;
 };
 
 const tableHeads = [

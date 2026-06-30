@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import type { EmployeeResponse } from "@/entities/employee/types/apiTypes";
 import { Bell, Plus } from "lucide-react";
 
 import type { RequirementResponse } from "@entities/project/types/apiTypes";
@@ -18,8 +19,15 @@ type RequirementsCardProps = {
 
 export function RequirementsCard({ requirements, projectId }: RequirementsCardProps) {
   const [raiseOpen, setRaiseOpen] = useState(false);
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [selectedRequirement, setSelectedRequirement] = useState<RequirementResponse | null>(null);
 
+  const handleAssignClick = (requirement: RequirementResponse) => {
+    setSelectedRequirement(requirement);
+  };
+
+  const handlClear = () => {
+    setSelectedRequirement(null);
+  };
   return (
     <>
       <SectionCard>
@@ -43,18 +51,19 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
               </>
             }
           />
-          <RequirementTable
-            requirements={requirements}
-            onAssign={() => {
-              console.log("Assigne clicke");
-              setIsAssignDialogOpen(true);
-            }}
-          />
+          <RequirementTable requirements={requirements} onAssign={handleAssignClick} />
         </SectionCardInner>
       </SectionCard>
 
       <RequirementFormDialog projectId={projectId} isOpen={raiseOpen} onOpenChange={setRaiseOpen} />
-      <AssignEngineerDialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />
+      {selectedRequirement && (
+        <AssignEngineerDialog
+          requirement={selectedRequirement}
+          open={true}
+          onOpenChange={handlClear}
+          onAssign={handlClear}
+        />
+      )}
     </>
   );
 }

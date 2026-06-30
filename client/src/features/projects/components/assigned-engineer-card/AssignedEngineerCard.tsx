@@ -1,11 +1,14 @@
 import { useState } from "react";
 
+import type { RequirementResponse } from "@/entities/project/types/apiTypes";
 import { UserPlus } from "lucide-react";
 
 import { useGetSkillsQuery } from "@entities/config/services/configApi";
-import { type Engineer } from "@entities/employee/components/employee-table/EmployeeTable";
 import EmployeeTable from "@entities/employee/components/employee-table/EmployeeTable";
-import type { AdvanceSearchEmployeeParams } from "@entities/employee/types/apiTypes";
+import type {
+  AdvanceSearchEmployeeParams,
+  EmployeeResponse,
+} from "@entities/employee/types/apiTypes";
 
 import { Button } from "@shared/components/ui/button";
 import {
@@ -17,13 +20,17 @@ import {
   DialogTitle,
 } from "@shared/components/ui/dialog";
 
-import { useGetCandidatesQuery } from "../../services/projectApi";
+import { useAssignEmployeeMutation, useGetCandidatesQuery } from "../../services/projectApi";
 import AdvancedFilters, { type AssignEngineerFilters } from "../advanced-filter/AdvancedFilters";
+import AssignFormDialog, {
+  type AssignEngineerFormValues,
+} from "../assign-form-dialog/AssignFormDialog";
 
 type AssignEngineerDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAssign?: (engineer: Engineer) => void;
+  onAssign: (engineer: EmployeeResponse) => void;
+  requirement: RequirementResponse;
 };
 
 const getFormattedFilters = (filters: AssignEngineerFilters): AdvanceSearchEmployeeParams => ({
@@ -64,7 +71,12 @@ const prepareFilterQueryParams = (filters: AssignEngineerFilters): URLSearchPara
   return urlParams;
 };
 
-export default function AssignEngineerDialog({ open, onOpenChange }: AssignEngineerDialogProps) {
+export default function AssignEngineerDialog({
+  open,
+  onOpenChange,
+  onAssign,
+  requirement,
+}: AssignEngineerDialogProps) {
   const [filters, setFilters] = useState<AssignEngineerFilters>({
     search: "",
     availability: "ALL",
@@ -72,6 +84,9 @@ export default function AssignEngineerDialog({ open, onOpenChange }: AssignEngin
     sortExperience: "low-high",
     sortProficiency: "lowest",
   });
+
+  const [assignEmployee, { isLoading: isAssigningEmployee }] = useAssignEmployeeMutation();
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeResponse | null>(null);
 
   const { data: employees = [], isLoading: isEmployeeLoading } = useGetCandidatesQuery(
     prepareFilterQueryParams(filters).toString(),
@@ -81,6 +96,24 @@ export default function AssignEngineerDialog({ open, onOpenChange }: AssignEngin
   );
 
   const { data: skills = [] } = useGetSkillsQuery();
+
+  const handleClear = () => {
+    setSelectedEmployee(null);
+  };
+
+  const handleAssignSubmit = async (values: AssignEngineerFormValues) => {
+    if (!selectedEmployee) return;
+
+    try {
+      await assignEmployee({
+        requirement_request_id: requirement.id,
+        employee_ids: [selectedEmployee?.id],
+        is_shadow: values.shadowAssignment,
+      }).unwrap();
+      onAssign(selectedEmployee);
+      handleClear();
+    } catch (err) {}
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,7 +134,7 @@ export default function AssignEngineerDialog({ open, onOpenChange }: AssignEngin
             <AdvancedFilters onSearch={setFilters} skills={skills} />
           </div>
 
-          <EmployeeTable employees={employees} onAssign={console.log} />
+          <EmployeeTable employees={employees} onAssign={setSelectedEmployee} />
         </div>
 
         <DialogFooter>
@@ -110,6 +143,12 @@ export default function AssignEngineerDialog({ open, onOpenChange }: AssignEngin
           </Button>
         </DialogFooter>
       </DialogContent>
+      <AssignFormDialog
+        open={!!selectedEmployee}
+        onOpenChange={handleClear}
+        onSubmit={handleAssignSubmit}
+        isSubmitting={isAssigningEmployee}
+      />
     </Dialog>
   );
 }

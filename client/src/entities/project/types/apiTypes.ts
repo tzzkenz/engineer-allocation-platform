@@ -60,3 +60,9 @@ export type UpdateFeedbackRequest = {
   feedback?: string;
   rating?: number;
 };
+
+export type AssignEngineerPayload = {
+  requirement_request_id: number;
+  employee_ids: number[];
+  is_shadow: boolean;
+};

@@ -14,7 +14,7 @@ const TABLE_HEADS = ["Project Role", "Required Expertise", "Assigned", "Status",
 
 type RequirementTableProps = {
   requirements: RequirementResponse[];
-  onAssign: (requirementId: number) => void;
+  onAssign: (requirement: RequirementResponse) => void;
 };
 
 export const RequirementTable = ({ requirements, onAssign }: RequirementTableProps) => {
@@ -54,7 +54,7 @@ export const RequirementTable = ({ requirements, onAssign }: RequirementTablePro
                 // variant=""
                 // className=" text-primary"
                 size="sm"
-                onClick={() => onAssign(req.id)}
+                onClick={() => onAssign(req)}
               >
                 Assign
               </Button>
