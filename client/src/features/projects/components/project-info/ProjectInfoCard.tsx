@@ -1,13 +1,16 @@
 import { CheckCircle, Pencil } from "lucide-react";
 
-import { IconButton } from "@shared/components/icon-button/IconButton";
+import type { BaseProject } from "@entities/project/types/apiTypes";
 
-import { type ProjectDetail } from "../../data/data";
+import { IconButton } from "@shared/components/icon-button/IconButton";
+import { formatDate } from "@shared/lib/format";
+
+import { getProjectDateRange } from "../../utils/duration";
 import { InfoField } from "../info-card/InfoCard";
 import { SectionCard, SectionCardInner, SectionHeader } from "../section/SectionCard";
 
 interface ProjectInfoCardProps {
-  project: ProjectDetail;
+  project: BaseProject;
   onEdit?: () => void;
   onMarkComplete?: () => void;
 }
@@ -40,9 +43,12 @@ export function ProjectInfoCard({ project, onEdit, onMarkComplete }: ProjectInfo
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 w-full">
           <InfoField label="Project Name" value={project.name} />
-          <InfoField label="Duration" value={project.duration} />
-          <InfoField label="Start Date" value={project.startDate} />
-          <InfoField label="End Date" value={project.endDate} />
+          <InfoField label="Duration" value={project.duration || "N/A"} />
+          <InfoField label="Start Date" value={project.start_date || "N/A"} />
+          <InfoField
+            label="End Date"
+            value={formatDate(getProjectDateRange(project.start_date, project.duration).endDate)}
+          />
         </div>
       </SectionCardInner>
     </SectionCard>
