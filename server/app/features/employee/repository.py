@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.employee import Employee
 from models.employee_skill import EmployeeSkill
 from models.skill import Skill
+from models.system_role import SystemRole
 from exceptions import NotFoundException
 
 
@@ -14,10 +15,41 @@ class EmployeeRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_by_id(self, employee_id: int) -> Employee | None:
-        stmt = select(Employee).where(
-            Employee.id == employee_id, Employee.deleted_at.is_(None)
+    async def get_by_id_with_role(self, employee_id: int) -> tuple[Employee, str] | None:
+        stmt = (
+            select(Employee, SystemRole.name)
+            .join(SystemRole, Employee.system_role_id == SystemRole.id)
+            .where(Employee.id == employee_id, Employee.deleted_at.is_(None))
         )
+        result = await self.db.execute(stmt)
+        return result.first()
+
+    async def get_by_email_with_role(self, email: str) -> tuple[Employee, str] | None:
+        stmt = (
+            select(Employee, SystemRole.name)
+            .join(SystemRole, Employee.system_role_id == SystemRole.id)
+            .where(Employee.email == email)
+        )
+        result = await self.db.execute(stmt)
+        return result.first()
+
+    async def list_all_with_role(self, limit: int | None = None, offset: int | None = None) -> list[tuple[Employee, str]]:
+        stmt = (
+            select(Employee, SystemRole.name)
+            .join(SystemRole, Employee.system_role_id == SystemRole.id)
+            .where(Employee.deleted_at.is_(None))
+        )
+        
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
+            
+        result = await self.db.execute(stmt)
+        return list(result.all())
+
+    async def get_by_id(self, employee_id: int) -> Employee | None:
+        stmt = select(Employee).where(Employee.id == employee_id, Employee.deleted_at.is_(None))
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -25,11 +57,6 @@ class EmployeeRepository:
         stmt = select(Employee).where(Employee.email == email)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
-
-    async def list_all(self) -> list[Employee]:
-        stmt = select(Employee).where(Employee.deleted_at.is_(None))
-        result = await self.db.execute(stmt)
-        return list(result.scalars())
 
     async def create(self, employee_data: dict[str, Any]) -> Employee:
         employee = Employee(**employee_data)

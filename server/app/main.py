@@ -3,14 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from features.system_role.router import router as system_role_router
 from features.project.router import router as project_router
-
 from features.feedback.router import router as feedback_router
-
 from features.employee.router import router as employee_router
 from features.skill.router import router as skill_router
 from features.auth.router import router as auth_router
 from features.requirement.router import router as requirement_router
 from features.project_role.router import router as project_role_router
+from features.audit.router import router as audit_router
+from features.agent.router import router as agent_router
+from features.reporting.router import router as reporting_router
 
 from exceptions.handler import register_exception_handlers
 
@@ -27,6 +28,9 @@ app.include_router(skill_router)
 app.include_router(auth_router)
 app.include_router(requirement_router)
 app.include_router(project_role_router)
+app.include_router(audit_router)
+app.include_router(agent_router)
+app.include_router(reporting_router)
 
 
 app.add_middleware(

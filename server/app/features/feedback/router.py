@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, status
 from core.dependencies import get_feedback_service
 from features.feedback.schemas import FeedbackCreate, FeedbackResponse, FeedbackUpdate
 from features.feedback.service import FeedbackService
+from features.auth.dependencies import get_current_user
+from features.auth.schemas import TokenPayload
 
 router = APIRouter(prefix="/feedbacks", tags=["Feedbacks"])
 
@@ -11,7 +13,7 @@ router = APIRouter(prefix="/feedbacks", tags=["Feedbacks"])
 async def list_feedbacks(
     service: FeedbackService = Depends(get_feedback_service),
 ):
-    return await service.list()
+    return await service.list_all()
 
 
 @router.get("/{feedback_id}", response_model=FeedbackResponse)
@@ -20,6 +22,14 @@ async def get_feedback(
     service: FeedbackService = Depends(get_feedback_service),
 ):
     return await service.get(feedback_id)
+
+
+@router.get("/project/{feedback_id}", response_model=list[FeedbackResponse])
+async def get_feedbacks_for_project(
+    project_id: int,
+    service: FeedbackService = Depends(get_feedback_service),
+):
+    return await service.get_by_project_id(project_id)
 
 
 @router.post(
@@ -31,11 +41,10 @@ async def create_feedback(
     project_id: int,
     payload: FeedbackCreate,
     service: FeedbackService = Depends(get_feedback_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
     return await service.create(
-        data=payload,
-        project_id=project_id,
-        created_by=1,  # TODO: change after setting up auth
+        data=payload, project_id=project_id, created_by=current_user.id
     )
 
 

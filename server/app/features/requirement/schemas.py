@@ -1,15 +1,20 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional
-from datetime import datetime
+from datetime import date, datetime
 
 from models.project_requirement_request import RequestStatus
+from enum import Enum
+
+class AvailabilityFilter(str, Enum):
+    AVAILABLE = "AVAILABLE"
+    UNAVAILABLE = "UNAVAILABLE"
+    ALL = "ALL"
 
 
 class RequirementCreate(BaseModel):
-    project_id: int
     project_role_id: int
     requested_count: int
-    requested_by: int
+    stack_ids: list[int] = []
 
 
 class RequirementUpdate(BaseModel):
@@ -19,15 +24,47 @@ class RequirementUpdate(BaseModel):
     resolved_at: Optional[datetime] = None
 
 
+class StackRequirementResponse(BaseModel):
+    id: int
+    project_requirement_request_id: int
+    stack_id: int
+    stack_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class RequirementResponse(BaseModel):
     id: int
     project_id: int
     project_role_id: int
+    project_role_name: str
     requested_count: int
     requested_by: int
+    requested_by_name: str
     resolved_by: int | None
     resolved_at: datetime | None
     status: RequestStatus
+    stack_requests: list[StackRequirementResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StackRequirementCreate(BaseModel):
+    stack_id: int
+
+
+
+
+
+class MatchedEmployeeResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    experience: int
+    date_of_joining: date
+    system_role_id: int
+    active_project_count: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+

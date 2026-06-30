@@ -1,12 +1,12 @@
 import { useState } from "react";
 
+import { useGetProjectsQuery } from "@/features/projects/services/projectApi";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import ProjectTableSkeleton from "@features/projects/components/loaders/project-table-skeleton/ProjectTableSkeleton";
 import ProjectFilters from "@features/projects/components/project-filters/ProjectFIlters";
 import ProjectTable from "@features/projects/components/project-table/ProjectTable";
-import { useGetProjectsQuery } from "@features/projects/services/employeeApi";
 
 import ErrorDisplay from "@shared/components/error-display/ErrorDisplay";
 import { Button } from "@shared/components/ui/button";
@@ -21,7 +21,7 @@ export function ProjectList() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const handleViewClick = (projectId: number) => {
-    navigate(`/projects/${projectId}`);
+    navigate(`/project/${projectId}`);
   };
 
   const filtered = projects.filter((p) => {

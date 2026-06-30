@@ -13,7 +13,7 @@ class ProjectStackRequirementRequest(Entity):
 
     stack_id: Mapped[int] = mapped_column(
         ForeignKey("skills.id"), nullable=False, index=True
-    )  # stacks_id is the id from skills who has type stack
+    )
 
     project_requirement_request = relationship(
         "ProjectRequirementRequest", back_populates="stack_requests"

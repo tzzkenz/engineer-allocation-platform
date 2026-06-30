@@ -22,8 +22,8 @@ class Project(Entity):
     status: Mapped[StatusType] = mapped_column(
         SQLEnum(StatusType), nullable=False, server_default="'NOT_STARTED'"
     )
-    start_date: Mapped[date] = mapped_column(Date, nullable=False)
-    duration: Mapped[int] = mapped_column(Integer, nullable=False)
+    start_date: Mapped[date] = mapped_column(Date, nullable=True)
+    duration: Mapped[int] = mapped_column(Integer, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     project_employees = relationship(
@@ -40,6 +40,10 @@ class Project(Entity):
         cascade="all, delete-orphan",
     )
 
+    stacks = relationship("ProjectStacks", back_populates="project")
+
     @property
-    def expected_end_date(self) -> date:
+    def expected_end_date(self) -> date | None:
+        if self.start_date is None or self.duration is None:
+            return None
         return self.start_date + timedelta(days=self.duration)

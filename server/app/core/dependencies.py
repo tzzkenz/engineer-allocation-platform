@@ -19,6 +19,10 @@ from features.requirement.repository import RequirementRepository
 from features.requirement.service import RequirementService
 from features.project_role.repository import ProjectRoleRepository
 from features.project_role.service import ProjectRoleService
+from features.audit.repository import AuditLogRepository
+from features.audit.service import AuditLogService
+from features.reporting.repository import ReportingRepository
+from features.reporting.service import ReportingService
 
 
 def get_system_role_service(db: AsyncSession = Depends(get_db)) -> SystemRoleService:
@@ -26,11 +30,11 @@ def get_system_role_service(db: AsyncSession = Depends(get_db)) -> SystemRoleSer
 
 
 def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
-    return ProjectService(ProjectRepository(db))
+    return ProjectService(ProjectRepository(db),AuditLogRepository(db))
 
 
 def get_employee_service(db: AsyncSession = Depends(get_db)) -> EmployeeService:
-    return EmployeeService(EmployeeRepository(db))
+    return EmployeeService(EmployeeRepository(db), AuditLogRepository(db))
 
 
 def get_feedback_service(db: AsyncSession = Depends(get_db)) -> FeedbackService:
@@ -51,3 +55,11 @@ def get_requirement_service(db: AsyncSession = Depends(get_db)) -> RequirementSe
 
 def get_project_role_service(db: AsyncSession = Depends(get_db)) -> ProjectRoleService:
     return ProjectRoleService(ProjectRoleRepository(db))
+
+
+def get_audit_log_service(db: AsyncSession = Depends(get_db)) -> AuditLogService:
+    return AuditLogService(AuditLogRepository(db))
+
+
+def get_reporting_service(db: AsyncSession = Depends(get_db)) -> ReportingService:
+    return ReportingService(ReportingRepository(db))

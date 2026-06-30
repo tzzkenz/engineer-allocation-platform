@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status
+from fastapi.params import Query
 
 from core.dependencies import get_employee_service
 from features.employee.schemas import (
@@ -13,6 +14,8 @@ from features.employee.schemas import (
     UpdateProficiency,
 )
 from features.employee.service import EmployeeService
+from features.auth.dependencies import get_current_user
+from features.auth.schemas import TokenPayload
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
@@ -20,12 +23,22 @@ router = APIRouter(prefix="/employees", tags=["Employees"])
 @router.get("", response_model=list[EmployeeResponse])
 async def list_employees(
     service: EmployeeService = Depends(get_employee_service),
+    limit: int | None = Query(default=None, ge=1),
+    offset: int | None = Query(default=None, ge=0),
 ):
-    return await service.list()
+    return await service.list(limit=limit, offset=offset)
+
+
+@router.get("/me", response_model=EmployeeResponse)
+async def get_current_employee(
+    service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    return await service.get(current_user.id)
 
 
 @router.get("/{id}", response_model=EmployeeResponse)
-async def get_employee(
+async def get_employee_by_id(
     id: int,
     service: EmployeeService = Depends(get_employee_service),
 ):
@@ -36,8 +49,9 @@ async def get_employee(
 async def create_employee(
     payload: EmployeeCreate,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.create(payload.model_dump())
+    return await service.create(payload.model_dump(), current_user.id)
 
 
 @router.patch("/{id}", response_model=EmployeeResponse)
@@ -45,35 +59,40 @@ async def update_employee(
     id: int,
     payload: EmployeeUpdate,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(id, payload.model_dump())
+    return await service.update(id, payload.model_dump(), current_user.id)
 
 
-@router.patch("/{id}/me", response_model=EmployeeResponse)
+@router.patch("/me", response_model=EmployeeResponse)
 async def update_employee_self(
-    id: int,
     payload: EmployeeUpdateSelf,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(id, payload.model_dump(exclude_none=True))
+    return await service.update(
+        current_user.id, payload.model_dump(exclude_none=True), current_user.id
+    )
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_employee(
     id: int,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.delete(id)
+    await service.delete(id, current_user.id)
 
 
-@router.patch("/{id}/password", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_employee_password(
-    id: int,
     payload: PasswordChange,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.change_password(id, payload.model_dump())
-
+    await service.change_password(
+        current_user.id, payload.model_dump(), current_user.id
+    )
 
 
 @router.post("/{id}/skills", status_code=status.HTTP_201_CREATED)
@@ -81,29 +100,36 @@ async def add_employee_skills(
     id: int,
     payload: EmployeeSkillAddMultiple,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.add_skills(id, payload)
+    await service.add_skills(id, payload, current_user.id)
     return {"message": "Skills assigned successfully"}
 
 
-@router.patch("/{id}/skills/{skill_id}/proficiency", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(
+    "/{id}/skills/{skill_id}/proficiency", status_code=status.HTTP_204_NO_CONTENT
+)
 async def update_skill_proficiency(
     id: int,
     skill_id: int,
     payload: UpdateProficiency,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.update_skill_proficiency(id, skill_id, payload)
+    await service.update_skill_proficiency(id, skill_id, payload, current_user.id)
 
 
-@router.patch("/{id}/skills/{skill_id}/interest", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(
+    "/{id}/skills/{skill_id}/interest", status_code=status.HTTP_204_NO_CONTENT
+)
 async def update_skill_interest(
     id: int,
     skill_id: int,
     payload: UpdateInterest,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.update_skill_interest(id, skill_id, payload)
+    await service.update_skill_interest(id, skill_id, payload, current_user.id)
 
 
 @router.delete("/{id}/skills/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)

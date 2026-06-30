@@ -43,7 +43,7 @@ const ProjectTable = ({ employees, onViewClick }: ProjectTableProps) => {
           <TableRow
             key={project.id}
             className=" cursor-pointer group transition-colors"
-            onClick={() => navigate(`/projects/${project.id}`)}
+            onClick={() => navigate(`/project/${project.id}`)}
           >
             <TableCell className="pr-6 py-4">
               <div className="flex items-center gap-3">
