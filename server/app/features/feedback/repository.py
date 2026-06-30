@@ -59,7 +59,7 @@ class FeedbackRepository:
         )
         self.db.add(feedback)
         await self.db.flush()
-        return feedback
+        return feedback.id
 
     async def update(
         self,

@@ -32,7 +32,7 @@ class FeedbackService:
         created_by: int,
     ) -> Feedback:
         try:
-            feedback = await self.repo.create(
+            feedback_id = await self.repo.create(
                 note=data.note.strip(),
                 feedback_type=data.feedback_type,
                 project_id=project_id,
@@ -40,8 +40,7 @@ class FeedbackService:
             )
 
             await self.repo.db.commit()
-            await self.repo.db.refresh(feedback)
-            return feedback
+            return await self.repo.get_by_id(feedback_id)
 
         except IntegrityError:
             await self.repo.db.rollback()
