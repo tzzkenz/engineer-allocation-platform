@@ -10,6 +10,7 @@ from models.project_stack_requirement_request import ProjectStackRequirementRequ
 from models.feedback import Feedback
 from models.audit_log import AuditLog
 from models.system_role import SystemRole
+from models.project_stacks import ProjectStacks
 
 __all__ = [
     "Test",
@@ -25,4 +26,5 @@ __all__ = [
     "Feedback",
     "AuditLog",
     "SystemRole",
+    "ProjectStacks",
 ]
