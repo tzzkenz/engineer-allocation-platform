@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional
-from datetime import datetime
+from datetime import date, datetime
 
 from models.project_requirement_request import RequestStatus
 
@@ -43,3 +43,18 @@ class RequirementResponse(BaseModel):
 
 class StackRequirementCreate(BaseModel):
     stack_id: int
+
+
+
+
+
+class MatchedEmployeeResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    experience: int
+    date_of_joining: date
+    system_role_id: int
+    active_project_count: int
+
+    model_config = ConfigDict(from_attributes=True)

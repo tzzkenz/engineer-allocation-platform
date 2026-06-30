@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 
 from core.dependencies import get_requirement_service
 from features.requirement.schemas import (
+    MatchedEmployeeResponse,
     RequirementCreate,
     RequirementResponse,
     RequirementUpdate,
@@ -110,3 +111,17 @@ async def remove_stack_requirement(
     service: RequirementService = Depends(get_requirement_service),
 ):
     await service.remove_stack(request_id=request_id, stack_request_id=stack_request_id)
+
+
+
+
+@router.get(
+    "/requirements/{request_id}/matches", 
+    response_model=list[MatchedEmployeeResponse],
+    status_code=status.HTTP_200_OK
+)
+async def get_matching_candidates(
+    request_id: int,
+    service: RequirementService = Depends(get_requirement_service),
+):
+    return await service.get_candidate_matches(request_id)

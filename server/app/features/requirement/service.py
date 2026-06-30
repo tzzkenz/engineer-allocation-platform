@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from sqlalchemy.exc import IntegrityError
 
@@ -14,6 +15,7 @@ from exceptions import (
     UnknownException,
 )
 from models.skill import SkillType
+from features.requirement.schemas import MatchedEmployeeResponse
 
 
 class RequirementService:
@@ -170,3 +172,24 @@ class RequirementService:
         except Exception:
             await self.repo.db.rollback()
             raise UnknownException("Failed to delete stack requirement")
+        
+    async def get_candidate_matches(self, request_id: int) -> List[MatchedEmployeeResponse]:
+        # Verify the parent requirement request exists first
+        request = await self.repo.get_by_id(request_id)
+        if request is None:
+            raise NotFoundException("Requirement request not found")
+
+        records = await self.repo.get_matched_employees_for_request(request_id)
+        
+        return [
+            MatchedEmployeeResponse(
+                id=emp.id,
+                name=emp.name,
+                email=emp.email,
+                experience=emp.experience,
+                date_of_joining=emp.date_of_joining,
+                system_role_id=emp.system_role_id,
+                active_project_count=active_count
+            )
+            for emp, active_count in records
+        ]
