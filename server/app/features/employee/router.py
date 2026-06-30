@@ -27,8 +27,16 @@ async def list_employees(
     return await service.list()
 
 
+@router.get("/me", response_model=EmployeeResponse)
+async def get_current_employee(
+    service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    return await service.get(current_user.id)
+
+
 @router.get("/{id}", response_model=EmployeeResponse)
-async def get_employee(
+async def get_employee_by_id(
     id: int,
     service: EmployeeService = Depends(get_employee_service),
 ):
@@ -41,7 +49,7 @@ async def create_employee(
     service: EmployeeService = Depends(get_employee_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.create(payload.model_dump(),current_user.id)
+    return await service.create(payload.model_dump(), current_user.id)
 
 
 @router.patch("/{id}", response_model=EmployeeResponse)
@@ -51,7 +59,7 @@ async def update_employee(
     service: EmployeeService = Depends(get_employee_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(id, payload.model_dump(),current_user.id)
+    return await service.update(id, payload.model_dump(), current_user.id)
 
 
 @router.patch("/me", response_model=EmployeeResponse)
@@ -60,7 +68,9 @@ async def update_employee_self(
     service: EmployeeService = Depends(get_employee_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(current_user.id, payload.model_dump(exclude_none=True),current_user.id)
+    return await service.update(
+        current_user.id, payload.model_dump(exclude_none=True), current_user.id
+    )
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -69,7 +79,7 @@ async def delete_employee(
     service: EmployeeService = Depends(get_employee_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.delete(id,current_user.id)
+    await service.delete(id, current_user.id)
 
 
 @router.patch("/password", status_code=status.HTTP_204_NO_CONTENT)
@@ -78,8 +88,9 @@ async def change_employee_password(
     service: EmployeeService = Depends(get_employee_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.change_password(current_user.id, payload.model_dump(),current_user.id)
-
+    await service.change_password(
+        current_user.id, payload.model_dump(), current_user.id
+    )
 
 
 @router.post("/{id}/skills", status_code=status.HTTP_201_CREATED)
@@ -89,11 +100,13 @@ async def add_employee_skills(
     service: EmployeeService = Depends(get_employee_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.add_skills(id, payload,current_user.id)
+    await service.add_skills(id, payload, current_user.id)
     return {"message": "Skills assigned successfully"}
 
 
-@router.patch("/{id}/skills/{skill_id}/proficiency", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(
+    "/{id}/skills/{skill_id}/proficiency", status_code=status.HTTP_204_NO_CONTENT
+)
 async def update_skill_proficiency(
     id: int,
     skill_id: int,
@@ -101,10 +114,12 @@ async def update_skill_proficiency(
     service: EmployeeService = Depends(get_employee_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.update_skill_proficiency(id, skill_id, payload,current_user.id)
+    await service.update_skill_proficiency(id, skill_id, payload, current_user.id)
 
 
-@router.patch("/{id}/skills/{skill_id}/interest", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(
+    "/{id}/skills/{skill_id}/interest", status_code=status.HTTP_204_NO_CONTENT
+)
 async def update_skill_interest(
     id: int,
     skill_id: int,
@@ -112,7 +127,7 @@ async def update_skill_interest(
     service: EmployeeService = Depends(get_employee_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.update_skill_interest(id, skill_id, payload,current_user.id)
+    await service.update_skill_interest(id, skill_id, payload, current_user.id)
 
 
 @router.delete("/{id}/skills/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -130,6 +145,3 @@ async def get_employee_skills(
     service: EmployeeService = Depends(get_employee_service),
 ):
     return await service.get_skills(id)
-
-
-
