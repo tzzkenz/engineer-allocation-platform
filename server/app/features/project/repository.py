@@ -19,6 +19,7 @@ class ProjectRepository:
             select(Project)
             .options(selectinload(Project.stacks).selectinload(ProjectStacks.skill))
             .where(Project.id == project_id, Project.deleted_at.is_(None))
+            .execution_options(populate_existing=True)
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()

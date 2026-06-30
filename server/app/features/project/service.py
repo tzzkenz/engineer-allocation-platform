@@ -107,11 +107,11 @@ class ProjectService:
         if data.duration is not None:
             update_data["duration"] = data.duration
 
-        if not update_data:
+        if not update_data and data.skill_ids is None:
             return project
 
         try:
-            # --- AUDIT LOG ADDED (Track specific field mutations) ---
+            # --- AUDIT LOG (field mutations) ---
             for field, new_val in update_data.items():
                 old_val = getattr(project, field)
                 old_val_str = str(old_val) if old_val is not None else None
@@ -128,10 +128,29 @@ class ProjectService:
                         changed_by_id=changed_by_id,
                     )
 
-            project = await self.repo.update(project, **update_data)
+            if update_data:
+                project = await self.repo.update(project, **update_data)
+
+            if data.skill_ids is not None:
+                old_skill_ids = sorted(ps.skill_id for ps in project.stacks)
+                new_skill_ids = sorted(set(data.skill_ids))
+
+                if old_skill_ids != new_skill_ids:
+                    await self.repo.set_stacks(project, data.skill_ids)
+
+                    await self._stage_audit_log(
+                        entity_name=EntityName.PROJECT,
+                        entity_id=project_id,
+                        action=ActionType.UPDATE,
+                        field_name="stacks",
+                        old_value=str(old_skill_ids),
+                        new_value=str(new_skill_ids),
+                        changed_by_id=changed_by_id,
+                    )
+
             await self.repo.db.commit()
-            await self.repo.db.refresh(project)
-            return project
+
+            return await self.repo.get_by_id(project_id)
 
         except IntegrityError:
             await self.repo.db.rollback()

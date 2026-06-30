@@ -45,8 +45,9 @@ async def update_project(
     project_id: int,
     payload: ProjectUpdate,
     service: ProjectService = Depends(get_project_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(project_id, payload)
+    return await service.update(project_id, payload, current_user.id)
 
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
