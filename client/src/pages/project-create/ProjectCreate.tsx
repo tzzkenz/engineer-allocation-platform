@@ -9,33 +9,61 @@ import { CalendarDays, CircleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { useCreateProjectMutation } from "@/features/projects/services/projectCreateApi";
+import { useParams } from "react-router";
+import { useEditProjectMutation } from "@/features/projects/services/projectEditApi";
 export default function ProjectCreate() {
-  const [createProject,{isLoading}]=useCreateProjectMutation();
+  const {projectId}=useParams();
+  const isEdit= !!projectId;
+  const [createProject, { isLoading: isCreateLoading }] =
+  useCreateProjectMutation();
+  const [editProject, { isLoading: isEditLoading }] =
+    useEditProjectMutation();
+  const isLoading = isCreateLoading || isEditLoading;
+
     const navigate=useNavigate()
   const checkForm = useForm<ProjectCreateFormData>({
     resolver: zodResolver(projectCreateSchema),
     defaultValues: {
-      name: "",
+  name:"",
+  duration: undefined,
+  start_date: undefined,
+  status: "NOT_STARTED",
+
     },
   });
   const onSubmit =async (data: ProjectCreateFormData) => {
     console.log("onSubmit called");
     console.log(data.name);
-    try{
-    const response= await createProject(data).unwrap()
-    
-    console.log(response)
+    if(!isEdit){
+      try{
+        const response= await createProject(data).unwrap()
+        
+        console.log(response)
 
-    navigate('/projects')
+        navigate('/projects')
+        }
+        catch(err){
+          console.log("failed")
+        }
+
     }
-    catch(err){
-      console.log("failed")
+    if(isEdit){
+      try{
+        const response=await editProject({projectId, ...data}).unwrap()
+        console.log(response)
+        navigate('/projects')
+        }
+        catch(err){
+          console.log("failed")
+        }
+
     }
+    
   };
   return (
     <>
       <PageSection
-        title="Create Project"
+        title={isEdit ? "Edit Project" : "Create Project"}
         description="Define and create a new project"
         additionalContent={<></>}
       ></PageSection>
@@ -48,7 +76,10 @@ export default function ProjectCreate() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
-          <form className="space-y-8 " onSubmit={checkForm.handleSubmit(onSubmit)}>
+          <form className="space-y-8 " onSubmit={(e) => {
+              console.log(checkForm.formState.errors);
+              checkForm.handleSubmit(onSubmit)(e);
+            }}>
             <div className="md:grid grid-cols-2 gap-8 max-md:space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">PROJECT NAME</Label>
@@ -74,7 +105,8 @@ export default function ProjectCreate() {
                     placeholder="Select start and end dates"
                     className="h-12 pr-12"
                     {...checkForm.register("duration", {
-                      valueAsNumber: true,
+                      setValueAs: (value) =>
+                        value === "" ? undefined : Number(value),
                     })}
                   />
 
@@ -95,14 +127,16 @@ export default function ProjectCreate() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endDate">EXPECTED END DATE</Label>
+                <Label htmlFor="endDate">PROJECT STATUS</Label>
 
                 <Input
                   id="status"
 
-                  placeholder="Calculated from duration"
+                  placeholder="Status of Project"
                   className="h-12"
-                  {...checkForm.register("status")}
+                  {...checkForm.register("start_date", {
+                    setValueAs: (value) => value === "" ? undefined : value,
+                  })}
                 />
               </div>
             </div>
