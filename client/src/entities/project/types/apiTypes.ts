@@ -12,9 +12,25 @@ export type Project = BaseProject & {};
 
 export type ProjectListResponse = Project[];
 
-type BaseProjectRequirement = {
+export type RequirementResponse = {
+  id: number;
+  project_id: number;
   project_role_id: number;
   requested_count: number;
   requested_by: number;
   stack_ids: number[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreateRequirementRequest = {
+  project_role_id: number;
+  requested_count: number;
+  stack_ids: number[];
+};
+
+export type UpdateRequirementRequest = {
+  project_role_id?: number;
+  requested_count?: number;
+  stack_ids?: number[];
 };
