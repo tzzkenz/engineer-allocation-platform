@@ -25,3 +25,5 @@ class Skill(Entity):
     stack_requests = relationship(
         "ProjectStackRequirementRequest", back_populates="stack"
     )
+
+    project_stacks = relationship("ProjectStacks", back_populates="skill")

@@ -40,6 +40,8 @@ class Project(Entity):
         cascade="all, delete-orphan",
     )
 
+    stacks = relationship("ProjectStacks", back_populates="project")
+
     @property
     def expected_end_date(self) -> date:
         return self.start_date + timedelta(days=self.duration)
