@@ -14,7 +14,6 @@ class AvailabilityFilter(str, Enum):
 class RequirementCreate(BaseModel):
     project_role_id: int
     requested_count: int
-    requested_by: int
     stack_ids: list[int] = []
 
 
