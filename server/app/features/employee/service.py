@@ -77,8 +77,8 @@ class EmployeeService:
             raise NotFoundException("Employee not found")
         return self._format_employee_response(result[0], result[1])
 
-    async def list(self) -> list[dict[str, Any]]:
-        records = await self.repo.list_all_with_role()
+    async def list(self, limit: int | None = None, offset: int | None = None) -> list[dict[str, Any]]:
+        records = await self.repo.list_all_with_role(limit=limit, offset=offset)
         return [self._format_employee_response(emp, role_name) for emp, role_name in records]
 
     async def create(self, employee_data: dict[str, Any], changed_by_id: int) -> dict[str, Any]:

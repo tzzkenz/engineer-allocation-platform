@@ -33,12 +33,18 @@ class EmployeeRepository:
         result = await self.db.execute(stmt)
         return result.first()
 
-    async def list_all_with_role(self) -> list[tuple[Employee, str]]:
+    async def list_all_with_role(self, limit: int | None = None, offset: int | None = None) -> list[tuple[Employee, str]]:
         stmt = (
             select(Employee, SystemRole.name)
             .join(SystemRole, Employee.system_role_id == SystemRole.id)
             .where(Employee.deleted_at.is_(None))
         )
+        
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
+            
         result = await self.db.execute(stmt)
         return list(result.all())
 
