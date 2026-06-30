@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -7,7 +6,11 @@ from sqlalchemy.exc import IntegrityError
 from exceptions import ConflictException, NotFoundException, UnknownException
 from features.project.repository import ProjectRepository
 from models.project import Project, StatusType
-from features.project.schemas import ProjectCreate, ProjectEmployeeBatchCreate, ProjectUpdate
+from features.project.schemas import (
+    ProjectCreate,
+    ProjectEmployeeBatchCreate,
+    ProjectUpdate,
+)
 from features.audit.schemas import ActionType, EntityName
 from models.project_employee import ProjectEmployee
 from models.project_requirement_request import ProjectRequirementRequest
@@ -62,8 +65,8 @@ class ProjectService:
                 status=data.status,
                 start_date=data.start_date,
                 duration=data.duration,
+                skill_ids=data.skill_ids,
             )
-            # Flush to populate the project ID before audit log generation
             await self.repo.db.flush()
 
             # --- AUDIT LOG ADDED ---
@@ -71,12 +74,12 @@ class ProjectService:
                 entity_name=EntityName.PROJECT,
                 entity_id=project.id,
                 action=ActionType.CREATE,
-                changed_by_id=changed_by_id
+                changed_by_id=changed_by_id,
             )
 
             await self.repo.db.commit()
-            await self.repo.db.refresh(project)
-            return project
+            # await self.repo.db.refresh(project)
+            return await self.repo.get_by_id(project.id)
 
         except IntegrityError:
             await self.repo.db.rollback()
@@ -85,7 +88,9 @@ class ProjectService:
             await self.repo.db.rollback()
             raise UnknownException(str(e))
 
-    async def update(self, project_id: int, data: ProjectUpdate, changed_by_id: int) -> Project:
+    async def update(
+        self, project_id: int, data: ProjectUpdate, changed_by_id: int
+    ) -> Project:
         project = await self.get(project_id)
 
         update_data = {}
@@ -102,11 +107,11 @@ class ProjectService:
         if data.duration is not None:
             update_data["duration"] = data.duration
 
-        if not update_data:
+        if not update_data and data.skill_ids is None:
             return project
 
         try:
-            # --- AUDIT LOG ADDED (Track specific field mutations) ---
+            # --- AUDIT LOG (field mutations) ---
             for field, new_val in update_data.items():
                 old_val = getattr(project, field)
                 old_val_str = str(old_val) if old_val is not None else None
@@ -120,13 +125,32 @@ class ProjectService:
                         field_name=field,
                         old_value=old_val_str,
                         new_value=new_val_str,
-                        changed_by_id=changed_by_id
+                        changed_by_id=changed_by_id,
                     )
 
-            project = await self.repo.update(project, **update_data)
+            if update_data:
+                project = await self.repo.update(project, **update_data)
+
+            if data.skill_ids is not None:
+                old_skill_ids = sorted(ps.skill_id for ps in project.stacks)
+                new_skill_ids = sorted(set(data.skill_ids))
+
+                if old_skill_ids != new_skill_ids:
+                    await self.repo.set_stacks(project, data.skill_ids)
+
+                    await self._stage_audit_log(
+                        entity_name=EntityName.PROJECT,
+                        entity_id=project_id,
+                        action=ActionType.UPDATE,
+                        field_name="stacks",
+                        old_value=str(old_skill_ids),
+                        new_value=str(new_skill_ids),
+                        changed_by_id=changed_by_id,
+                    )
+
             await self.repo.db.commit()
-            await self.repo.db.refresh(project)
-            return project
+
+            return await self.repo.get_by_id(project_id)
 
         except IntegrityError:
             await self.repo.db.rollback()
@@ -146,7 +170,7 @@ class ProjectService:
                 entity_name=EntityName.PROJECT,
                 entity_id=project_id,
                 action=ActionType.DELETE,
-                changed_by_id=changed_by_id
+                changed_by_id=changed_by_id,
             )
 
             await self.repo.db.commit()
@@ -179,10 +203,12 @@ class ProjectService:
 
         return result
 
-    async def allocate_employees_batch(self, data: ProjectEmployeeBatchCreate, changed_by_id: int) -> list[ProjectEmployee]:
+    async def allocate_employees_batch(
+        self, data: ProjectEmployeeBatchCreate, changed_by_id: int
+    ) -> list[ProjectEmployee]:
         stmt = select(ProjectRequirementRequest).where(
             ProjectRequirementRequest.id == data.requirement_request_id,
-            ProjectRequirementRequest.deleted_at.is_(None)
+            ProjectRequirementRequest.deleted_at.is_(None),
         )
         result = await self.repo.db.execute(stmt)
         req_request = result.scalar_one_or_none()
@@ -198,9 +224,9 @@ class ProjectService:
                 existing_active = await self.repo.get_active_allocation(
                     project_id=req_request.project_id,
                     employee_id=emp_id,
-                    project_role_id=req_request.project_role_id
+                    project_role_id=req_request.project_role_id,
                 )
-                
+
                 if existing_active is not None:
                     raise ConflictException(
                         f"Employee with ID {emp_id} is already actively assigned to this project under the same role."
@@ -212,9 +238,9 @@ class ProjectService:
                     "employee_id": emp_id,
                     "is_shadow": data.is_shadow,
                     "requirement_request_id": data.requirement_request_id,
-                    "date_assigned": today_date
+                    "date_assigned": today_date,
                 }
-                
+
                 allocation = await self.repo.allocate_employee(allocation_dict)
                 allocations.append(allocation)
 
@@ -227,7 +253,7 @@ class ProjectService:
                     entity_name=EntityName.PROJECT_EMPLOYEE,
                     entity_id=allocation.id,
                     action=ActionType.CREATE,
-                    changed_by_id=changed_by_id
+                    changed_by_id=changed_by_id,
                 )
 
             # 3. Commit both allocations and audit entries atomically

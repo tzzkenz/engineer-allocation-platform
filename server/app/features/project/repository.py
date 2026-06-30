@@ -1,11 +1,13 @@
 from datetime import datetime, timezone, date
 from typing import Any
 
+from sqlalchemy.orm import selectinload
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.project import Project, StatusType
 from models.project_employee import ProjectEmployee
+from models.project_stacks import ProjectStacks
 from models.project_requirement_request import ProjectRequirementRequest, RequestStatus
 
 
@@ -14,8 +16,11 @@ class ProjectRepository:
         self.db = db
 
     async def get_by_id(self, project_id: int) -> Project | None:
-        stmt = select(Project).where(
-            Project.id == project_id, Project.deleted_at.is_(None)
+        stmt = (
+            select(Project)
+            .options(selectinload(Project.stacks).selectinload(ProjectStacks.skill))
+            .where(Project.id == project_id, Project.deleted_at.is_(None))
+            .execution_options(populate_existing=True)
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
@@ -26,7 +31,11 @@ class ProjectRepository:
         return result.scalar_one_or_none()
 
     async def list_all(self) -> list[Project]:
-        stmt = select(Project).where(Project.deleted_at.is_(None))
+        stmt = (
+            select(Project)
+            .options(selectinload(Project.stacks).selectinload(ProjectStacks.skill))
+            .where(Project.deleted_at.is_(None))
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
@@ -36,6 +45,7 @@ class ProjectRepository:
         status: StatusType,
         start_date: date,
         duration: int,
+        skill_ids: list[int] | None = None,
     ) -> Project:
         project = Project(
             name=name,
@@ -44,6 +54,11 @@ class ProjectRepository:
             duration=duration,
         )
         self.db.add(project)
+        await self.db.flush()
+
+        for skill_id in skill_ids or []:
+            self.db.add(ProjectStacks(project_id=project.id, skill_id=skill_id))
+
         await self.db.flush()
         return project
 
@@ -67,11 +82,21 @@ class ProjectRepository:
         await self.db.flush()
         return project
 
+    async def set_stacks(self, project: Project, skill_ids: list[int]) -> None:
+        for ps in project.stacks:
+            await self.db.delete(ps)
+        await self.db.flush()
+        for skill_id in skill_ids:
+            self.db.add(ProjectStacks(project_id=project.id, skill_id=skill_id))
+        await self.db.flush()
+
     async def soft_delete(self, project: Project) -> None:
         project.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()
 
-    async def get_active_allocation(self, project_id: int, employee_id: int, project_role_id: int) -> ProjectEmployee | None:
+    async def get_active_allocation(
+        self, project_id: int, employee_id: int, project_role_id: int
+    ) -> ProjectEmployee | None:
         """
         Checks if the employee is already assigned to the project with the same role and hasn't exited.
         """
@@ -79,13 +104,15 @@ class ProjectRepository:
             ProjectEmployee.project_id == project_id,
             ProjectEmployee.employee_id == employee_id,
             ProjectEmployee.project_role_id == project_role_id,
-            ProjectEmployee.date_exited.is_(None),       # Not exited yet
-            ProjectEmployee.deleted_at.is_(None)         # Soft-delete safety check
+            ProjectEmployee.date_exited.is_(None),  # Not exited yet
+            ProjectEmployee.deleted_at.is_(None),  # Soft-delete safety check
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def allocate_employee(self, allocation_data: dict[str, Any]) -> ProjectEmployee:
+    async def allocate_employee(
+        self, allocation_data: dict[str, Any]
+    ) -> ProjectEmployee:
         allocation = ProjectEmployee(**allocation_data)
         self.db.add(allocation)
         await self.db.flush()

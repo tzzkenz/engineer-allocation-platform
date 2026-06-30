@@ -43,5 +43,7 @@ class Project(Entity):
     stacks = relationship("ProjectStacks", back_populates="project")
 
     @property
-    def expected_end_date(self) -> date:
+    def expected_end_date(self) -> date | None:
+        if self.start_date is None or self.duration is None:
+            return None
         return self.start_date + timedelta(days=self.duration)
