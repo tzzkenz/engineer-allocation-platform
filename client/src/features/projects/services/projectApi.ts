@@ -46,7 +46,9 @@ const projectApi = employeeBaseApi.injectEndpoints({
         url: `/feedbacks/project/${projectId}`,
         method: "GET",
       }),
-      providesTags: ["Project"],
+      providesTags: (_result, _error, projectId) => [
+        { type: "Feedback", id: `PROJECT-${projectId}` },
+      ],
     }),
     getProjectRequirements: builder.query<RequirementResponse[], string>({
       query: (projectId) => ({

@@ -44,6 +44,12 @@ export function ProjectNotesCard({ projectId, notes }: ProjectNotesCardProps) {
     }
   };
 
+  const handleEditClick = (note: FeedbackResponse) => {
+    setPendingEdit(note);
+    console.log(note);
+    setIsNoteDialogOpen(true);
+  };
+
   return (
     <>
       <SectionCard>
@@ -61,7 +67,7 @@ export function ProjectNotesCard({ projectId, notes }: ProjectNotesCardProps) {
             }
           />
 
-          <NotesTable notes={notes} onDelete={setPendingDelete} onEdit={setPendingEdit} />
+          <NotesTable notes={notes} onDelete={setPendingDelete} onEdit={handleEditClick} />
         </SectionCardInner>
       </SectionCard>
 

@@ -45,7 +45,10 @@ export const feedbackApi = employeeBaseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: "Feedback", id: "LIST" }],
+      invalidatesTags: (_result, _error, projectId) => [
+        { type: "Feedback", id: "LIST" },
+        { type: "Feedback", id: `PROJECT-${projectId}` },
+      ],
     }),
 
     updateFeedback: builder.mutation<
@@ -63,6 +66,7 @@ export const feedbackApi = employeeBaseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { feedbackId }) => [
         { type: "Feedback", id: feedbackId },
         { type: "Feedback", id: "LIST" },
+        { type: "Feedback", id: `PROJECT-${_result?.project_id}` },
       ],
     }),
 
