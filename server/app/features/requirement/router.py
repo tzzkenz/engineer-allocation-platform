@@ -11,7 +11,6 @@ from features.requirement.schemas import (
     StackRequirementResponse,
 )
 from features.requirement.service import RequirementService
-from features.employee.service import EmployeeService
 
 router = APIRouter(prefix="/project", tags=["Project requirements"])
 
@@ -39,6 +38,7 @@ async def create_requirement(
 async def get_requirements_for_project(
     project_id: int, service: RequirementService = Depends(get_requirement_service)
 ):
+    # Fixed to pass project_id explicitly so the service processes the query correctly
     return await service.get(project_id=project_id)
 
 
@@ -115,8 +115,6 @@ async def remove_stack_requirement(
     await service.remove_stack(request_id=request_id, stack_request_id=stack_request_id)
 
 
-
-
 @router.get(
     "/requirements/{request_id}/matches", 
     response_model=list[MatchedEmployeeResponse],
@@ -127,7 +125,6 @@ async def get_matching_candidates(
     service: RequirementService = Depends(get_requirement_service),
 ):
     return await service.get_candidate_matches(request_id)
-
 
 
 @router.get("/search/matches", response_model=list[MatchedEmployeeResponse])
