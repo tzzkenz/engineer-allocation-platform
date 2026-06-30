@@ -3,6 +3,12 @@ from typing import Optional
 from datetime import date, datetime
 
 from models.project_requirement_request import RequestStatus
+from enum import Enum
+
+class AvailabilityFilter(str, Enum):
+    AVAILABLE = "AVAILABLE"
+    UNAVAILABLE = "UNAVAILABLE"
+    ALL = "ALL"
 
 
 class RequirementCreate(BaseModel):
@@ -23,6 +29,7 @@ class StackRequirementResponse(BaseModel):
     id: int
     project_requirement_request_id: int
     stack_id: int
+    stack_name: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -31,8 +38,10 @@ class RequirementResponse(BaseModel):
     id: int
     project_id: int
     project_role_id: int
+    project_role_name: str
     requested_count: int
     requested_by: int
+    requested_by_name: str
     resolved_by: int | None
     resolved_at: datetime | None
     status: RequestStatus
@@ -58,3 +67,5 @@ class MatchedEmployeeResponse(BaseModel):
     active_project_count: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
