@@ -5,6 +5,7 @@ import { createBrowserRouter } from "react-router";
 import EmployeeCreate from "@/pages/employee-create/EmployeeCreate";
 import EmployeeEdit from "@/pages/employee-edit/EmployeeEdit";
 import Login from "@/pages/login/Login";
+import ProjectCreate from "@/pages/project-create/ProjectCreate";
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
             index: true,
             element: <ProjectList />,
           },
+          {
+            path:"create",
+            element:<ProjectCreate/>
+          }
         ],
       },
     ],
