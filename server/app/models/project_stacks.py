@@ -1,6 +1,4 @@
-from pydoc import text
-
-from sqlalchemy import ForeignKey, Index
+from sqlalchemy import ForeignKey, Index, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models import Entity
