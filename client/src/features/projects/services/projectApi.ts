@@ -1,4 +1,9 @@
 import type {
+  AdvanceSearchEmployeeParams,
+  EmployeeResponse,
+} from "@/entities/employee/types/apiTypes";
+
+import type {
   CreateRequirementRequest,
   FeedbackResponse,
   Project,
@@ -49,6 +54,11 @@ const projectApi = employeeBaseApi.injectEndpoints({
       providesTags: (_result, _error, projectId) => [
         { type: "Feedback", id: `PROJECT-${projectId}` },
       ],
+    }),
+    getCandidates: builder.query<EmployeeResponse[], string>({
+      query: (params) => ({
+        url: `/project/search/matches?${params}`,
+      }),
     }),
     getProjectRequirements: builder.query<RequirementResponse[], string>({
       query: (projectId) => ({
@@ -130,4 +140,5 @@ export const {
   useUpdateRequirementMutation,
   useDeleteRequirementMutation,
   useGetProjectNotesQuery,
+  useGetCandidatesQuery,
 } = projectApi;

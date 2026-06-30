@@ -3,7 +3,6 @@ import { useParams } from "react-router";
 import { ProjectNotesCard } from "@features/projects/components/notes/notes-card/NotesCard";
 import { ProjectInfoCard } from "@features/projects/components/project-info/ProjectInfoCard";
 import { RequirementsCard } from "@features/projects/components/requirements/requirement-card/RequirementCard";
-import { mockProjectDetail } from "@features/projects/data/data";
 import {
   useGetProjectNotesQuery,
   useGetProjectQuery,

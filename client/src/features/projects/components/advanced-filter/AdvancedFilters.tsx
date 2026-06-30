@@ -1,3 +1,6 @@
+import type { Skill } from "@/entities/config/types/apiTypes";
+import type { AvailabilityFilterType } from "@/entities/employee/types/apiTypes";
+import { Button } from "@/shared/components/ui/button";
 import { Search } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -24,223 +27,178 @@ import {
   SelectValue,
 } from "@shared/components/ui/select";
 
-type AssignEngineerFilters = {
+export type AssignEngineerFilters = {
   search: string;
-  role: string;
-  availability: string;
-  sortExperience: string;
-  sortProficiency: string;
-  skills: string[];
-  shadowAssignment: boolean;
-  startDate: string;
+  availability: AvailabilityFilterType;
+  sortExperience: "high-low" | "low-high";
+  sortProficiency: "highest" | "lowest";
+  skills: Skill[];
 };
 
 const availableSkills = ["React", "TypeScript", "FastAPI", "Python", "AWS", "Docker"];
 
-const AdvancedFilters = () => {
+type AdvancedFiltersProps = {
+  onSearch: (filters: AssignEngineerFilters) => void;
+  skills: Skill[];
+};
+const AdvancedFilters = ({ onSearch, skills }: AdvancedFiltersProps) => {
   const anchor = useComboboxAnchor();
 
-  const { register, control, watch } = useForm<AssignEngineerFilters>({
+  const { register, control, watch, getValues } = useForm<AssignEngineerFilters>({
     defaultValues: {
       search: "",
-      role: "",
-      availability: "available",
+      availability: "ALL",
       sortExperience: "high-low",
       sortProficiency: "highest",
       skills: [],
-      shadowAssignment: false,
-      startDate: "",
     },
   });
 
-  const filters = watch();
+  const handleSearch = () => {
+    if (onSearch) onSearch(getValues());
+  };
 
   return (
-    <FieldGroup className="grid grid-cols-4 gap-6">
-      <Field className="col-span-2">
-        <FieldLabel>Search Engineer</FieldLabel>
+    <div className=" flex flex-col">
+      <FieldGroup className="grid grid-cols-4 gap-6">
+        <Field className="col-span-2">
+          <FieldLabel>Search Engineer</FieldLabel>
 
-        <FieldContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <FieldContent>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-            <Input
-              placeholder="Search by name or email..."
-              className="pl-10"
-              {...register("search")}
+              <Input
+                placeholder="Search by name or email..."
+                className="pl-10"
+                {...register("search")}
+              />
+            </div>
+          </FieldContent>
+        </Field>
+
+        <Field>
+          <FieldLabel>Experience</FieldLabel>
+
+          <FieldContent>
+            <Controller
+              control={control}
+              name="sortExperience"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="high-low">Highest → Lowest</SelectItem>
+
+                    <SelectItem value="low-high">Lowest → Highest</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             />
-          </div>
-        </FieldContent>
-      </Field>
+          </FieldContent>
+        </Field>
 
-      <Field>
-        <FieldLabel>Experience</FieldLabel>
+        <Field>
+          <FieldLabel>Availability</FieldLabel>
 
-        <FieldContent>
-          <Controller
-            control={control}
-            name="sortExperience"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+          <FieldContent>
+            <Controller
+              control={control}
+              name="availability"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
 
-                <SelectContent>
-                  <SelectItem value="high-low">Highest → Lowest</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="ALL">All</SelectItem>
+                    <SelectItem value="AVAILABLE">Available</SelectItem>
+                    <SelectItem value="UNAVAILABLE">Busy</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </FieldContent>
+        </Field>
 
-                  <SelectItem value="low-high">Lowest → Highest</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldContent>
-      </Field>
+        <Field className="col-span-1">
+          <FieldLabel>Skills</FieldLabel>
 
-      <Field>
-        <FieldLabel>Role</FieldLabel>
+          <FieldContent>
+            <Controller
+              control={control}
+              name="skills"
+              render={({ field }) => (
+                <Combobox
+                  multiple
+                  items={skills}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  autoHighlight
+                >
+                  <ComboboxChips ref={anchor}>
+                    <ComboboxValue>
+                      {(values: Skill[]) => (
+                        <>
+                          {values.map((skill) => (
+                            <ComboboxChip key={skill.id}>{skill.name}</ComboboxChip>
+                          ))}
 
-        <FieldContent>
-          <Controller
-            control={control}
-            name="role"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
+                          <ComboboxChipsInput placeholder="Select skills..." />
+                        </>
+                      )}
+                    </ComboboxValue>
+                  </ComboboxChips>
 
-                <SelectContent>
-                  <SelectItem value="Developer">Developer</SelectItem>
+                  <ComboboxContent anchor={anchor}>
+                    <ComboboxEmpty>No skills found.</ComboboxEmpty>
 
-                  <SelectItem value="QA">QA</SelectItem>
+                    <ComboboxList>
+                      {(item: Skill) => (
+                        <ComboboxItem key={item.id} value={item}>
+                          {item.name}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              )}
+            />
+          </FieldContent>
+        </Field>
 
-                  <SelectItem value="DevOps">DevOps</SelectItem>
+        <Field>
+          <FieldLabel>Proficiency</FieldLabel>
 
-                  <SelectItem value="Designer">Designer</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldContent>
-      </Field>
+          <FieldContent>
+            <Controller
+              control={control}
+              name="sortProficiency"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
 
-      <Field>
-        <FieldLabel>Availability</FieldLabel>
+                  <SelectContent>
+                    <SelectItem value="highest">Highest</SelectItem>
 
-        <FieldContent>
-          <Controller
-            control={control}
-            name="availability"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="busy">Busy</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldContent>
-      </Field>
-
-      <Field className="col-span-3">
-        <FieldLabel>Skills</FieldLabel>
-
-        <FieldContent>
-          <Controller
-            control={control}
-            name="skills"
-            render={({ field }) => (
-              <Combobox
-                multiple
-                items={availableSkills}
-                value={field.value}
-                onValueChange={field.onChange}
-                autoHighlight
-              >
-                <ComboboxChips ref={anchor}>
-                  <ComboboxValue>
-                    {(values: string[]) => (
-                      <>
-                        {values.map((skill) => (
-                          <ComboboxChip key={skill}>{skill}</ComboboxChip>
-                        ))}
-
-                        <ComboboxChipsInput placeholder="Select skills..." />
-                      </>
-                    )}
-                  </ComboboxValue>
-                </ComboboxChips>
-
-                <ComboboxContent anchor={anchor}>
-                  <ComboboxEmpty>No skills found.</ComboboxEmpty>
-
-                  <ComboboxList>
-                    {(item) => (
-                      <ComboboxItem key={item} value={item}>
-                        {item}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            )}
-          />
-        </FieldContent>
-      </Field>
-
-      <Field>
-        <FieldLabel>Proficiency</FieldLabel>
-
-        <FieldContent>
-          <Controller
-            control={control}
-            name="sortProficiency"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="highest">Highest</SelectItem>
-
-                  <SelectItem value="lowest">Lowest</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldContent>
-      </Field>
-
-      <Field>
-        <FieldLabel>Start Date</FieldLabel>
-
-        <FieldContent>
-          <Input type="date" {...register("startDate")} />
-        </FieldContent>
-      </Field>
-
-      <Field orientation="horizontal">
-        <Controller
-          control={control}
-          name="shadowAssignment"
-          render={({ field }) => (
-            <>
-              <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-
-              <FieldLabel>Shadow Assignment</FieldLabel>
-            </>
-          )}
-        />
-      </Field>
-    </FieldGroup>
+                    <SelectItem value="lowest">Lowest</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </FieldContent>
+        </Field>
+      </FieldGroup>
+      <Button className=" w-32 self-end " type="button" onClick={handleSearch}>
+        Search
+      </Button>
+    </div>
   );
 };
 
