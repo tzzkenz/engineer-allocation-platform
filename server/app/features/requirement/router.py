@@ -139,6 +139,8 @@ async def search_candidates(
     sort_by_experience: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
     sort_by_proficiency: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
     service: RequirementService = Depends(get_requirement_service),
+    limit: int | None = Query(default=None, ge=1),
+    offset: int | None = Query(default=None, ge=0),
 ):
     return await service.get_filtered_candidates(
         identifier=identifier,
@@ -146,4 +148,6 @@ async def search_candidates(
         availability=availability.value,
         sort_by_experience=sort_by_experience,
         sort_by_proficiency=sort_by_proficiency,
+        limit=limit,
+        offset=offset
     )

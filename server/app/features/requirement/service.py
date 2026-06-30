@@ -244,6 +244,8 @@ class RequirementService:
         sort_by_experience: bool,
         sort_by_proficiency: bool,
         identifier: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> list:
         identifier_filter = None
         if identifier:
@@ -261,6 +263,8 @@ class RequirementService:
             sort_by_exp_desc=sort_by_experience,
             sort_by_prof_desc=sort_by_proficiency,
             identifier_filter=identifier_filter,
+            limit=limit,
+            offset=offset
         )
         return [
             {

@@ -225,6 +225,8 @@ class RequirementRepository:
         sort_by_exp_desc: bool,
         sort_by_prof_desc: bool,
         identifier_filter: tuple[str, Any] | None = None,
+        limit: int | None = None,
+        offset: int | None = None
     ) -> list[tuple[Employee, int, float]]:
         
         active_allocations_subquery = (
@@ -284,6 +286,11 @@ class RequirementRepository:
             order_by_clauses.append(asc("avg_proficiency"))
 
         stmt = stmt.order_by(*order_by_clauses)
+
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
 
         result = await self.db.execute(stmt)
         return list(result.all())
