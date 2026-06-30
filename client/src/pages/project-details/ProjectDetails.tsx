@@ -5,6 +5,7 @@ import { ProjectInfoCard } from "@features/projects/components/project-info/Proj
 import { RequirementsCard } from "@features/projects/components/requirements/requirement-card/RequirementCard";
 import { mockProjectDetail } from "@features/projects/data/data";
 import {
+  useGetProjectNotesQuery,
   useGetProjectQuery,
   useGetProjectRequirementsQuery,
 } from "@features/projects/services/projectApi";
@@ -27,7 +28,9 @@ export function ProjectDetails() {
       skip: !id,
     });
 
-  const dummyProject = mockProjectDetail;
+  const { data: projectNotes = [], isLoading: isNotesLoading } = useGetProjectNotesQuery(id!, {
+    skip: !id,
+  });
 
   return (
     <div className="flex flex-col gap-8 w-full py-6">
@@ -37,7 +40,7 @@ export function ProjectDetails() {
 
       <RequirementsCard projectId={id!} requirements={requirements} />
 
-      <ProjectNotesCard notes={dummyProject.notes} />
+      <ProjectNotesCard projectId={id!} notes={projectNotes} />
     </div>
   );
 }

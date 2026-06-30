@@ -1,5 +1,8 @@
-import type { ProjectNote } from "@/features/projects/data/data";
-import { Button } from "@/shared/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+
+import type { FeedbackResponse } from "@entities/project/types/apiTypes";
+
+import { Button } from "@shared/components/ui/button";
 import {
   Table,
   TableBody,
@@ -7,15 +10,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/components/ui/table";
-import { Pencil, Trash2 } from "lucide-react";
+} from "@shared/components/ui/table";
+import { formatDate } from "@shared/lib/format";
 
 type ProjectNotesCardProps = {
-  notes: ProjectNote[];
-  onDelete: (id: number) => void;
+  notes: FeedbackResponse[];
+  onDelete: (note: FeedbackResponse) => void;
+  onEdit: (note: FeedbackResponse) => void;
 };
 
-const NotesTable = ({ notes, onDelete }: ProjectNotesCardProps) => {
+const NotesTable = ({ notes, onEdit, onDelete }: ProjectNotesCardProps) => {
   return (
     <Table>
       <TableHeader>
@@ -37,9 +41,9 @@ const NotesTable = ({ notes, onDelete }: ProjectNotesCardProps) => {
         ) : (
           notes.map((note) => (
             <TableRow key={note.id}>
-              <TableCell>{note.date}</TableCell>
+              <TableCell>{formatDate(note.created_at)}</TableCell>
 
-              <TableCell>{note.addedBy}</TableCell>
+              <TableCell>{note.creator.name}</TableCell>
 
               <TableCell>{note.note}</TableCell>
 
@@ -49,14 +53,12 @@ const NotesTable = ({ notes, onDelete }: ProjectNotesCardProps) => {
                     variant="ghost"
                     className=" text-primary"
                     size="icon"
-                    onClick={() => {
-                      console.log("Hello world");
-                    }}
+                    onClick={() => onEdit(note)}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
 
-                  <Button variant="ghost" size="icon" onClick={() => console.log("Hllo world")}>
+                  <Button variant="ghost" size="icon" onClick={() => onDelete(note)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
