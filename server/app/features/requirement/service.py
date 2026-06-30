@@ -31,7 +31,7 @@ class RequirementService:
             raise NotFoundException("Requirement request not found")
         return request
 
-    async def list(self) -> list[ProjectRequirementRequest]:
+    async def list_all(self) -> list[ProjectRequirementRequest]:
         return await self.repo.list_all()
 
     async def create(
@@ -40,6 +40,7 @@ class RequirementService:
         project_role_id: int,
         requested_count: int,
         requested_by: int,
+        stack_ids: list[int] | None = None,
     ) -> ProjectRequirementRequest:
         try:
             request = await self.repo.create(
@@ -48,6 +49,21 @@ class RequirementService:
                 requested_count=requested_count,
                 requested_by=requested_by,
             )
+
+            if stack_ids:
+                for stack_id in stack_ids:
+                    skill = await self.repo.get_stack_by_id(stack_id)
+
+                    if skill is None:
+                        raise NotFoundException(f"Stack {stack_id} not found")
+
+                    if skill.type != SkillType.STACK:
+                        raise BadRequestException(
+                            f"Skill {stack_id} is not a valid stack"
+                        )
+
+                    await self.repo.add_stack_to_request(request.id, stack_id)
+
             await self.repo.db.commit()
             return request
 
@@ -55,9 +71,9 @@ class RequirementService:
             await self.repo.db.rollback()
             raise ConflictException("Invalid foreign key or constraint violation")
 
-        except Exception:
+        except Exception as e:
             await self.repo.db.rollback()
-            raise UnknownException("Failed to create requirement request")
+            raise UnknownException(str(e))
 
     async def update(
         self,

@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 
 from models.project_requirement_request import (
     ProjectRequirementRequest,
@@ -124,3 +126,12 @@ class RequirementRepository:
     ) -> None:
         await self.db.delete(stack_request)
         await self.db.flush()
+
+    async def get_with_stacks(self, request_id: int):
+        stmt = (
+            select(ProjectRequirementRequest)
+            .where(ProjectRequirementRequest.id == request_id)
+            .options(selectinload(ProjectRequirementRequest.stack_requests))
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
