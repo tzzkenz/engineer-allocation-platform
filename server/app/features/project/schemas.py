@@ -59,6 +59,12 @@ class ProjectResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_validator("stacks", mode="before")
+    @classmethod
+    def extract_skills(cls, v):
+        # v is a list of ProjectStacks ORM rows — pull the related Skill out of each
+        return [ps.skill for ps in v]
+
 
 class ProjectEmployeeBatchCreate(BaseModel):
     requirement_request_id: int
