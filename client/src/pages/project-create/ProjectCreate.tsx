@@ -8,17 +8,29 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, CircleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
+import { useCreateProjectMutation } from "@/features/projects/services/projectCreateApi";
 export default function ProjectCreate() {
+  const [createProject,{isLoading}]=useCreateProjectMutation();
     const navigate=useNavigate()
   const checkForm = useForm<ProjectCreateFormData>({
     resolver: zodResolver(projectCreateSchema),
     defaultValues: {
-      projectName: "",
+      name: "",
     },
   });
-  const onSubmit = (data: ProjectCreateFormData) => {
-    console.log(data.projectName);
+  const onSubmit =async (data: ProjectCreateFormData) => {
+    console.log("onSubmit called");
+    console.log(data.name);
+    try{
+    const response= await createProject(data).unwrap()
+    
+    console.log(response)
+
     navigate('/projects')
+    }
+    catch(err){
+      console.log("failed")
+    }
   };
   return (
     <>
@@ -39,16 +51,16 @@ export default function ProjectCreate() {
           <form className="space-y-8 " onSubmit={checkForm.handleSubmit(onSubmit)}>
             <div className="md:grid grid-cols-2 gap-8 max-md:space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="projectName">PROJECT NAME</Label>
+                <Label htmlFor="name">PROJECT NAME</Label>
 
                 <Input
-                  id="projectName"
+                  id="name"
                   placeholder="e.g. Helix Cloud Infrastructure"
                   className="h-12"
-                  {...checkForm.register("projectName")}
+                  {...checkForm.register("name")}
                 />
-                {checkForm.formState.errors.projectName && (
-                    <p className="text-sm text-red-500">{checkForm.formState.errors.projectName.message}</p>
+                {checkForm.formState.errors.name && (
+                    <p className="text-sm text-red-500">{checkForm.formState.errors.name.message}</p>
                   )}
               </div>
 
@@ -58,9 +70,12 @@ export default function ProjectCreate() {
                 <div className="relative">
                   <Input
                     id="duration"
+                    type="number"
                     placeholder="Select start and end dates"
                     className="h-12 pr-12"
-                    {...checkForm.register("duration")}
+                    {...checkForm.register("duration", {
+                      valueAsNumber: true,
+                    })}
                   />
 
                   <CalendarDays className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -70,10 +85,10 @@ export default function ProjectCreate() {
 
             <div className="md:grid grid-cols-2 gap-8 max-md:space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="startDate">START DATE (OPTIONAL)</Label>
+                <Label htmlFor="start_date">START DATE (OPTIONAL)</Label>
 
                 <div className="relative">
-                  <Input id="startDate" placeholder="mm/dd/yyyy" className="h-12 pr-12"{...checkForm.register("startDate")} />
+                  <Input id="start_date" type="date" placeholder="yyyy-mm-dd" className="h-12 pr-12"{...checkForm.register("start_date")} />
 
                   <CalendarDays className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 </div>
@@ -83,11 +98,11 @@ export default function ProjectCreate() {
                 <Label htmlFor="endDate">EXPECTED END DATE</Label>
 
                 <Input
-                  id="endDate"
-                  disabled
+                  id="status"
+
                   placeholder="Calculated from duration"
                   className="h-12"
-                  {...checkForm.register("endDate")}
+                  {...checkForm.register("status")}
                 />
               </div>
             </div>
@@ -104,7 +119,7 @@ export default function ProjectCreate() {
               </Button>
 
               <Button type="submit" className="min-w-40 py-4 hover:scale-102 active:scale-97">
-                Create Project
+                {isLoading ? "Creating....": "Create Project" }
               </Button>
             </div>
           </form>

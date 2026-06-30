@@ -1,15 +1,19 @@
 import { z } from "zod";
 
 export const projectCreateSchema = z.object({
-  projectName: z
+  name: z
     .string()
     .min(1, "Project name is required"),
 
-  duration: z.string().optional(),
+  duration: z.number(),
 
-  startDate: z.string().optional(),
-
-  endDate: z.string().optional(),
+  start_date: z.string(),
+  status: z.enum([
+    "NOT_STARTED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "ON_HOLD",
+  ])
 });
 
 export type ProjectCreateFormData = z.infer<typeof projectCreateSchema>;

@@ -4,10 +4,10 @@ import type { LoginRequest,LoginResponse } from "@shared/api/types";
 export const authApi=employeeBaseApi.injectEndpoints({
     endpoints:(builder)=>({
         login:builder.mutation<LoginResponse,LoginRequest>({
-            query:(credentials)=>({
-                url:"/abcd",
+            query:(formData)=>({
+                url:"/auth/login",
                 method:"POST",
-                body:credentials,
+                body:formData,
             }),
         }),
     }),

@@ -8,26 +8,36 @@ import { Hexagon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import loginImg from "../../assets/loginImg.png";
-
+import { useState } from "react";
 import { useLoginMutation } from "@/features/auth/services/authApi";
 
 export default function Login() {
+  const [failed,setFailed]=useState(false)
     const navigate=useNavigate()
   const [login,{isLoading}]=useLoginMutation();
   const florm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
 
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
   const onSubmit = async (data: LoginFormData) => {
     console.log("Form Submitted");
-    navigate('/projects')
-      const response= await login(data).unwrap();
-      localStorage.setItem("access_token", response.access_token);
+
+    const formData = new FormData()
+    formData.set("username",data.username)
+    formData.set("password",data.password)
+    try{
+    const response= await login(formData).unwrap();
+      
+    localStorage.setItem("access_token", response.access_token);
     localStorage.setItem("refresh_token", response.refresh_token);
+    navigate('/projects')
+    }catch(err){
+      setFailed(true)
+    }
   };
   return (
     <div className="lg:flex h-screen w-full">
@@ -70,14 +80,14 @@ export default function Login() {
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
-                    id="email"
+                    id="username"
                     type="email"
                     placeholder="Enter your email"
                     className="h-12 rounded-xl"
-                    {...florm.register("email")}
+                    {...florm.register("username")}
                   />
-                  {florm.formState.errors.email && (
-                    <p className="text-sm text-red-500">{florm.formState.errors.email.message}</p>
+                  {florm.formState.errors.username && (
+                    <p className="text-sm text-red-500">{florm.formState.errors.username.message}</p>
                   )}
                 </div>
 
@@ -99,12 +109,15 @@ export default function Login() {
                 </div>
 
                 <Button
-                //   disabled={isLoading}
+                  disabled={isLoading}
                   className="h-12 w-full rounded-xl text-base hover:scale-102 active:scale-97"
                   type="submit"
                 >
                   {isLoading ? "Signing In..." : "Login"}
                 </Button>
+                {failed && (
+                    <p className=" text-center text-sm text-red-500">invalid email or password</p>
+                  )}
               </form>
             </CardContent>
           </Card>
