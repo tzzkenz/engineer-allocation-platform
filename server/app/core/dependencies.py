@@ -32,7 +32,7 @@ def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
 
 
 def get_employee_service(db: AsyncSession = Depends(get_db)) -> EmployeeService:
-    return EmployeeService(EmployeeRepository(db))
+    return EmployeeService(EmployeeRepository(db), AuditLogRepository(db))
 
 
 def get_feedback_service(db: AsyncSession = Depends(get_db)) -> FeedbackService:
@@ -55,5 +55,5 @@ def get_project_role_service(db: AsyncSession = Depends(get_db)) -> ProjectRoleS
     return ProjectRoleService(ProjectRoleRepository(db))
 
 
-def get_audit_log_service(db: AsyncSession = Depends(get_db)) -> "AuditLogService":
+def get_audit_log_service(db: AsyncSession = Depends(get_db)) -> AuditLogService:
     return AuditLogService(AuditLogRepository(db))
