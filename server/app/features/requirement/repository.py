@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-from sqlalchemy import func, select
+from typing import Any
+from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
 
 from models.project_requirement_request import (
     ProjectRequirementRequest,
@@ -199,3 +199,82 @@ class RequirementRepository:
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
+    
+
+    async def search_matching_employees(
+        self,
+        skill_ids: list[int],
+        availability: str,
+        sort_by_exp_desc: bool,
+        sort_by_prof_desc: bool,
+        identifier_filter: tuple[str, Any] | None = None,  # Added: (type, value) tuple
+    ) -> list[tuple[Employee, int, float]]:
+        
+        # 1. Subquery to calculate current active project allocations
+        active_allocations_subquery = (
+            select(
+                ProjectEmployee.employee_id,
+                func.count(ProjectEmployee.id).label("project_count")
+            )
+            .where(
+                ProjectEmployee.date_exited.is_(None),
+                ProjectEmployee.deleted_at.is_(None)
+            )
+            .group_by(ProjectEmployee.employee_id)
+            .subquery()
+        )
+
+        # 2. Base query mapping profiles against average skill proficiency metrics
+        stmt = (
+            select(
+                Employee,
+                func.coalesce(active_allocations_subquery.c.project_count, 0).label("active_projects"),
+                func.avg(EmployeeSkill.proficiency).label("avg_proficiency")
+            )
+            .join(EmployeeSkill, Employee.id == EmployeeSkill.employee_id)
+            .outerjoin(active_allocations_subquery, Employee.id == active_allocations_subquery.c.employee_id)
+            .where(Employee.deleted_at.is_(None), EmployeeSkill.deleted_at.is_(None))
+        )
+
+        # 3. Apply Multi-Format Identifier Filter
+        if identifier_filter:
+            id_type, val = identifier_filter
+            if id_type == "id":
+                stmt = stmt.where(Employee.id == val)
+            elif id_type == "email":
+                stmt = stmt.where(Employee.email == val)
+            elif id_type == "name":
+                stmt = stmt.where(Employee.name.ilike(f"%{val}%"))
+
+        # 4. Handle skill requirement containment
+        if skill_ids:
+            stmt = stmt.where(EmployeeSkill.skill_id.in_(skill_ids))
+            stmt = stmt.group_by(Employee.id, active_allocations_subquery.c.project_count)
+            stmt = stmt.having(func.count(EmployeeSkill.skill_id) == len(skill_ids))
+        else:
+            stmt = stmt.group_by(Employee.id, active_allocations_subquery.c.project_count)
+
+        # 5. Filter by capacity requirements dynamically
+        if availability == "AVAILABLE":
+            stmt = stmt.where(func.coalesce(active_allocations_subquery.c.project_count, 0) < 2)
+        elif availability == "UNAVAILABLE":
+            stmt = stmt.where(func.coalesce(active_allocations_subquery.c.project_count, 0) >= 2)
+
+        # 6. Build multi-layered ordering criteria (Experience takes priority)
+        order_by_clauses = []
+        if sort_by_exp_desc:
+            order_by_clauses.append(desc(Employee.experience))
+        else:
+            order_by_clauses.append(asc(Employee.experience))
+            
+        if sort_by_prof_desc:
+            order_by_clauses.append(desc("avg_proficiency"))
+        else:
+            order_by_clauses.append(asc("avg_proficiency"))
+
+        stmt = stmt.order_by(*order_by_clauses)
+
+        result = await self.db.execute(stmt)
+        return list(result.all())
+    
+    

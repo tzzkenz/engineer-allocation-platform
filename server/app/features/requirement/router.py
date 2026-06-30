@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
-from core.dependencies import get_requirement_service
+from core.dependencies import get_employee_service, get_requirement_service
 from features.requirement.schemas import (
+    AvailabilityFilter,
     MatchedEmployeeResponse,
     RequirementCreate,
     RequirementResponse,
@@ -10,6 +11,7 @@ from features.requirement.schemas import (
     StackRequirementResponse,
 )
 from features.requirement.service import RequirementService
+from features.employee.service import EmployeeService
 
 router = APIRouter(prefix="/project", tags=["Project requirements"])
 
@@ -125,3 +127,22 @@ async def get_matching_candidates(
     service: RequirementService = Depends(get_requirement_service),
 ):
     return await service.get_candidate_matches(request_id)
+
+
+
+@router.get("/search/matches", response_model=list[MatchedEmployeeResponse])
+async def search_candidates(
+    identifier: str | None = Query(default=None, description="Search parameter accepting an ID, exact Email, or partial Name"),
+    skill_ids: list[int] = Query(default=[]),
+    availability: AvailabilityFilter = Query(default=AvailabilityFilter.ALL),
+    sort_by_experience: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
+    sort_by_proficiency: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
+    service: RequirementService = Depends(get_requirement_service),
+):
+    return await service.get_filtered_candidates(
+        identifier=identifier,
+        skill_ids=skill_ids,
+        availability=availability.value,
+        sort_by_experience=sort_by_experience,
+        sort_by_proficiency=sort_by_proficiency,
+    )

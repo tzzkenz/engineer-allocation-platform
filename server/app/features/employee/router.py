@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status
+from fastapi.params import Query
 
 from core.dependencies import get_employee_service
 from features.employee.schemas import (
@@ -129,3 +130,6 @@ async def get_employee_skills(
     service: EmployeeService = Depends(get_employee_service),
 ):
     return await service.get_skills(id)
+
+
+
