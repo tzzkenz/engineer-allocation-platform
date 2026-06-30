@@ -276,9 +276,8 @@ class ProjectService:
         except Exception as e:
             await self.repo.db.rollback()
             raise UnknownException(f"Failed to allocate employees batch: {str(e)}")
-    
 
-    async def get_project_staffing_status(self, project_id: int) -> dict[str, Any]:
+    async def get_project_staffing_status(self, project_id: int):
         """
         Calculates staffing metrics comparing active allocations vs non-rejected requirements.
         """
@@ -301,5 +300,5 @@ class ProjectService:
             "total_requested": total_requested,
             "active_allocated": active_allocated,
             "staffing_balance": staffing_balance,
-            "status_label": status_label
+            "status_label": status_label,
         }
