@@ -30,7 +30,7 @@ def get_system_role_service(db: AsyncSession = Depends(get_db)) -> SystemRoleSer
 
 
 def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
-    return ProjectService(ProjectRepository(db))
+    return ProjectService(ProjectRepository(db),AuditLogRepository(db))
 
 
 def get_employee_service(db: AsyncSession = Depends(get_db)) -> EmployeeService:

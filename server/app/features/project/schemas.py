@@ -50,3 +50,26 @@ class ProjectResponse(BaseModel):
     updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+
+
+class ProjectEmployeeBatchCreate(BaseModel):
+    requirement_request_id: int
+    employee_ids: list[int] = Field(..., min_length=1, description="List of employee IDs to allocate")
+    is_shadow: bool = False
+
+
+class ProjectEmployeeResponse(BaseModel):
+    id: int
+    project_id: int
+    employee_id: int
+    project_role_id: int
+    is_shadow: bool
+    date_assigned: date
+    date_exited: date | None
+    requirement_request_id: int | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

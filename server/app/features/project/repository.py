@@ -1,9 +1,11 @@
 from datetime import datetime, timezone, date
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.project import Project, StatusType
+from models.project_employee import ProjectEmployee
 
 
 class ProjectRepository:
@@ -67,3 +69,23 @@ class ProjectRepository:
     async def soft_delete(self, project: Project) -> None:
         project.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()
+
+    async def get_active_allocation(self, project_id: int, employee_id: int, project_role_id: int) -> ProjectEmployee | None:
+        """
+        Checks if the employee is already assigned to the project with the same role and hasn't exited.
+        """
+        stmt = select(ProjectEmployee).where(
+            ProjectEmployee.project_id == project_id,
+            ProjectEmployee.employee_id == employee_id,
+            ProjectEmployee.project_role_id == project_role_id,
+            ProjectEmployee.date_exited.is_(None),       # Not exited yet
+            ProjectEmployee.deleted_at.is_(None)         # Soft-delete safety check
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def allocate_employee(self, allocation_data: dict[str, Any]) -> ProjectEmployee:
+        allocation = ProjectEmployee(**allocation_data)
+        self.db.add(allocation)
+        await self.db.flush()
+        return allocation
