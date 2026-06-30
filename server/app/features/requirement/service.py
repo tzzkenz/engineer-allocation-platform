@@ -1,6 +1,9 @@
 from datetime import datetime
+import re
+from select import select
 from typing import List
 
+from sqlalchemy import asc, desc, func
 from sqlalchemy.exc import IntegrityError
 
 from models.project_requirement_request import (
@@ -16,6 +19,8 @@ from exceptions import (
 )
 from models.skill import SkillType
 from features.requirement.schemas import MatchedEmployeeResponse
+from models.employee import Employee
+
 
 
 class RequirementService:
@@ -193,3 +198,50 @@ class RequirementService:
             )
             for emp, active_count in records
         ]
+
+
+    
+    
+    async def get_filtered_candidates(
+        self,
+        skill_ids: list[int],
+        availability: str,
+        sort_by_experience: bool,
+        sort_by_proficiency: bool,
+        identifier: str | None = None,  # Added parameter
+    ) -> list[MatchedEmployeeResponse]:
+        
+        identifier_filter = None
+        if identifier:
+            identifier = identifier.strip()
+            
+            if identifier.isdigit():
+                identifier_filter = ("id", int(identifier))
+            elif re.match(r"[^@]+@[^@]+\.[^@]+", identifier):
+                identifier_filter = ("email", identifier.lower())
+            else:
+                identifier_filter = ("name", identifier)
+
+        records = await self.repo.search_matching_employees(
+            skill_ids=skill_ids,
+            availability=availability,
+            sort_by_exp_desc=sort_by_experience,
+            sort_by_prof_desc=sort_by_proficiency,
+            identifier_filter=identifier_filter,
+        )
+        
+        return [
+            MatchedEmployeeResponse(
+                id=emp.id,
+                name=emp.name,
+                email=emp.email,
+                experience=emp.experience,
+                date_of_joining=emp.date_of_joining,
+                system_role_id=emp.system_role_id,
+                active_project_count=active_count
+            )
+            for emp, active_count, avg_prof in records
+        ]
+    
+
+    
