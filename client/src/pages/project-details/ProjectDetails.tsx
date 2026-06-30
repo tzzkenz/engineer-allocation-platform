@@ -27,7 +27,7 @@ export function ProjectDetails() {
 
       {project && <ProjectInfoCard project={project} />}
 
-      <RequirementsCard requirements={dummyProject.requirements} />
+      <RequirementsCard projectId={id!} requirements={dummyProject.requirements} />
 
       <ProjectNotesCard notes={dummyProject.notes} />
     </div>

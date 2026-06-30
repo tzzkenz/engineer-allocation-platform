@@ -24,7 +24,7 @@ interface RequirementsCardProps {
   projectId: string;
 }
 
-export function RequirementsCard({ requirements }: RequirementsCardProps) {
+export function RequirementsCard({ requirements, projectId }: RequirementsCardProps) {
   const [raiseOpen, setRaiseOpen] = useState(false);
 
   return (
@@ -61,7 +61,7 @@ export function RequirementsCard({ requirements }: RequirementsCardProps) {
 
       {/* Raise Request dialog */}
 
-      <RequirementFormDialog isOpen={raiseOpen} onOpenChange={setRaiseOpen} />
+      <RequirementFormDialog projectId={projectId} isOpen={raiseOpen} onOpenChange={setRaiseOpen} />
     </>
   );
 }

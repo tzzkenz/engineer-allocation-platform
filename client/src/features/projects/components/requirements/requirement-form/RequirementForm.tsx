@@ -1,3 +1,4 @@
+import { useGetProjectRolesQuery, useGetSkillsQuery } from "@/entities/config/services/configApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -33,18 +34,10 @@ import {
 
 import { requirementSchema } from "../schema";
 
-const skills = ["React", "TypeScript", "Node.js", "Python", "Docker"] as const;
-const roles = [
-  "Frontend Developer",
-  "Backend Developer",
-  "Full Stack Developer",
-  "QA Engineer",
-  "DevOps Engineer",
-  "UI/UX Designer",
-];
 export type RequirementFormValues = z.infer<typeof requirementSchema>;
 
 type RequirementFormProps = {
+  projectId: string;
   defaultValues?: Partial<RequirementFormValues>;
   onSubmit: (values: RequirementFormValues) => void | Promise<void>;
   isSubmitting?: boolean;
@@ -52,11 +45,15 @@ type RequirementFormProps = {
 };
 
 const RequirementForm = ({
+  projectId: string,
   defaultValues,
   onSubmit,
   onCancel,
   isSubmitting = false,
 }: RequirementFormProps) => {
+  const { data: projectRoles = [], isLoading: isProjectRolesLoading } = useGetProjectRolesQuery();
+  const { data: skills = [], isLoading: isSkillsLoading } = useGetSkillsQuery();
+
   const anchor = useComboboxAnchor();
 
   const {
@@ -75,13 +72,21 @@ const RequirementForm = ({
     },
   });
 
+  const handleProjectRoleObject = (values: RequirementFormValues) => {
+    const projectObj = projectRoles.find((value) => value.id == values.role);
+
+    const newValues = { ...values, role: projectObj };
+
+    onSubmit(newValues);
+  };
+
   const handleCancel = () => {
     reset();
     onCancel();
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
+    <form onSubmit={handleSubmit(handleProjectRoleObject)} className="space-y-4 py-2">
       <FieldGroup>
         <Field>
           <FieldLabel>Role</FieldLabel>
@@ -97,9 +102,9 @@ const RequirementForm = ({
                   </SelectTrigger>
 
                   <SelectContent>
-                    {roles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
+                    {projectRoles.map((role) => (
+                      <SelectItem key={role.id} value={role.id.toString()}>
+                        {role.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -150,7 +155,7 @@ const RequirementForm = ({
                       {(values) => (
                         <>
                           {values.map((value) => (
-                            <ComboboxChip key={value}>{value}</ComboboxChip>
+                            <ComboboxChip key={value.id}>{value.name}</ComboboxChip>
                           ))}
 
                           <ComboboxChipsInput
@@ -168,8 +173,8 @@ const RequirementForm = ({
 
                     <ComboboxList>
                       {(item) => (
-                        <ComboboxItem key={item} value={item}>
-                          {item}
+                        <ComboboxItem key={item.id} value={item}>
+                          {item.name}
                         </ComboboxItem>
                       )}
                     </ComboboxList>
@@ -189,6 +194,7 @@ const RequirementForm = ({
         <Button
           type="submit"
           className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+          disabled={isSubmitting}
         >
           Raise Request
         </Button>

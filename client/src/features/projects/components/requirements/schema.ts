@@ -5,5 +5,7 @@ export const requirementSchema = z.object({
 
   requiredCount: z.number().int().min(1, "Required count must be at least 1"),
 
-  requiredSkills: z.array(z.string()).min(1, "Select at least one skill"),
+  requiredSkills: z
+    .array(z.object({ id: z.number(), name: z.string() }))
+    .min(1, "Select at least one skill"),
 });
