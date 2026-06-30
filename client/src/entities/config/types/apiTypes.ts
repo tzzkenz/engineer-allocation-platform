@@ -26,3 +26,8 @@ export type UpdateSkillPayload = {
   name?: string;
   description?: string | null;
 };
+
+export type SystemRoleResponse = {
+  id: number;
+  name: string;
+};

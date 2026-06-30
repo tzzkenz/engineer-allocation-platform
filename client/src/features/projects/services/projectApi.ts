@@ -1,5 +1,6 @@
 import type {
   CreateRequirementRequest,
+  FeedbackResponse,
   Project,
   ProjectListResponse,
   RequirementResponse,
@@ -40,7 +41,13 @@ const projectApi = employeeBaseApi.injectEndpoints({
             ]
           : [{ type: "Requirement", id: "LIST" }],
     }),
-
+    getProjectNotes: builder.query<FeedbackResponse[], string>({
+      query: (projectId) => ({
+        url: `/feedbacks/project/${projectId}`,
+        method: "GET",
+      }),
+      providesTags: ["Project"],
+    }),
     getProjectRequirements: builder.query<RequirementResponse[], string>({
       query: (projectId) => ({
         url: `/project/${projectId}/requirements`,
@@ -120,4 +127,5 @@ export const {
   useCreateRequirementMutation,
   useUpdateRequirementMutation,
   useDeleteRequirementMutation,
+  useGetProjectNotesQuery,
 } = projectApi;
