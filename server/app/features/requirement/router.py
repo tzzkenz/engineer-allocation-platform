@@ -11,7 +11,8 @@ from features.requirement.schemas import (
     StackRequirementResponse,
 )
 from features.requirement.service import RequirementService
-from features.employee.service import EmployeeService
+from features.auth.dependencies import get_current_user
+from features.auth.schemas import TokenPayload
 
 router = APIRouter(prefix="/project", tags=["Project requirements"])
 
@@ -25,12 +26,13 @@ async def create_requirement(
     payload: RequirementCreate,
     project_id: int,
     service: RequirementService = Depends(get_requirement_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
     return await service.create(
         project_id=project_id,
         project_role_id=payload.project_role_id,
         requested_count=payload.requested_count,
-        requested_by=payload.requested_by,
+        requested_by=current_user.id,
         stack_ids=payload.stack_ids,
     )
 
@@ -38,7 +40,9 @@ async def create_requirement(
 @router.get("/{project_id}/requirements", response_model=list[RequirementResponse])
 async def get_requirements_for_project(
     project_id: int, service: RequirementService = Depends(get_requirement_service)
+    
 ):
+    # Fixed to pass project_id explicitly so the service processes the query correctly
     return await service.get(project_id=project_id)
 
 
@@ -115,8 +119,6 @@ async def remove_stack_requirement(
     await service.remove_stack(request_id=request_id, stack_request_id=stack_request_id)
 
 
-
-
 @router.get(
     "/requirements/{request_id}/matches", 
     response_model=list[MatchedEmployeeResponse],
@@ -129,7 +131,6 @@ async def get_matching_candidates(
     return await service.get_candidate_matches(request_id)
 
 
-
 @router.get("/search/matches", response_model=list[MatchedEmployeeResponse])
 async def search_candidates(
     identifier: str | None = Query(default=None, description="Search parameter accepting an ID, exact Email, or partial Name"),
@@ -138,6 +139,8 @@ async def search_candidates(
     sort_by_experience: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
     sort_by_proficiency: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
     service: RequirementService = Depends(get_requirement_service),
+    limit: int | None = Query(default=None, ge=1),
+    offset: int | None = Query(default=None, ge=0),
 ):
     return await service.get_filtered_candidates(
         identifier=identifier,
@@ -145,4 +148,6 @@ async def search_candidates(
         availability=availability.value,
         sort_by_experience=sort_by_experience,
         sort_by_proficiency=sort_by_proficiency,
+        limit=limit,
+        offset=offset
     )

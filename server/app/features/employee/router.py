@@ -23,8 +23,10 @@ router = APIRouter(prefix="/employees", tags=["Employees"])
 @router.get("", response_model=list[EmployeeResponse])
 async def list_employees(
     service: EmployeeService = Depends(get_employee_service),
+    limit: int | None = Query(default=None, ge=1),
+    offset: int | None = Query(default=None, ge=0),
 ):
-    return await service.list()
+    return await service.list(limit=limit, offset=offset)
 
 
 @router.get("/me", response_model=EmployeeResponse)

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Any
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload  # Added joinedload
 
 from models.project_requirement_request import (
     ProjectRequirementRequest,
@@ -28,7 +28,11 @@ class RequirementRepository:
                 ProjectRequirementRequest.project_id == project_id,
                 ProjectRequirementRequest.deleted_at.is_(None),
             )
-            .options(selectinload(ProjectRequirementRequest.stack_requests))  # ✅
+            .options(
+                joinedload(ProjectRequirementRequest.project_role),
+                joinedload(ProjectRequirementRequest.requested_by_employee),  # ✅ Added
+                selectinload(ProjectRequirementRequest.stack_requests).joinedload(ProjectStackRequirementRequest.stack)
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -40,7 +44,11 @@ class RequirementRepository:
                 ProjectRequirementRequest.id == request_id,
                 ProjectRequirementRequest.deleted_at.is_(None),
             )
-            .options(selectinload(ProjectRequirementRequest.stack_requests))  # ✅
+            .options(
+                joinedload(ProjectRequirementRequest.project_role),
+                joinedload(ProjectRequirementRequest.requested_by_employee), 
+                selectinload(ProjectRequirementRequest.stack_requests).joinedload(ProjectStackRequirementRequest.stack)
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
@@ -49,10 +57,16 @@ class RequirementRepository:
         stmt = (
             select(ProjectRequirementRequest)
             .where(ProjectRequirementRequest.deleted_at.is_(None))
-            .options(selectinload(ProjectRequirementRequest.stack_requests))  # ✅
+            .options(
+                joinedload(ProjectRequirementRequest.project_role),
+                joinedload(ProjectRequirementRequest.requested_by_employee), 
+                selectinload(ProjectRequirementRequest.stack_requests).joinedload(ProjectStackRequirementRequest.stack)
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    
 
     async def create(
         self,
@@ -119,8 +133,10 @@ class RequirementRepository:
     async def list_stacks_by_request(
         self, request_id: int
     ) -> list[ProjectStackRequirementRequest]:
-        stmt = select(ProjectStackRequirementRequest).where(
-            ProjectStackRequirementRequest.project_requirement_request_id == request_id
+        stmt = (
+            select(ProjectStackRequirementRequest)
+            .where(ProjectStackRequirementRequest.project_requirement_request_id == request_id)
+            .options(joinedload(ProjectStackRequirementRequest.stack)) # Load skills details
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -128,8 +144,10 @@ class RequirementRepository:
     async def get_stack_request_by_id(
         self, stack_request_id: int
     ) -> ProjectStackRequirementRequest | None:
-        stmt = select(ProjectStackRequirementRequest).where(
-            ProjectStackRequirementRequest.id == stack_request_id
+        stmt = (
+            select(ProjectStackRequirementRequest)
+            .where(ProjectStackRequirementRequest.id == stack_request_id)
+            .options(joinedload(ProjectStackRequirementRequest.stack))
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
@@ -141,18 +159,15 @@ class RequirementRepository:
         await self.db.flush()
 
     async def get_matched_employees_for_request(self, request_id: int) -> list[tuple[Employee, int]]:
-        # 1. Fetch the required skill IDs for this requirement request
         skills_stmt = select(ProjectStackRequirementRequest.stack_id).where(
             ProjectStackRequirementRequest.project_requirement_request_id == request_id
         )
         skills_result = await self.db.execute(skills_stmt)
         required_skill_ids = list(skills_result.scalars().all())
 
-        # If no specific skill requirements are assigned, return an empty list or adjust logic
         if not required_skill_ids:
             return []
 
-        # 2. Subquery to count active project allocations per employee
         active_allocations_subquery = (
             select(
                 ProjectEmployee.employee_id,
@@ -166,7 +181,6 @@ class RequirementRepository:
             .subquery()
         )
 
-        # 3. Main query: Fetch active employees who have all required skills and < 2 active projects
         stmt = (
             select(
                 Employee,
@@ -183,7 +197,6 @@ class RequirementRepository:
                 Employee.id, 
                 active_allocations_subquery.c.project_count
             )
-            # Having count of matched skills equal to total required skills ensures absolute coverage
             .having(func.count(EmployeeSkill.skill_id) == len(required_skill_ids))
             .where(func.coalesce(active_allocations_subquery.c.project_count, 0) < 2)
         )
@@ -195,7 +208,11 @@ class RequirementRepository:
         stmt = (
             select(ProjectRequirementRequest)
             .where(ProjectRequirementRequest.id == request_id)
-            .options(selectinload(ProjectRequirementRequest.stack_requests))
+            .options(
+                joinedload(ProjectRequirementRequest.project_role),
+                joinedload(ProjectRequirementRequest.requested_by_employee),  
+                selectinload(ProjectRequirementRequest.stack_requests).joinedload(ProjectStackRequirementRequest.stack)
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
@@ -207,10 +224,11 @@ class RequirementRepository:
         availability: str,
         sort_by_exp_desc: bool,
         sort_by_prof_desc: bool,
-        identifier_filter: tuple[str, Any] | None = None,  # Added: (type, value) tuple
+        identifier_filter: tuple[str, Any] | None = None,
+        limit: int | None = None,
+        offset: int | None = None
     ) -> list[tuple[Employee, int, float]]:
         
-        # 1. Subquery to calculate current active project allocations
         active_allocations_subquery = (
             select(
                 ProjectEmployee.employee_id,
@@ -224,7 +242,6 @@ class RequirementRepository:
             .subquery()
         )
 
-        # 2. Base query mapping profiles against average skill proficiency metrics
         stmt = (
             select(
                 Employee,
@@ -236,7 +253,6 @@ class RequirementRepository:
             .where(Employee.deleted_at.is_(None), EmployeeSkill.deleted_at.is_(None))
         )
 
-        # 3. Apply Multi-Format Identifier Filter
         if identifier_filter:
             id_type, val = identifier_filter
             if id_type == "id":
@@ -246,7 +262,6 @@ class RequirementRepository:
             elif id_type == "name":
                 stmt = stmt.where(Employee.name.ilike(f"%{val}%"))
 
-        # 4. Handle skill requirement containment
         if skill_ids:
             stmt = stmt.where(EmployeeSkill.skill_id.in_(skill_ids))
             stmt = stmt.group_by(Employee.id, active_allocations_subquery.c.project_count)
@@ -254,13 +269,11 @@ class RequirementRepository:
         else:
             stmt = stmt.group_by(Employee.id, active_allocations_subquery.c.project_count)
 
-        # 5. Filter by capacity requirements dynamically
         if availability == "AVAILABLE":
             stmt = stmt.where(func.coalesce(active_allocations_subquery.c.project_count, 0) < 2)
         elif availability == "UNAVAILABLE":
             stmt = stmt.where(func.coalesce(active_allocations_subquery.c.project_count, 0) >= 2)
 
-        # 6. Build multi-layered ordering criteria (Experience takes priority)
         order_by_clauses = []
         if sort_by_exp_desc:
             order_by_clauses.append(desc(Employee.experience))
@@ -274,7 +287,10 @@ class RequirementRepository:
 
         stmt = stmt.order_by(*order_by_clauses)
 
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
+
         result = await self.db.execute(stmt)
         return list(result.all())
-    
-    

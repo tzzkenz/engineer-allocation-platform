@@ -28,3 +28,10 @@ export type ProjectResponse = BaseApiResponse & {
   duration: number;
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD";
 };
+export type UpdateProjectRequest = {
+  projectId: string
+  name: string;
+  start_date: string;
+  duration: number;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD";
+};

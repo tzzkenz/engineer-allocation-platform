@@ -14,7 +14,6 @@ class AvailabilityFilter(str, Enum):
 class RequirementCreate(BaseModel):
     project_role_id: int
     requested_count: int
-    requested_by: int
     stack_ids: list[int] = []
 
 
@@ -29,6 +28,7 @@ class StackRequirementResponse(BaseModel):
     id: int
     project_requirement_request_id: int
     stack_id: int
+    stack_name: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,8 +37,10 @@ class RequirementResponse(BaseModel):
     id: int
     project_id: int
     project_role_id: int
+    project_role_name: str
     requested_count: int
     requested_by: int
+    requested_by_name: str
     resolved_by: int | None
     resolved_at: datetime | None
     status: RequestStatus
