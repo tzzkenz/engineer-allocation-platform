@@ -6,6 +6,7 @@ import type { RequirementResponse } from "@entities/project/types/apiTypes";
 
 import { IconButton } from "@shared/components/icon-button/IconButton";
 
+import AssignEngineerDialog from "../../assigned-engineer-card/AssignedEngineerCard";
 import { SectionCard, SectionCardInner, SectionHeader } from "../../section/SectionCard";
 import RequirementFormDialog from "../requirement-form-dlalog/requirement-form/RequirementFormDialog";
 import { RequirementTable } from "../requirement-table/RequirementTable";
@@ -17,6 +18,7 @@ type RequirementsCardProps = {
 
 export function RequirementsCard({ requirements, projectId }: RequirementsCardProps) {
   const [raiseOpen, setRaiseOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
   return (
     <>
@@ -45,14 +47,14 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
             requirements={requirements}
             onAssign={() => {
               console.log("Assigne clicke");
+              setIsAssignDialogOpen(true);
             }}
           />
         </SectionCardInner>
       </SectionCard>
 
-      {/* Raise Request dialog */}
-
       <RequirementFormDialog projectId={projectId} isOpen={raiseOpen} onOpenChange={setRaiseOpen} />
+      <AssignEngineerDialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />
     </>
   );
 }

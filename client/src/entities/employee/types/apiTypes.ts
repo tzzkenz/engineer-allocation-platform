@@ -5,3 +5,5 @@ export type EmployeeResponse = {
   name: string;
   role: SystemRoleResponse;
 };
+
+export type AvailabilityStatus = "AVAILABLE" | "BUSY";
