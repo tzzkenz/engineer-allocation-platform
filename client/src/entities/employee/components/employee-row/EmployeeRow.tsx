@@ -3,24 +3,18 @@ import type { ReactNode } from "react";
 import { TechStackTag } from "@/entities/project/components/TechStack";
 import { TableCell, TableRow } from "@/shared/components/ui/table";
 
-import type { Engineer } from "../engineer-table/EngineerTable";
+import type { EmployeeResponse } from "../../types/apiTypes";
 import StatusBadge from "../status-badge/StatusBadge";
 
 type EngineerRowProps = {
-  engineer: Engineer;
+  engineer: EmployeeResponse;
   actions?: ReactNode;
 };
-const EngineerRow = ({ engineer, actions }: EngineerRowProps) => {
+const EmployeeRow = ({ engineer, actions }: EngineerRowProps) => {
   return (
     <TableRow key={engineer.id}>
       <TableCell>
         <div className="flex items-center gap-3">
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold ${engineer.avatarBg} ${engineer.avatarText}`}
-          >
-            {engineer.initials}
-          </div>
-
           <div>
             <p className="font-medium">{engineer.name}</p>
 
@@ -29,22 +23,22 @@ const EngineerRow = ({ engineer, actions }: EngineerRowProps) => {
         </div>
       </TableCell>
 
-      <TableCell>{engineer.currentRole}</TableCell>
+      <TableCell>{engineer.system_role_name}</TableCell>
 
       <TableCell>
         <div className="flex flex-wrap gap-1">
-          {engineer.skills.map((skill) => (
+          {/* {engineer.map((skill) => (
             <TechStackTag tech={skill} />
-          ))}
+          ))} */}
         </div>
       </TableCell>
 
       <TableCell>{engineer.experience}</TableCell>
 
-      <TableCell>{engineer.activeProjects}</TableCell>
+      <TableCell>{engineer.active_project_count}</TableCell>
 
       <TableCell>
-        <StatusBadge status={engineer.availability} />
+        <StatusBadge status={engineer.active_project_count < 2 ? "AVAILABLE" : "BUSY"} />
       </TableCell>
 
       <TableCell className="text-right">{actions}</TableCell>
@@ -52,4 +46,4 @@ const EngineerRow = ({ engineer, actions }: EngineerRowProps) => {
   );
 };
 
-export default EngineerRow;
+export default EmployeeRow;

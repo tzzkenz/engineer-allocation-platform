@@ -8,7 +8,8 @@ import {
   TableRow,
 } from "@shared/components/ui/table";
 
-import EngineerRow from "../engineer-row/EngineerRow";
+import type { EmployeeResponse } from "../../types/apiTypes";
+import EmployeeRow from "../employee-row/EmployeeRow";
 
 export type AvailabilityStatus = "available" | "busy" | "on_leave";
 
@@ -27,7 +28,7 @@ export interface Engineer {
 }
 
 type Props = {
-  engineers: Engineer[];
+  employees: EmployeeResponse[];
   onAssign: (engineer: Engineer) => void;
 };
 
@@ -41,7 +42,7 @@ const tableHeads = [
   "Actions",
 ];
 
-export default function EngineerTable({ engineers, onAssign }: Props) {
+export default function EmployeeTable({ employees, onAssign }: Props) {
   return (
     <div className="rounded-lg border">
       <Table>
@@ -56,17 +57,17 @@ export default function EngineerTable({ engineers, onAssign }: Props) {
         </TableHeader>
 
         <TableBody>
-          {engineers.length === 0 ? (
+          {employees.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                 No engineers match your filters.
               </TableCell>
             </TableRow>
           ) : (
-            engineers.map((engineer) => (
-              <EngineerRow
-                engineer={engineer}
-                actions={<Button onClick={() => onAssign(engineer)}>Assign</Button>}
+            employees.map((employee) => (
+              <EmployeeRow
+                engineer={employee}
+                actions={<Button onClick={() => onAssign(employee)}>Assign</Button>}
               />
             ))
           )}
