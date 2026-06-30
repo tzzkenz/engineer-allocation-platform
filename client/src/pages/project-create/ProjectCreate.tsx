@@ -9,13 +9,20 @@ import { CalendarDays, CircleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { useCreateProjectMutation } from "@/features/projects/services/projectCreateApi";
+import { useParams } from "react-router";
 export default function ProjectCreate() {
+  const {projectId}=useParams();
+  const isEdit= !!projectId;
   const [createProject,{isLoading}]=useCreateProjectMutation();
     const navigate=useNavigate()
   const checkForm = useForm<ProjectCreateFormData>({
     resolver: zodResolver(projectCreateSchema),
     defaultValues: {
-      name: "",
+  name:"",
+  duration: undefined,
+  start_date: undefined,
+  status: "NOT_STARTED",
+
     },
   });
   const onSubmit =async (data: ProjectCreateFormData) => {
@@ -35,7 +42,7 @@ export default function ProjectCreate() {
   return (
     <>
       <PageSection
-        title="Create Project"
+        title={isEdit ? "Edit Project" : "Create Project"}
         description="Define and create a new project"
         additionalContent={<></>}
       ></PageSection>
@@ -48,7 +55,10 @@ export default function ProjectCreate() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
-          <form className="space-y-8 " onSubmit={checkForm.handleSubmit(onSubmit)}>
+          <form className="space-y-8 " onSubmit={(e) => {
+              console.log(checkForm.formState.errors);
+              checkForm.handleSubmit(onSubmit)(e);
+            }}>
             <div className="md:grid grid-cols-2 gap-8 max-md:space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">PROJECT NAME</Label>
@@ -74,7 +84,8 @@ export default function ProjectCreate() {
                     placeholder="Select start and end dates"
                     className="h-12 pr-12"
                     {...checkForm.register("duration", {
-                      valueAsNumber: true,
+                      setValueAs: (value) =>
+                        value === "" ? undefined : Number(value),
                     })}
                   />
 
@@ -95,14 +106,16 @@ export default function ProjectCreate() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endDate">EXPECTED END DATE</Label>
+                <Label htmlFor="endDate">PROJECT STATUS</Label>
 
                 <Input
                   id="status"
 
                   placeholder="Calculated from duration"
                   className="h-12"
-                  {...checkForm.register("status")}
+                  {...checkForm.register("start_date", {
+                    setValueAs: (value) => value === "" ? undefined : value,
+                  })}
                 />
               </div>
             </div>
