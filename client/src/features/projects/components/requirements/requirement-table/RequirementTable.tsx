@@ -1,4 +1,5 @@
-import { TechStackTag } from "@/entities/project/components/TechStack";
+import type { RequirementResponse } from "@/entities/project/types/apiTypes";
+import { REQUIREMENT_NAME_TO_LABEL } from "@/features/projects/utils/status";
 import { Button } from "@/shared/components/ui/button";
 import {
   Table,
@@ -9,25 +10,11 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 
-const TABLE_HEADS = [
-  "Project Role",
-  "Required Expertise",
-  "Required",
-  "Assigned",
-  "Status",
-  "Actions",
-];
+const TABLE_HEADS = ["Project Role", "Required Expertise", "Assigned", "Status", "Actions"];
 
 type RequirementTableProps = {
-  requirements: {
-    id: string;
-    role: string;
-    expertise: string[];
-    required: number;
-    assigned: number;
-    status: string;
-  }[];
-  onAssign: (requirementId: string) => void;
+  requirements: RequirementResponse[];
+  onAssign: (requirementId: number) => void;
 };
 
 export const RequirementTable = ({ requirements, onAssign }: RequirementTableProps) => {
@@ -44,10 +31,10 @@ export const RequirementTable = ({ requirements, onAssign }: RequirementTablePro
       <TableBody>
         {requirements.map((req) => (
           <TableRow key={req.id}>
-            <TableCell>{req.role}</TableCell>
+            <TableCell>{req.project_role_id}</TableCell>
 
             <TableCell>
-              {req.expertise.length > 0 ? (
+              {/* {req.expertise.length > 0 ? (
                 <div>
                   {req.expertise.map((expertise) => (
                     <TechStackTag key={expertise} tech={expertise} />
@@ -55,16 +42,12 @@ export const RequirementTable = ({ requirements, onAssign }: RequirementTablePro
                 </div>
               ) : (
                 <span>{req.role === "QA" ? "Manual Testing" : "—"}</span>
-              )}
+              )} */}
             </TableCell>
 
-            <TableCell>{req.required}</TableCell>
+            <TableCell>0 / {req.requested_count}</TableCell>
 
-            <TableCell>
-              {req.assigned} / {req.required}
-            </TableCell>
-
-            <TableCell>{req.status}</TableCell>
+            <TableCell>{REQUIREMENT_NAME_TO_LABEL[req.status]}</TableCell>
 
             <TableCell>
               <Button

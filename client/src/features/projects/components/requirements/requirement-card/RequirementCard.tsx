@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import type { RequirementResponse } from "@/entities/project/types/apiTypes";
 import { Bell, Plus } from "lucide-react";
 
 import { IconButton } from "@shared/components/icon-button/IconButton";
@@ -19,10 +20,10 @@ import RequirementForm from "../requirement-form-dlalog/requirement-form/Require
 import RequirementFormDialog from "../requirement-form-dlalog/requirement-form/RequirementFormDialog";
 import { RequirementTable } from "../requirement-table/RequirementTable";
 
-interface RequirementsCardProps {
-  requirements: Requirement[];
+type RequirementsCardProps = {
+  requirements: RequirementResponse[];
   projectId: string;
-}
+};
 
 export function RequirementsCard({ requirements, projectId }: RequirementsCardProps) {
   const [raiseOpen, setRaiseOpen] = useState(false);

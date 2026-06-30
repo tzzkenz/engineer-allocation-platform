@@ -41,7 +41,7 @@ const projectApi = employeeBaseApi.injectEndpoints({
           : [{ type: "Requirement", id: "LIST" }],
     }),
 
-    getProjectRequirements: builder.query<RequirementResponse[], number>({
+    getProjectRequirements: builder.query<RequirementResponse[], string>({
       query: (projectId) => ({
         url: `/project/${projectId}/requirements`,
         method: "GET",

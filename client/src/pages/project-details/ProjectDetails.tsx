@@ -4,7 +4,10 @@ import { ProjectNotesCard } from "@features/projects/components/notes/notes-card
 import { ProjectInfoCard } from "@features/projects/components/project-info/ProjectInfoCard";
 import { RequirementsCard } from "@features/projects/components/requirements/requirement-card/RequirementCard";
 import { mockProjectDetail } from "@features/projects/data/data";
-import { useGetProjectQuery } from "@features/projects/services/projectApi";
+import {
+  useGetProjectQuery,
+  useGetProjectRequirementsQuery,
+} from "@features/projects/services/projectApi";
 
 import PageSection from "@shared/components/ui/section";
 
@@ -19,6 +22,11 @@ export function ProjectDetails() {
     skip: !id,
   });
 
+  const { data: requirements = [], isLoading: isRequirementsLoading } =
+    useGetProjectRequirementsQuery(id!, {
+      skip: !id,
+    });
+
   const dummyProject = mockProjectDetail;
 
   return (
@@ -27,7 +35,7 @@ export function ProjectDetails() {
 
       {project && <ProjectInfoCard project={project} />}
 
-      <RequirementsCard projectId={id!} requirements={dummyProject.requirements} />
+      <RequirementsCard projectId={id!} requirements={requirements} />
 
       <ProjectNotesCard notes={dummyProject.notes} />
     </div>
