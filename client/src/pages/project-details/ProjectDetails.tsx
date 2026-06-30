@@ -1,3 +1,4 @@
+import ProjectEmployees from "@/features/projects/components/project-employees/ProjectEmployees";
 import { useParams } from "react-router";
 
 import { ProjectNotesCard } from "@features/projects/components/notes/notes-card/NotesCard";
@@ -37,6 +38,7 @@ export function ProjectDetails() {
 
       {project && <ProjectInfoCard project={project} />}
 
+      <ProjectEmployees employees={[]} />
       <RequirementsCard projectId={id!} requirements={requirements} />
 
       <ProjectNotesCard projectId={id!} notes={projectNotes} />

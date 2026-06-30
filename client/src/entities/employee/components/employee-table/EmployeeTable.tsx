@@ -15,7 +15,7 @@ export type AvailabilityStatus = "available" | "busy" | "on_leave";
 
 type Props = {
   employees: EmployeeResponse[];
-  onAssign: (engineer: EmployeeResponse) => void;
+  onAssign?: (engineer: EmployeeResponse) => void;
 };
 
 const tableHeads = [
@@ -30,7 +30,7 @@ const tableHeads = [
 
 export default function EmployeeTable({ employees, onAssign }: Props) {
   return (
-    <div className="rounded-lg border">
+    <div className=" w-full rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -53,7 +53,7 @@ export default function EmployeeTable({ employees, onAssign }: Props) {
             employees.map((employee) => (
               <EmployeeRow
                 engineer={employee}
-                actions={<Button onClick={() => onAssign(employee)}>Assign</Button>}
+                actions={<Button onClick={() => onAssign && onAssign(employee)}>Assign</Button>}
               />
             ))
           )}
