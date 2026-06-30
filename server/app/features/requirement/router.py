@@ -28,6 +28,7 @@ async def create_requirement(
         project_role_id=payload.project_role_id,
         requested_count=payload.requested_count,
         requested_by=payload.requested_by,
+        stack_ids=payload.stack_ids,
     )
 
 
@@ -50,7 +51,7 @@ async def get_requirement(
 async def list_requirements(
     service: RequirementService = Depends(get_requirement_service),
 ):
-    return await service.list()
+    return await service.list_all()
 
 
 @router.patch("/requirements/{request_id}", response_model=RequirementResponse)
