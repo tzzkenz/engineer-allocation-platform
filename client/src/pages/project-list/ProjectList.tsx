@@ -21,7 +21,7 @@ export function ProjectList() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const handleViewClick = (projectId: number) => {
-    navigate(`/projects/${projectId}`);
+    navigate(`/project/${projectId}`);
   };
 
   const filtered = projects.filter((p) => {

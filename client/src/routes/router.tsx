@@ -1,9 +1,10 @@
 import { AppLayout } from "@/app/layout/AppLayout";
-import { EmployeeProfile } from "@/pages/employee-profile/EmployeeProfile";
-import { ProjectList } from "@/pages/project-list/ProjectList";
-import { createBrowserRouter } from "react-router";
 import EmployeeCreate from "@/pages/employee-create/EmployeeCreate";
 import EmployeeEdit from "@/pages/employee-edit/EmployeeEdit";
+import { EmployeeProfile } from "@/pages/employee-profile/EmployeeProfile";
+import { ProjectDetails } from "@/pages/project-details/ProjectDetails";
+import { ProjectList } from "@/pages/project-list/ProjectList";
+import { createBrowserRouter } from "react-router";
 
 const router = createBrowserRouter([
   {
@@ -15,24 +16,28 @@ const router = createBrowserRouter([
         element: <EmployeeProfile />,
       },
       {
-        path:"employee",
-        children:[
+        path: "employee",
+        children: [
           {
-            path:"create",
-            element:<EmployeeCreate/>,
+            path: "create",
+            element: <EmployeeCreate />,
           },
           {
-            path:"edit",
-            element:<EmployeeEdit/>,
+            path: "edit",
+            element: <EmployeeEdit />,
           },
-        ]
+        ],
       },
       {
-        path: "projects",
+        path: "project",
         children: [
           {
             index: true,
             element: <ProjectList />,
+          },
+          {
+            path: ":id",
+            element: <ProjectDetails />,
           },
         ],
       },
