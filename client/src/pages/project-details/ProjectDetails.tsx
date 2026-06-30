@@ -1,5 +1,5 @@
 import ProjectEmployees from "@/features/projects/components/project-employees/ProjectEmployees";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import { ProjectNotesCard } from "@features/projects/components/notes/notes-card/NotesCard";
 import { ProjectInfoCard } from "@features/projects/components/project-info/ProjectInfoCard";
@@ -15,6 +15,7 @@ import PageSection from "@shared/components/ui/section";
 export function ProjectDetails() {
   const { id } = useParams<{ id: string }>();
 
+  const navigate = useNavigate();
   const {
     data: project,
     isLoading: isProjectLoading,
@@ -36,7 +37,9 @@ export function ProjectDetails() {
     <div className="flex flex-col gap-8 w-full py-6">
       <PageSection title="Project Details" />
 
-      {project && <ProjectInfoCard project={project} />}
+      {project && (
+        <ProjectInfoCard project={project} onEdit={() => navigate(`/project/${id}/edit`)} />
+      )}
 
       <ProjectEmployees employees={[]} />
       <RequirementsCard projectId={id!} requirements={requirements} />

@@ -44,7 +44,7 @@ export function ProjectInfoCard({ project, onEdit, onMarkComplete }: ProjectInfo
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 w-full">
           <InfoField label="Project Name" value={project.name} />
           <InfoField label="Duration" value={project.duration || "N/A"} />
-          <InfoField label="Start Date" value={project.start_date || "N/A"} />
+          <InfoField label="Start Date" value={formatDate(project.start_date) || "N/A"} />
           <InfoField
             label="End Date"
             value={formatDate(getProjectDateRange(project.start_date, project.duration).endDate)}
