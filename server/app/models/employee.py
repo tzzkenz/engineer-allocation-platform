@@ -19,9 +19,7 @@ class Employee(Entity):
     role = relationship("SystemRole", back_populates="employees")
     audit_logs = relationship("AuditLog", back_populates="changed_by")
 
-    employee_stacks = relationship(
-        "EmployeeSkill", back_populates="employee", cascade="all, delete-orphan"
-    )
+    
 
     employee_skills = relationship(
         "EmployeeSkill", back_populates="employee", cascade="all, delete-orphan"
