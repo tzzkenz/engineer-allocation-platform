@@ -1,38 +1,44 @@
-import json
+"""
+Chat endpoint for the AI assistant.
 
-from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+Assumes you already have:
+  - a `get_employee_service` dependency that yields a request-scoped
+    EmployeeService (DB session per request)
+  - a `get_current_user` dependency that yields the authenticated user,
+    used both for the thread_id (so conversation memory is per-user) and
+    for role-based tool authorization
+"""
 
-from features.agent.schemas import ChatRequest
-from features.agent.chatbot import agent
-from langchain_core.runnables import RunnableConfig
-from langchain.messages import HumanMessage
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+
+from features.agent.agent import make_agent
+from core.dependencies import get_employee_service
+from features.auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/agent", tags=["Agent"])
 
 
-@router.post("/chatbot/stream")
-async def chatbot(req: ChatRequest):
-    """
-    Stream chatbot responses using Server-Sent Events (SSE).
-    """
-    config: RunnableConfig = {"configurable": {"thread_id": req.user_id}}
+class ChatRequest(BaseModel):
+    message: str
 
-    async def event_stream():
-        messages = {"messages": [HumanMessage(content=req.content)]}
 
-        async for event in agent.astream_events(messages, config=config):
-            if event["event"] == "on_chat_model_stream":
-                chunk = event["data"]["chunk"]
+class ChatResponse(BaseModel):
+    response: str
 
-                if chunk.content:
-                    yield (
-                        f"data: {json.dumps({'content': chunk.content, 'type': 'delta'})}\n\n"
-                    )
 
-        yield "data: [DONE]\n\n"
+@router.post("/chat", response_model=ChatResponse)
+async def chat(
+    payload: ChatRequest,
+    employee_service=Depends(get_employee_service),
+    current_user=Depends(get_current_user),
+):
+    agent = make_agent(employee_service, requesting_role=current_user.system_role_id)
 
-    return StreamingResponse(
-        event_stream(),
-        media_type="text/event-stream",
+    result = await agent.ainvoke(
+        {"messages": [{"role": "user", "content": payload.message}]},
+        config={"configurable": {"thread_id": f"employee-{current_user.id}"}},
     )
+
+    last_message = result["messages"][-1]
+    return ChatResponse(response=last_message.content)
