@@ -1,18 +1,17 @@
 import { type ReactNode } from "react";
 
+import { useAppSelector } from "@/store/store";
 import { Navigate, Outlet, useLocation } from "react-router";
-
-import { useAuth } from "@features/auth/hooks/useAuth";
 
 type PrivateRouteProps = {
   children?: ReactNode;
 };
 
 const PrivateRoute = ({ children }: PrivateRouteProps) => {
-  const auth = useAuth();
+  const auth = useAppSelector((state) => state.auth.user);
   const location = useLocation();
 
-  if (!auth?.isAuthenticated) {
+  if (!auth) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

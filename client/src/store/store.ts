@@ -2,9 +2,12 @@ import employeeBaseApi from "@/shared/api/base.api";
 import { configureStore } from "@reduxjs/toolkit";
 import { type TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
+import authReducer from "@features/auth/slice/authReducer";
+
 const store = configureStore({
   reducer: {
     [employeeBaseApi.reducerPath]: employeeBaseApi.reducer,
+    auth: authReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(employeeBaseApi.middleware),
 });
