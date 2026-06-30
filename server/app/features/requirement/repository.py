@@ -6,11 +6,23 @@ from models.project_requirement_request import (
     ProjectRequirementRequest,
     RequestStatus,
 )
+from models.project_stack_requirement_request import ProjectStackRequirementRequest
+from models.skill import Skill
 
 
 class RequirementRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def get_by_project_id(
+        self, project_id: int
+    ) -> ProjectRequirementRequest | None:
+        stmt = select(ProjectRequirementRequest).where(
+            ProjectRequirementRequest.project_id == project_id,
+            ProjectRequirementRequest.deleted_at.is_(None),
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
 
     async def get_by_id(self, request_id: int) -> ProjectRequirementRequest | None:
         stmt = select(ProjectRequirementRequest).where(
@@ -71,4 +83,44 @@ class RequirementRepository:
 
     async def soft_delete(self, request: ProjectRequirementRequest) -> None:
         request.deleted_at = datetime.now(timezone.utc)
+        await self.db.flush()
+
+    async def get_stack_by_id(self, stack_id: id) -> Skill | None:
+        stmt = select(Skill).where(
+            Skill.id == stack_id,
+            Skill.deleted_at.is_(None),
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def add_stack_to_request(self, request_id, stack_id):
+        stack_request = ProjectStackRequirementRequest(
+            stack_id=stack_id, project_requirement_request_id=request_id
+        )
+        self.db.add(stack_request)
+        await self.db.flush()
+        return stack_request
+
+    async def list_stacks_by_request(
+        self, request_id: int
+    ) -> list[ProjectStackRequirementRequest]:
+        stmt = select(ProjectStackRequirementRequest).where(
+            ProjectStackRequirementRequest.project_requirement_request_id == request_id
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
+    async def get_stack_request_by_id(
+        self, stack_request_id: int
+    ) -> ProjectStackRequirementRequest | None:
+        stmt = select(ProjectStackRequirementRequest).where(
+            ProjectStackRequirementRequest.id == stack_request_id
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def delete_stack_request(
+        self, stack_request: ProjectStackRequirementRequest
+    ) -> None:
+        await self.db.delete(stack_request)
         await self.db.flush()
