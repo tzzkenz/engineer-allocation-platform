@@ -13,10 +13,10 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from features.agent.agent import make_agent
-from core.dependencies import get_employee_service
+from core.dependencies import get_employee_service, get_project_service
 from features.auth.dependencies import get_current_user
 
-router = APIRouter(prefix="/agent", tags=["Agent"])
+router = APIRouter(prefix="/agent", tags=["agent"])
 
 
 class ChatRequest(BaseModel):
@@ -31,9 +31,14 @@ class ChatResponse(BaseModel):
 async def chat(
     payload: ChatRequest,
     employee_service=Depends(get_employee_service),
+    project_service=Depends(get_project_service),
     current_user=Depends(get_current_user),
 ):
-    agent = make_agent(employee_service, requesting_role=current_user.system_role_id)
+    agent = make_agent(
+        employee_service,
+        project_service,
+        requesting_role=current_user.systed_role_id,
+    )
 
     result = await agent.ainvoke(
         {"messages": [{"role": "user", "content": payload.message}]},

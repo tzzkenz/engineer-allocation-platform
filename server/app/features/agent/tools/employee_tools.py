@@ -6,11 +6,6 @@ from features.employee.service import EmployeeService
 def build_employee_tools(
     employee_service: EmployeeService, requesting_role: str | None = None
 ):
-    """
-    Build the list of employee-related tools bound to a specific
-    EmployeeService instance (and optionally scoped to the requesting
-    user's role for authorization).
-    """
 
     @tool
     async def list_all_employees() -> list[dict]:
