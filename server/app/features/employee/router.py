@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Depends, status
+import codecs
+import csv
+
+from click import File
+from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.params import Query
 
 from core.dependencies import get_employee_service
@@ -21,7 +25,6 @@ from features.auth.schemas import TokenPayload
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
 
-
 @router.get("", response_model=EmployeePaginatedResponse)
 async def list_employees(
     service: EmployeeService = Depends(get_employee_service),
@@ -29,6 +32,7 @@ async def list_employees(
     limit: int = Query(default=10, ge=1),
 ):
     return await service.list(page=page, limit=limit)
+
 
 @router.get("/me", response_model=EmployeeResponse)
 async def get_current_employee(
@@ -53,6 +57,18 @@ async def create_employee(
     current_user: TokenPayload = Depends(get_current_user),
 ):
     return await service.create(payload.model_dump(), current_user.id)
+
+
+@router.post("/upload")
+def upload(file: UploadFile = File(...)):
+    csvReader = csv.DictReader(codecs.iterdecode(file.file, "utf-8"))
+    data = {}
+    for rows in csvReader:
+        key = rows["name"]
+        data[key] = rows
+
+    file.file.close()
+    return data
 
 
 @router.patch("/{id}", response_model=EmployeeResponse)
