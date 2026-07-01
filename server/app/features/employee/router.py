@@ -27,13 +27,20 @@ router = APIRouter(prefix="/employees", tags=["Employees"])
 
 @router.get("", response_model=EmployeePaginatedResponse)
 async def list_employees(
-    service: EmployeeService = Depends(get_employee_service),
+    identifier: str | None = Query(default=None, description="Flexible match filter accepting an exact ID, an exact Email, or a partial Name"),
+    system_role_id: int | None = Query(default=None, description="Optional system role ID to filter candidates"),
+    skill_ids: list[int] = Query(default=[], description="List of skill/stack requirement IDs to check intersection against"),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
+    service: EmployeeService = Depends(get_employee_service),
 ):
-    return await service.list_all(page=page, limit=limit)
-
-
+    return await service.list_all(
+        page=page, 
+        limit=limit, 
+        identifier=identifier, 
+        system_role_id=system_role_id, 
+        skill_ids=skill_ids
+    )
 @router.get("/me", response_model=EmployeeResponse)
 async def get_current_employee(
     service: EmployeeService = Depends(get_employee_service),

@@ -80,14 +80,39 @@ class EmployeeService:
             raise NotFoundException("Employee not found")
         return self._format_employee_response(result[0], result[1], result[2])
 
-    async def list_all(self, page: int = 1, limit: int = 10) -> dict[str, Any]:
+    async def list_all(
+        self, 
+        page: int = 1, 
+        limit: int = 10,
+        identifier: str | None = None,
+        system_role_id: int | None = None,
+        skill_ids: list[int] | None = None
+    ) -> dict[str, Any]:
         import math
+        import re
 
-        # Calculate database offset based on page number
+        identifier_filter = None
+        if identifier:
+            identifier = identifier.strip()
+            # If the value is entirely numeric, process as an explicit ID check
+            if identifier.isdigit():
+                identifier_filter = ("id", int(identifier))
+            # If the format conforms to an email string pattern, process as a strict Email match
+            elif re.match(r"[^@]+@[^@]+\.[^@]+", identifier):
+                identifier_filter = ("email", identifier.lower())
+            # Otherwise, execute a partial textual name comparison
+            else:
+                identifier_filter = ("name", identifier)
+
+        # Calculate dataset window offset boundaries
         offset = (page - 1) * limit
 
         records, total_count = await self.repo.list_all_with_role(
-            limit=limit, offset=offset
+            limit=limit, 
+            offset=offset,
+            identifier_filter=identifier_filter,
+            system_role_id=system_role_id,
+            skill_ids=skill_ids
         )
 
         total_pages = math.ceil(total_count / limit) if limit > 0 else 1
@@ -462,11 +487,23 @@ class EmployeeService:
     #############################################################################
     #############################AGENT###########################################
     #############################################################################
-    async def list_all_employees_with_roll_for_agent(self):
-        rows, total_count = await self.repo.list_all_with_role()
+    async def list_all_employees_with_roll_for_agent(
+        self,
+        skill: str | None = None,
+        check_for_available: bool = False,
+    ):
+        rows, total_count = await self.repo.list_all_by_skill(skill)
+
+        if check_for_available:
+            rows = [
+                (employee, role_name, projects_count)
+                for employee, role_name, projects_count in rows
+                if projects_count < 2
+            ]
+
         result = [
             self._format_employee_response(employee, role_name, projects_count)
             for employee, role_name, projects_count in rows
         ]
-        print(result)
+
         return result

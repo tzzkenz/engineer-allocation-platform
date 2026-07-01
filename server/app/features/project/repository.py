@@ -31,17 +31,49 @@ class ProjectRepository:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def list_all(self, limit: int | None = None, offset: int | None = None) -> tuple[list[Project], int]:
-        count_stmt = select(func.count(Project.id)).where(Project.deleted_at.is_(None))
-        count_result = await self.db.execute(count_stmt)
-        total_count = count_result.scalar() or 0
-
+    async def list_all(
+        self, 
+        limit: int | None = None, 
+        offset: int | None = None,
+        status_filter: StatusType | None = None,
+        identifier_filter: tuple[str, Any] | None = None,
+        skill_ids: list[int] | None = None
+    ) -> tuple[list[Project], int]:
+        # 1. Base statement matching active (non-deleted) projects
         stmt = (
             select(Project)
             .options(selectinload(Project.stacks).selectinload(ProjectStacks.skill))
             .where(Project.deleted_at.is_(None))
         )
-        
+
+        # 2. Apply status filter if provided
+        if status_filter is not None:
+            stmt = stmt.where(Project.status == status_filter)
+
+        # 3. Apply identifier filter (Strictly Project ID or Name now)
+        if identifier_filter is not None:
+            filter_type, val = identifier_filter
+            if filter_type == "id":
+                stmt = stmt.where(Project.id == val)
+            elif filter_type == "name":
+                stmt = stmt.where(Project.name.ilike(f"%{val}%"))
+
+        # 4. Filter by the list of Stack IDs if provided
+        if skill_ids:
+            # Join with project stacks and look for matches inside the provided skill IDs list
+            stmt = stmt.join(ProjectStacks, Project.id == ProjectStacks.project_id).where(
+                ProjectStacks.skill_id.in_(skill_ids),
+                ProjectStacks.deleted_at.is_(None)
+            )
+            # Enforce that the project contains ALL of the requested stacks (Intersection check)
+            stmt = stmt.group_by(Project.id).having(func.count(ProjectStacks.skill_id) == len(skill_ids))
+
+        # 5. Execute companion statement to calculate total pages safely before pagination slicing
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar() or 0
+
+        # 6. Apply pagination slices
         if limit is not None:
             stmt = stmt.limit(limit)
         if offset is not None:
@@ -49,7 +81,6 @@ class ProjectRepository:
             
         result = await self.db.execute(stmt)
         return list(result.scalars().all()), total_count
-
     async def create(
         self,
         name: str,
@@ -202,3 +233,34 @@ class ProjectRepository:
             allocations.append(emp_allocation)
             
         return allocations
+    
+
+    async def get_allocation_by_id(self, allocation_id: int) -> ProjectEmployee | None:
+        """Fetch an active allocation record by its ID."""
+        stmt = select(ProjectEmployee).where(
+            ProjectEmployee.id == allocation_id,
+            ProjectEmployee.deleted_at.is_(None)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def exit_employee_from_project(self, allocation: ProjectEmployee) -> ProjectEmployee:
+        """Sets the exit date to today and decrements the requirement request count."""
+        # Set exited date to today
+        allocation.date_exited = date.today()
+        
+        # Decrement assigned_count if tied to a requirement request
+        if allocation.requirement_request_id is not None:
+            stmt = select(ProjectRequirementRequest).where(
+                ProjectRequirementRequest.id == allocation.requirement_request_id,
+                ProjectRequirementRequest.deleted_at.is_(None)
+            )
+            result = await self.db.execute(stmt)
+            requirement = result.scalar_one_or_none()
+            
+            # Ensure it doesn't drop below 0
+            if requirement is not None and requirement.assigned_count > 0:
+                requirement.assigned_count -= 1
+                
+        await self.db.flush()
+        return allocation
