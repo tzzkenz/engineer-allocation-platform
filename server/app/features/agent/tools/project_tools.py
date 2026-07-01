@@ -1,5 +1,12 @@
+from datetime import datetime
+
 from langchain_core.tools import tool
 from features.project.service import ProjectService
+from features.agent.tools.helpers import (
+    error_response,
+    log_tool_event,
+    success_response,
+)
 
 
 def make_project_tools(project_service: ProjectService):
@@ -29,8 +36,28 @@ def make_project_tools(project_service: ProjectService):
             this tool may still be used, but filtering may need to be handled in reasoning.
         """
 
-        data = await project_service.list_all_for_agent()
-        print(data)
-        return data
+        try:
+            data = await project_service.list_all_for_agent()
+
+            log_tool_event(
+                "project_tool_logs.jsonl",
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "output": data,
+                },
+            )
+
+            return success_response(data)
+
+        except Exception as e:
+            log_tool_event(
+                "project_tool_logs.jsonl",
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "error": str(e),
+                },
+            )
+
+            return error_response(e)
 
     return [list_projects]
