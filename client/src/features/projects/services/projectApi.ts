@@ -2,13 +2,13 @@ import type {
   AdvanceSearchEmployeeParams,
   EmployeeResponse,
 } from "@/entities/employee/types/apiTypes";
+import type { PaginatedResult } from "@/shared/type/pagination";
 
 import type {
   AssignEngineerPayload,
   CreateRequirementRequest,
   FeedbackResponse,
   Project,
-  ProjectListResponse,
   RequirementResponse,
   UpdateRequirementRequest,
 } from "@entities/project/types/apiTypes";
@@ -17,9 +17,9 @@ import employeeBaseApi from "@shared/api/base.api";
 
 const projectApi = employeeBaseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getProjects: builder.query<ProjectListResponse, void>({
-      query: () => ({
-        url: "/projects",
+    getProjects: builder.query<PaginatedResult<Project>, string>({
+      query: (params) => ({
+        url: `/projects?${params}`,
         method: "GET",
       }),
       providesTags: ["Project"],
@@ -56,7 +56,7 @@ const projectApi = employeeBaseApi.injectEndpoints({
         { type: "Feedback", id: `PROJECT-${projectId}` },
       ],
     }),
-    getCandidates: builder.query<EmployeeResponse[], string>({
+    getCandidates: builder.query<PaginatedResult<EmployeeResponse>, string>({
       query: (params) => ({
         url: `/project/search/matches?${params}`,
       }),
@@ -70,7 +70,15 @@ const projectApi = employeeBaseApi.injectEndpoints({
         { type: "Requirement", id: `PROJECT-${projectId}` },
       ],
     }),
-
+    getProjectEmployees: builder.query<EmployeeResponse[], string>({
+      query: (projectId) => ({
+        url: `/projects/${projectId}/employees`,
+        method: "GET",
+      }),
+      providesTags: (_result, _error, projectId) => [
+        { type: "Requirement", id: `PROJECT-${projectId}` },
+      ],
+    }),
     getRequirement: builder.query<RequirementResponse, number>({
       query: (requestId) => ({
         url: `/project/requirements/${requestId}`,
@@ -149,5 +157,6 @@ export const {
   useDeleteRequirementMutation,
   useGetProjectNotesQuery,
   useGetCandidatesQuery,
+  useGetProjectEmployeesQuery,
   useAssignEmployeeMutation,
 } = projectApi;

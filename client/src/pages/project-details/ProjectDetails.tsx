@@ -5,6 +5,7 @@ import { ProjectNotesCard } from "@features/projects/components/notes/notes-card
 import { ProjectInfoCard } from "@features/projects/components/project-info/ProjectInfoCard";
 import { RequirementsCard } from "@features/projects/components/requirements/requirement-card/RequirementCard";
 import {
+  useGetProjectEmployeesQuery,
   useGetProjectNotesQuery,
   useGetProjectQuery,
   useGetProjectRequirementsQuery,
@@ -33,6 +34,11 @@ export function ProjectDetails() {
     skip: !id,
   });
 
+  const { data: projectEmployees = [], isLoading: isEmployeesLoading } =
+    useGetProjectEmployeesQuery(id!, {
+      skip: !id,
+    });
+
   return (
     <div className="flex flex-col gap-8 w-full py-6">
       <PageSection title="Project Details" />
@@ -41,7 +47,7 @@ export function ProjectDetails() {
         <ProjectInfoCard project={project} onEdit={() => navigate(`/project/${id}/edit`)} />
       )}
 
-      <ProjectEmployees employees={[]} />
+      <ProjectEmployees employees={projectEmployees} />
       <RequirementsCard projectId={id!} requirements={requirements} />
 
       <ProjectNotesCard projectId={id!} notes={projectNotes} />

@@ -1,8 +1,9 @@
 import { useState } from "react";
 
 import { useGetProjectsQuery } from "@/features/projects/services/projectApi";
+import { Paginated } from "@/shared/components/paginated/Paginated";
 import { Plus } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import ProjectTableSkeleton from "@features/projects/components/loaders/project-table-skeleton/ProjectTableSkeleton";
 import ProjectFilters from "@features/projects/components/project-filters/ProjectFIlters";
@@ -15,8 +16,14 @@ import PageSection from "@shared/components/ui/section";
 
 export function ProjectList() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: projects = [], isLoading, isError, refetch } = useGetProjectsQuery();
+  const {
+    data: projects = { items: [], total_pages: 0, current_page: 0, limit: 0 },
+    isLoading,
+    isError,
+    refetch,
+  } = useGetProjectsQuery(searchParams.toString());
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -24,12 +31,13 @@ export function ProjectList() {
     navigate(`/project/${projectId}`);
   };
 
-  const filtered = projects.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
+  const handlePageChange = (page: number) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set("page", page.toString());
+      return newParams;
+    });
+  };
   return (
     <>
       <PageSection
@@ -73,7 +81,14 @@ export function ProjectList() {
               {isLoading ? (
                 <ProjectTableSkeleton />
               ) : (
-                <ProjectTable employees={filtered} onViewClick={handleViewClick} />
+                <>
+                  <ProjectTable employees={projects.items} onViewClick={handleViewClick} />
+                  <Paginated
+                    totalPages={projects.total_pages}
+                    page={searchParams.get("page") ? parseInt(searchParams.get("page")!) : 1}
+                    onPageChange={handlePageChange}
+                  />
+                </>
               )}
             </CardContent>
           </Card>

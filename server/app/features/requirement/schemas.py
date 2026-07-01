@@ -5,6 +5,8 @@ from datetime import date, datetime
 from models.project_requirement_request import RequestStatus
 from enum import Enum
 
+from features.project.schemas import ProjectResponse
+
 class AvailabilityFilter(str, Enum):
     AVAILABLE = "AVAILABLE"
     UNAVAILABLE = "UNAVAILABLE"
@@ -39,6 +41,7 @@ class RequirementResponse(BaseModel):
     project_role_id: int
     project_role_name: str
     requested_count: int
+    assigned_count: int
     requested_by: int
     requested_by_name: str
     resolved_by: int | None
@@ -65,14 +68,13 @@ class MatchedEmployeeResponse(BaseModel):
     system_role_id: int
     system_role_name: str
     active_project_count: int
+    end_date: date | None
+    projects: list[ProjectResponse] = []  # Added active projects list
 
     model_config = ConfigDict(from_attributes=True)
-
-
 
 class MatchedEmployeePaginatedResponse(BaseModel):
     items: list[MatchedEmployeeResponse]
     total_pages: int
     current_page: int
     limit: int
-

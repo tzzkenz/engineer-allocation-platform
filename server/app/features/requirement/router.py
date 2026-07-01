@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query, status
 
 from core.dependencies import get_requirement_service
@@ -42,7 +44,6 @@ async def create_requirement(
 async def get_requirements_for_project(
     project_id: int, service: RequirementService = Depends(get_requirement_service)
 ):
-    # Fixed to pass project_id explicitly so the service processes the query correctly
     return await service.get(project_id=project_id)
 
 
@@ -142,9 +143,20 @@ async def search_candidates(
     ),
     skill_ids: list[int] = Query(default=[]),
     availability: AvailabilityFilter = Query(default=AvailabilityFilter.ALL),
-    sort_by_experience: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
-    sort_by_proficiency: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
-    requirement_request_id: int | None = Query(default=None, description="Requirement request ID to check assignment exclusions against"),
+    sort_by_experience: bool = Query(
+        default=True, description="True for high-to-low, False for low-to-high"
+    ),
+    sort_by_proficiency: bool = Query(
+        default=True, description="True for high-to-low, False for low-to-high"
+    ),
+    requirement_request_id: int | None = Query(
+        default=None,
+        description="Requirement request ID to check assignment exclusions against",
+    ),
+    available_after: date | None = Query(
+        default=None, 
+        description="Show employees whose capacity and contracts are valid after this date"
+    ),
     service: RequirementService = Depends(get_requirement_service),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
@@ -155,7 +167,8 @@ async def search_candidates(
         availability=availability.value,
         sort_by_experience=sort_by_experience,
         sort_by_proficiency=sort_by_proficiency,
-        limit=limit,
-        page=page,
         requirement_request_id=requirement_request_id,
+        available_after=available_after,
+        page=page,
+        limit=limit,
     )
