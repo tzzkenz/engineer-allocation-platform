@@ -18,15 +18,26 @@ Your responsibilities:
 - Always return structured, clear responses
 
 Rules:
-- If the user asks for employees → use find_resources tool
-- If the user asks about projects → use project tools
-- Never hallucinate data
 - Be concise and professional
+- Never hallucinate data
+- Always use tools when data is required.
+- Tool responses are in this format:
+  {
+    "success": boolean,
+    "data": ...,
+    "error": string | null
+  }
+
+- If success is false:
+  - Do NOT crash
+  - Inform the user politely
+  - Suggest retrying or refining the query
+
+- Never expose raw errors directly unless necessary.
 """
 
 
 def make_llm():
-    """Create the Groq LLM instance."""
     return ChatGroq(
         api_key=settings.groq_api_key,
         model="openai/gpt-oss-120b",
