@@ -24,6 +24,8 @@ from features.requirement.service import RequirementService
 from features.project_role.service import ProjectRoleService
 from features.audit.service import AuditLogService
 from features.reporting.service import ReportingService
+from features.dashboard.repository import DashboardRepository
+from features.dashboard.service import DashboardService
 
 
 def get_audit_repo(db: AsyncSession) -> AuditLogRepository:
@@ -71,7 +73,6 @@ def get_skill_service(
 ) -> SkillService:
     return SkillService(
         SkillRepository(db),
-        get_audit_repo(db),
     )
 
 
@@ -109,3 +110,9 @@ def get_reporting_service(
     db: AsyncSession = Depends(get_db),
 ) -> ReportingService:
     return ReportingService(ReportingRepository(db))
+
+
+def get_dashboard_service(
+    db: AsyncSession = Depends(get_db),
+) -> ReportingService:
+    return DashboardService(DashboardRepository(db))
