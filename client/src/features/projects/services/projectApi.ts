@@ -50,8 +50,12 @@ const projectApi = employeeBaseApi.injectEndpoints({
         url: `/feedbacks/project/${projectId}`,
         method: "GET",
       }),
-      providesTags: (_result, _error, projectId) => [
+      providesTags: (result, _error, projectId) => [
         { type: "Feedback", id: `PROJECT-${projectId}` },
+        ...(result?.map((feedback) => ({
+          type: "Feedback" as const,
+          id: feedback.id,
+        })) ?? []),
       ],
     }),
     getCandidates: builder.query<PaginatedResult<EmployeeResponse>, string>({
