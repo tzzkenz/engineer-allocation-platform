@@ -166,8 +166,9 @@ async def remove_employee_skill(
     id: int,
     skill_id: int,
     service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.remove_skill(id, skill_id)
+    await service.remove_skill(id, skill_id, current_user.id)
 
 
 @router.get("/{id}/skills", response_model=list[EmployeeSkillResponse])
