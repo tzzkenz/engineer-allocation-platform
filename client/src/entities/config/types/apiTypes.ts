@@ -40,3 +40,8 @@ export type SystemRoleResponse = {
   id: number;
   name: string;
 };
+
+export type SystemRoleResponseWithDatesResponse = SystemRoleResponse & {
+  created_at: string;
+  updated_at: string;
+};
