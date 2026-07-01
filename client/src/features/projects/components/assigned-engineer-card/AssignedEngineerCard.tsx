@@ -41,11 +41,15 @@ const getFormattedFilters = (filters: AssignEngineerFilters): AdvanceSearchEmplo
   sort_by_proficiency: filters.sortProficiency == "highest",
 });
 
-const prepareFilterQueryParams = (filters: AssignEngineerFilters): URLSearchParams => {
+const prepareFilterQueryParams = (
+  filters: AssignEngineerFilters,
+  requirementId: number
+): URLSearchParams => {
   const urlParams = new URLSearchParams();
 
   const formattedFilters = getFormattedFilters(filters);
 
+  urlParams.set("requirement_request_id", String(requirementId));
   if (formattedFilters.identifier) {
     urlParams.set("identifier", formattedFilters.identifier);
   }
@@ -88,12 +92,12 @@ export default function AssignEngineerDialog({
   const [assignEmployee, { isLoading: isAssigningEmployee }] = useAssignEmployeeMutation();
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeResponse | null>(null);
 
-  const { data: employees = [], isLoading: isEmployeeLoading } = useGetCandidatesQuery(
-    prepareFilterQueryParams(filters).toString(),
-    {
-      skip: !open,
-    }
-  );
+  const {
+    data: employees = { items: [], page: 1, limit: 10, total: 0 },
+    isLoading: isEmployeeLoading,
+  } = useGetCandidatesQuery(prepareFilterQueryParams(filters, requirement.id).toString(), {
+    skip: !open,
+  });
 
   const { data: skills = [] } = useGetSkillsQuery();
 
@@ -135,7 +139,7 @@ export default function AssignEngineerDialog({
           </div>
 
           <EmployeeTable
-            employees={employees}
+            employees={employees.items}
             renderActions={(engineer) => (
               <Button onClick={() => setSelectedEmployee(engineer)}>Assign</Button>
             )}

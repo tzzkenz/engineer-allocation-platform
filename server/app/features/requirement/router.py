@@ -142,9 +142,16 @@ async def search_candidates(
     ),
     skill_ids: list[int] = Query(default=[]),
     availability: AvailabilityFilter = Query(default=AvailabilityFilter.ALL),
-    sort_by_experience: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
-    sort_by_proficiency: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
-    requirement_request_id: int | None = Query(default=None, description="Requirement request ID to check assignment exclusions against"),
+    sort_by_experience: bool = Query(
+        default=True, description="True for high-to-low, False for low-to-high"
+    ),
+    sort_by_proficiency: bool = Query(
+        default=True, description="True for high-to-low, False for low-to-high"
+    ),
+    requirement_request_id: int | None = Query(
+        default=None,
+        description="Requirement request ID to check assignment exclusions against",
+    ),
     service: RequirementService = Depends(get_requirement_service),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
@@ -155,7 +162,7 @@ async def search_candidates(
         availability=availability.value,
         sort_by_experience=sort_by_experience,
         sort_by_proficiency=sort_by_proficiency,
-        limit=limit,
         page=page,
+        limit=limit,
         requirement_request_id=requirement_request_id,
     )
