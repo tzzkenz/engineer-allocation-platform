@@ -462,11 +462,23 @@ class EmployeeService:
     #############################################################################
     #############################AGENT###########################################
     #############################################################################
-    async def list_all_employees_with_roll_for_agent(self):
-        rows, total_count = await self.repo.list_all_with_role()
+    async def list_all_employees_with_roll_for_agent(
+        self,
+        skill: str | None = None,
+        check_for_available: bool = False,
+    ):
+        rows, total_count = await self.repo.list_all_by_skill(skill)
+
+        if check_for_available:
+            rows = [
+                (employee, role_name, projects_count)
+                for employee, role_name, projects_count in rows
+                if projects_count < 2
+            ]
+
         result = [
             self._format_employee_response(employee, role_name, projects_count)
             for employee, role_name, projects_count in rows
         ]
-        print(result)
+
         return result
