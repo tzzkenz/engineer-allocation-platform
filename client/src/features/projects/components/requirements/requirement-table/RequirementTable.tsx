@@ -1,8 +1,9 @@
-import { TechStackTag } from "@/entities/project/components/TechStack";
-import type { RequirementResponse } from "@/entities/project/types/apiTypes";
-import { REQUIREMENT_NAME_TO_LABEL } from "@/features/projects/utils/status";
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
+import { Pencil, Trash } from "lucide-react";
+
+import { TechStackTag } from "@entities/project/components/TechStack";
+import type { RequirementResponse } from "@entities/project/types/apiTypes";
+
+import { Button } from "@shared/components/ui/button";
 import {
   Table,
   TableBody,
@@ -10,8 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/components/ui/table";
-import { Delete, Edit, Pencil, Trash } from "lucide-react";
+} from "@shared/components/ui/table";
 
 import { RequirementStatusBadge } from "../requirement-status-badge/RequirementStatusBadge";
 
@@ -22,12 +22,14 @@ type RequirementTableProps = {
   onAssign: (requirement: RequirementResponse) => void;
   onRemove: (requirement: RequirementResponse) => void;
   onEdit: (requirement: RequirementResponse) => void;
+  onApprove: (requirement: RequirementResponse) => void;
 };
 
 export const RequirementTable = ({
   requirements,
   onAssign,
   onRemove,
+  onApprove,
   onEdit,
 }: RequirementTableProps) => {
   return (
@@ -45,7 +47,12 @@ export const RequirementTable = ({
       <TableBody>
         {requirements.map((req) => (
           <TableRow key={req.id}>
-            <TableCell>{req.project_role_name}</TableCell>
+            <TableCell>
+              {req.project_role_name}
+              <p className=" text-xs font-semibold text-muted-foreground ">
+                Requested by {req.requested_by_name}
+              </p>
+            </TableCell>
 
             <TableCell>
               {req.stack_requests.map((stack) => (
@@ -62,30 +69,27 @@ export const RequirementTable = ({
             </TableCell>
 
             <TableCell className="text-right flex justify-end items-center gap-1">
-              <Button
-                // variant=""
-                // className=" text-primary"
-                size="sm"
-                onClick={() => onAssign(req)}
-              >
-                Assign
-              </Button>
-              {req.status === "PENDING" && (
-                <Button
-                  variant="destructive"
-                  // className=" text-primary"
-                  size="sm"
-                  onClick={() => onRemove(req)}
-                >
-                  <Trash />
+              {req.status === "APPROVED" && (
+                <Button size="sm" onClick={() => onAssign(req)}>
+                  Assign
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                // className=" text-primary"
-                size="sm"
-                onClick={() => onEdit(req)}
-              >
+              {req.status === "PENDING" && (
+                <>
+                  <Button
+                    variant="ghost"
+                    className=" bg-green-100 text-green-600 hover:bg-green-200"
+                    size="sm"
+                    onClick={() => onApprove(req)}
+                  >
+                    Approve
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => onRemove(req)}>
+                    <Trash />
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => onEdit(req)}>
                 <Pencil />
               </Button>
             </TableCell>

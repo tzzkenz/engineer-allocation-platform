@@ -28,6 +28,7 @@ export type RequirementResponse = {
   requested_count: number;
   assigned_count: number;
   requested_by: number;
+  requested_by_name: string;
   status: RequirementStatus;
   stack_requests: StackRequest[];
   created_at: string;
@@ -44,6 +45,7 @@ export type UpdateRequirementRequest = {
   project_role_id?: number;
   requested_count?: number;
   stack_ids?: number[];
+  status?: RequirementStatus;
 };
 
 export type FeedbackResponse = {
