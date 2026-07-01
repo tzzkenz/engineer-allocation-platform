@@ -40,7 +40,7 @@ Rules:
 def make_llm():
     return ChatGroq(
         api_key=settings.groq_api_key,
-        model="openai/gpt-oss-120b",
+        model="qwen/qwen3-32b",
         temperature=0,
         max_retries=2,
     )
