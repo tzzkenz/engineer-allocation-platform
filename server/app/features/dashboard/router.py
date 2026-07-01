@@ -7,8 +7,8 @@ from features.dashboard.service import DashboardService
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
-@router.get("/projects/count")
-async def get_project_count(
+@router.get("/summary")
+async def get_dashboard_summary(
     service: DashboardService = Depends(get_dashboard_service),
 ):
-    return await service.get_project_status_summary()
+    return await service.get_dashboard_summary()
