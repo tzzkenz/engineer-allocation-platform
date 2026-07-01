@@ -41,7 +41,6 @@ def make_employees_tools(employee_service: EmployeeService):
                     )
                     + "\n"
                 )
-
             return response
 
         except Exception as e:
@@ -61,7 +60,6 @@ def make_employees_tools(employee_service: EmployeeService):
                     )
                     + "\n"
                 )
-
             return json.dumps(error_response)
 
     return [find_resources]

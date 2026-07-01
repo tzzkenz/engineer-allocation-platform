@@ -1,18 +1,16 @@
 import asyncio
 from core.database import get_db
-from features.employee.repository import EmployeeRepository
+from features.project.repository import ProjectRepository
+from features.project.service import ProjectService
 
 
 async def main():
     async for db in get_db():
-        repo = EmployeeRepository(db)
+        repo = ProjectService(ProjectRepository(db))
 
-        results, total = await repo.list_all_by_skill(skill="React")
+        results = repo.list_all_for_agent()
 
-        print(f"Total Employees: {total}\n")
-
-        for emp, role_name, project_count in results:
-            print(emp.name, role_name, project_count)
+        print(f"Total Employees: {results}\n")
 
 
 # Run async function
