@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -302,3 +303,13 @@ class ProjectService:
             "staffing_balance": staffing_balance,
             "status_label": status_label,
         }
+    
+
+    async def get_project_employees(self, project_id: int) -> list[Any]:
+        """
+        Validates project existence and returns active employee allocations 
+        populated with project role names and start dates.
+        """
+        await self.get(project_id)
+        
+        return await self.repo.get_assigned_employees(project_id)

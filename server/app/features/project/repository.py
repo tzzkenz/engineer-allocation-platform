@@ -9,6 +9,7 @@ from models.project import Project, StatusType
 from models.project_employee import ProjectEmployee
 from models.project_stacks import ProjectStacks
 from models.project_requirement_request import ProjectRequirementRequest, RequestStatus
+from models.project_role import ProjectRole
 
 
 class ProjectRepository:
@@ -147,3 +148,35 @@ class ProjectRepository:
         )
         result = await self.db.execute(stmt)
         return result.scalar() or 0
+    
+    async def get_assigned_employees(self, project_id: int) -> list[Any]:
+        """
+        Retrieves active employee allocations, dynamically selecting the project's start_date
+        and the project role's name from their respective tables.
+        """
+        stmt = (
+            select(
+                ProjectEmployee,
+                ProjectRole.name.label("project_role_name"),
+                Project.start_date.label("start_date")
+            )
+            .join(ProjectRole, ProjectEmployee.project_role_id == ProjectRole.id)
+            .join(Project, ProjectEmployee.project_id == Project.id)
+            .options(selectinload(ProjectEmployee.employee))
+            .where(
+                ProjectEmployee.project_id == project_id,
+                ProjectEmployee.date_exited.is_(None), 
+                ProjectEmployee.deleted_at.is_(None)  
+            )
+        )
+        
+        result = await self.db.execute(stmt)
+        
+        allocations = []
+        for row in result.all():
+            emp_allocation = row[0]
+            emp_allocation.project_role_name = row.project_role_name
+            emp_allocation.start_date = row.start_date
+            allocations.append(emp_allocation)
+            
+        return allocations
