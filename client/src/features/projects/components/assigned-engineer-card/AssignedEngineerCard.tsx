@@ -134,7 +134,12 @@ export default function AssignEngineerDialog({
             <AdvancedFilters onSearch={setFilters} skills={skills} />
           </div>
 
-          <EmployeeTable employees={employees} onAssign={setSelectedEmployee} />
+          <EmployeeTable
+            employees={employees}
+            renderActions={(engineer) => (
+              <Button onClick={() => setSelectedEmployee(engineer)}>Assign</Button>
+            )}
+          />
         </div>
 
         <DialogFooter>

@@ -15,20 +15,12 @@ export type AvailabilityStatus = "available" | "busy" | "on_leave";
 
 type Props = {
   employees: EmployeeResponse[];
-  onAssign?: (engineer: EmployeeResponse) => void;
+  renderActions: (engineer: EmployeeResponse) => React.ReactNode;
 };
 
-const tableHeads = [
-  "Engineer",
-  "Role",
-  "Skills",
-  "Experience",
-  "Projects",
-  "Availability",
-  "Actions",
-];
+const tableHeads = ["Engineer", "Role", "Experience", "Projects", "Availability", "Actions"];
 
-export default function EmployeeTable({ employees, onAssign }: Props) {
+export default function EmployeeTable({ employees, renderActions }: Props) {
   return (
     <div className=" w-full rounded-lg border">
       <Table>
@@ -51,10 +43,7 @@ export default function EmployeeTable({ employees, onAssign }: Props) {
             </TableRow>
           ) : (
             employees.map((employee) => (
-              <EmployeeRow
-                engineer={employee}
-                actions={<Button onClick={() => onAssign && onAssign(employee)}>Assign</Button>}
-              />
+              <EmployeeRow engineer={employee} actions={renderActions(employee)} />
             ))
           )}
         </TableBody>

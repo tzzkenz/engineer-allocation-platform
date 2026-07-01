@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { TechStackTag } from "@/entities/project/components/TechStack";
 import { TableCell, TableRow } from "@/shared/components/ui/table";
 
 import type { EmployeeResponse } from "../../types/apiTypes";
@@ -24,14 +23,6 @@ const EmployeeRow = ({ engineer, actions }: EngineerRowProps) => {
       </TableCell>
 
       <TableCell>{engineer.system_role_name}</TableCell>
-
-      <TableCell>
-        <div className="flex flex-wrap gap-1">
-          {/* {engineer.map((skill) => (
-            <TechStackTag tech={skill} />
-          ))} */}
-        </div>
-      </TableCell>
 
       <TableCell>{engineer.experience}</TableCell>
 
