@@ -5,6 +5,7 @@ import { Outlet } from "react-router";
 
 import { useGetCurrentUserQuery } from "@features/auth/services/authApi";
 import { initialize } from "@features/auth/slice/authReducer";
+import { AiAssistant } from "@features/chat/components/ai-assistant/AIAssistant";
 
 import { SidebarInset, SidebarProvider } from "@shared/components/ui/sidebar";
 
@@ -41,6 +42,7 @@ export function AppLayout() {
           </main>
         </SidebarInset>
       </div>
+      <AiAssistant />
     </SidebarProvider>
   );
 }
