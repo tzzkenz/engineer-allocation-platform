@@ -1,3 +1,6 @@
+import json
+from datetime import datetime
+
 from langchain_core.tools import tool
 from features.employee.service import EmployeeService
 
@@ -6,17 +9,57 @@ def make_employees_tools(employee_service: EmployeeService):
 
     @tool
     async def find_resources(
-        skill: str | None = None, check_for_available: bool = False
+        skill: str | None = None,
+        check_for_available: bool = False,
     ):
         """
-        List out all the employees with their names, roles,optionally filtered based on skill name. Also returns the number of prjects he is part of.
+        Returns a list of employees with:
+        - name
+        - role
+        - number of active projects
         """
 
-        employees_with_role = (
-            await employee_service.list_all_employees_with_roll_for_agent(
-                skill, check_for_available
+        try:
+            data = await employee_service.list_all_employees_with_roll_for_agent(
+                skill=skill,
+                check_for_available=check_for_available,
             )
-        )
-        return employees_with_role
+
+            response = json.dumps(data, indent=2, default=str)
+
+            with open("employee_tool_logs.jsonl", "a") as f:
+                f.write(
+                    json.dumps(
+                        {
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "input": {
+                                "skill": skill,
+                                "check_for_available": check_for_available,
+                            },
+                            "output": data,
+                        }
+                    )
+                    + "\n"
+                )
+            return response
+
+        except Exception as e:
+            error_response = {"error": str(e)}
+
+            with open("employee_tool_logs.jsonl", "a") as f:
+                f.write(
+                    json.dumps(
+                        {
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "input": {
+                                "skill": skill,
+                                "check_for_available": check_for_available,
+                            },
+                            "error": str(e),
+                        }
+                    )
+                    + "\n"
+                )
+            return json.dumps(error_response)
 
     return [find_resources]

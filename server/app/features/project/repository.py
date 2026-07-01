@@ -32,12 +32,12 @@ class ProjectRepository:
         return result.scalar_one_or_none()
 
     async def list_all(
-        self, 
-        limit: int | None = None, 
+        self,
+        limit: int | None = None,
         offset: int | None = None,
         status_filter: StatusType | None = None,
         identifier_filter: tuple[str, Any] | None = None,
-        skill_ids: list[int] | None = None
+        skill_ids: list[int] | None = None,
     ) -> tuple[list[Project], int]:
         # 1. Base statement matching active (non-deleted) projects
         stmt = (
@@ -61,12 +61,16 @@ class ProjectRepository:
         # 4. Filter by the list of Stack IDs if provided
         if skill_ids:
             # Join with project stacks and look for matches inside the provided skill IDs list
-            stmt = stmt.join(ProjectStacks, Project.id == ProjectStacks.project_id).where(
+            stmt = stmt.join(
+                ProjectStacks, Project.id == ProjectStacks.project_id
+            ).where(
                 ProjectStacks.skill_id.in_(skill_ids),
-                ProjectStacks.deleted_at.is_(None)
+                ProjectStacks.deleted_at.is_(None),
             )
             # Enforce that the project contains ALL of the requested stacks (Intersection check)
-            stmt = stmt.group_by(Project.id).having(func.count(ProjectStacks.skill_id) == len(skill_ids))
+            stmt = stmt.group_by(Project.id).having(
+                func.count(ProjectStacks.skill_id) == len(skill_ids)
+            )
 
         # 5. Execute companion statement to calculate total pages safely before pagination slicing
         count_stmt = select(func.count()).select_from(stmt.subquery())
@@ -78,9 +82,10 @@ class ProjectRepository:
             stmt = stmt.limit(limit)
         if offset is not None:
             stmt = stmt.offset(offset)
-            
+
         result = await self.db.execute(stmt)
         return list(result.scalars().all()), total_count
+
     async def create(
         self,
         name: str,
@@ -157,32 +162,29 @@ class ProjectRepository:
     ) -> ProjectEmployee:
         allocation = ProjectEmployee(**allocation_data)
         self.db.add(allocation)
-        
+
         if requirement_request_id is not None:
             stmt = select(ProjectRequirementRequest).where(
                 ProjectRequirementRequest.id == requirement_request_id,
-                ProjectRequirementRequest.deleted_at.is_(None)
+                ProjectRequirementRequest.deleted_at.is_(None),
             )
             result = await self.db.execute(stmt)
             requirement = result.scalar_one_or_none()
-            
+
             if requirement is not None:
                 requirement.assigned_count += 1
-                
+
         await self.db.flush()
         return allocation
-    
+
     async def get_total_requested_count(self, project_id: int) -> int:
         """
         Sums up requested_count for a project where the request status is not REJECTED.
         """
-        stmt = (
-            select(func.sum(ProjectRequirementRequest.requested_count))
-            .where(
-                ProjectRequirementRequest.project_id == project_id,
-                ProjectRequirementRequest.status != RequestStatus.REJECTED,
-                ProjectRequirementRequest.deleted_at.is_(None)
-            )
+        stmt = select(func.sum(ProjectRequirementRequest.requested_count)).where(
+            ProjectRequirementRequest.project_id == project_id,
+            ProjectRequirementRequest.status != RequestStatus.REJECTED,
+            ProjectRequirementRequest.deleted_at.is_(None),
         )
         result = await self.db.execute(stmt)
         return result.scalar() or 0
@@ -191,17 +193,14 @@ class ProjectRepository:
         """
         Counts current active allocations for a project where date_exited is None.
         """
-        stmt = (
-            select(func.count(ProjectEmployee.id))
-            .where(
-                ProjectEmployee.project_id == project_id,
-                ProjectEmployee.date_exited.is_(None),
-                ProjectEmployee.deleted_at.is_(None)
-            )
+        stmt = select(func.count(ProjectEmployee.id)).where(
+            ProjectEmployee.project_id == project_id,
+            ProjectEmployee.date_exited.is_(None),
+            ProjectEmployee.deleted_at.is_(None),
         )
         result = await self.db.execute(stmt)
         return result.scalar() or 0
-    
+
     async def get_assigned_employees(self, project_id: int) -> list[Any]:
         """
         Retrieves active employee allocations, dynamically selecting the project's start_date
@@ -211,56 +210,56 @@ class ProjectRepository:
             select(
                 ProjectEmployee,
                 ProjectRole.name.label("project_role_name"),
-                Project.start_date.label("start_date")
+                Project.start_date.label("start_date"),
             )
             .join(ProjectRole, ProjectEmployee.project_role_id == ProjectRole.id)
             .join(Project, ProjectEmployee.project_id == Project.id)
             .options(selectinload(ProjectEmployee.employee))
             .where(
                 ProjectEmployee.project_id == project_id,
-                ProjectEmployee.date_exited.is_(None), 
-                ProjectEmployee.deleted_at.is_(None)  
+                ProjectEmployee.date_exited.is_(None),
+                ProjectEmployee.deleted_at.is_(None),
             )
         )
-        
+
         result = await self.db.execute(stmt)
-        
+
         allocations = []
         for row in result.all():
             emp_allocation = row[0]
             emp_allocation.project_role_name = row.project_role_name
             emp_allocation.start_date = row.start_date
             allocations.append(emp_allocation)
-            
+
         return allocations
-    
 
     async def get_allocation_by_id(self, allocation_id: int) -> ProjectEmployee | None:
         """Fetch an active allocation record by its ID."""
         stmt = select(ProjectEmployee).where(
-            ProjectEmployee.id == allocation_id,
-            ProjectEmployee.deleted_at.is_(None)
+            ProjectEmployee.id == allocation_id, ProjectEmployee.deleted_at.is_(None)
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def exit_employee_from_project(self, allocation: ProjectEmployee) -> ProjectEmployee:
+    async def exit_employee_from_project(
+        self, allocation: ProjectEmployee
+    ) -> ProjectEmployee:
         """Sets the exit date to today and decrements the requirement request count."""
         # Set exited date to today
         allocation.date_exited = date.today()
-        
+
         # Decrement assigned_count if tied to a requirement request
         if allocation.requirement_request_id is not None:
             stmt = select(ProjectRequirementRequest).where(
                 ProjectRequirementRequest.id == allocation.requirement_request_id,
-                ProjectRequirementRequest.deleted_at.is_(None)
+                ProjectRequirementRequest.deleted_at.is_(None),
             )
             result = await self.db.execute(stmt)
             requirement = result.scalar_one_or_none()
-            
+
             # Ensure it doesn't drop below 0
             if requirement is not None and requirement.assigned_count > 0:
                 requirement.assigned_count -= 1
-                
+
         await self.db.flush()
         return allocation
