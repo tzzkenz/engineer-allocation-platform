@@ -63,6 +63,7 @@ class MatchedEmployeeResponse(BaseModel):
     experience: int
     date_of_joining: date
     system_role_id: int
+    system_role_name: str
     active_project_count: int
 
     model_config = ConfigDict(from_attributes=True)

@@ -156,5 +156,6 @@ async def search_candidates(
         sort_by_experience=sort_by_experience,
         sort_by_proficiency=sort_by_proficiency,
         limit=limit,
-        offset=offset
+        page=page,
+        requirement_request_id=requirement_request_id,
     )
