@@ -122,10 +122,22 @@ class ProjectRepository:
         return result.scalar_one_or_none()
 
     async def allocate_employee(
-        self, allocation_data: dict[str, Any]
+        self, allocation_data: dict[str, Any], requirement_request_id: int | None = None
     ) -> ProjectEmployee:
         allocation = ProjectEmployee(**allocation_data)
         self.db.add(allocation)
+        
+        if requirement_request_id is not None:
+            stmt = select(ProjectRequirementRequest).where(
+                ProjectRequirementRequest.id == requirement_request_id,
+                ProjectRequirementRequest.deleted_at.is_(None)
+            )
+            result = await self.db.execute(stmt)
+            requirement = result.scalar_one_or_none()
+            
+            if requirement is not None:
+                requirement.assigned_count += 1
+                
         await self.db.flush()
         return allocation
     
