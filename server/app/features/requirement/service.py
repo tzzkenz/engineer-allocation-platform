@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 import re
 from sqlite3 import IntegrityError
 from core.base_service import BaseService
@@ -266,10 +266,13 @@ class RequirementService(BaseService):
         sort_by_proficiency: bool,
         identifier: str | None = None,
         requirement_request_id: int | None = None,
+        available_after: date | None = None,
         page: int = 1,
         limit: int = 10,
     ) -> dict:
         import math
+        from models.project import Project
+        from sqlalchemy import select
 
         identifier_filter = None
         if identifier:
@@ -283,12 +286,21 @@ class RequirementService(BaseService):
 
         project_id = None
         project_role_id = None
+        target_project_start_date = None
+
         if requirement_request_id is not None:
             req_request = await self.repo.get_by_id(requirement_request_id)
             if req_request is None:
                 raise NotFoundException("Requirement request not found")
             project_id = req_request.project_id
             project_role_id = req_request.project_role_id
+
+            # Extract exact project context for timeline availability checking
+            project_stmt = select(Project).where(Project.id == project_id)
+            project_result = await self.repo.db.execute(project_stmt)
+            target_proj = project_result.scalar_one_or_none()
+            if target_proj:
+                target_project_start_date = target_proj.start_date
 
         offset = (page - 1) * limit
 
@@ -302,7 +314,13 @@ class RequirementService(BaseService):
             project_role_id=project_role_id,
             limit=limit,
             offset=offset,
+            available_after=available_after,
+            target_project_start_date=target_project_start_date
         )
+
+        # Batch fetch active projects for these sliced matches
+        emp_ids = [emp.id for emp, _, _, _ in records]
+        active_projects_map = await self.repo.get_active_projects_for_employees(emp_ids)
         
         items = [
             {
@@ -314,6 +332,8 @@ class RequirementService(BaseService):
                 "system_role_id": emp.system_role_id,
                 "system_role_name": system_role_name,  
                 "active_project_count": active_count,
+                "end_date": emp.end_date,
+                "projects": active_projects_map.get(emp.id, [])
             }
             for emp, system_role_name, active_count, avg_prof in records
         ]
