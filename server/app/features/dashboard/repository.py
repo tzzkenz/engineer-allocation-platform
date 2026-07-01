@@ -7,6 +7,7 @@ from models.project_employee import ProjectEmployee
 from models.employee import Employee
 from models.employee_skill import EmployeeSkill
 from models.skill import Skill
+from models.system_role import SystemRole
 
 
 class DashboardRepository:
@@ -20,9 +21,10 @@ class DashboardRepository:
 
     async def employee_count_by_role(self):
         stmt = (
-            select(Employee.system_role_id, func.count(Employee.id))
+            select(SystemRole.name, func.count(Employee.id))
+            .join(SystemRole, SystemRole.id == Employee.system_role_id)
             .where(Employee.deleted_at.is_(None))
-            .group_by(Employee.system_role_id)
+            .group_by(SystemRole.name)
         )
 
         result = await self.db.execute(stmt)

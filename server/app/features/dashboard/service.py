@@ -1,5 +1,8 @@
+from features.dashboard.repository import DashboardRepository
+
+
 class DashboardService:
-    def __init__(self, dashboard_repo):
+    def __init__(self, dashboard_repo: DashboardRepository):
         self.dashboard_repo = dashboard_repo
 
     async def get_dashboard(self):
