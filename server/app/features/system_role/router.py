@@ -34,7 +34,7 @@ async def create_system_role(
     service: SystemRoleService = Depends(get_system_role_service),
     current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.create(payload.name)
+    return await service.create(payload.name, current_user.id)
 
 
 @router.patch("/{role_id}", response_model=SystemRoleResponse)
@@ -42,13 +42,15 @@ async def update_system_role(
     role_id: int,
     payload: SystemRolePatch,
     service: SystemRoleService = Depends(get_system_role_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(role_id, payload.name)
+    return await service.update(role_id, payload.name, current_user.id)
 
 
 @router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_system_role(
     role_id: int,
     service: SystemRoleService = Depends(get_system_role_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.delete(role_id)
+    await service.delete(role_id, current_user.id)

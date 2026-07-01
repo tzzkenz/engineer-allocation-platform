@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, status
 
-from core.dependencies import get_employee_service, get_requirement_service
+from core.dependencies import get_requirement_service
 from features.requirement.schemas import (
     AvailabilityFilter,
     MatchedEmployeeResponse,
@@ -40,7 +40,6 @@ async def create_requirement(
 @router.get("/{project_id}/requirements", response_model=list[RequirementResponse])
 async def get_requirements_for_project(
     project_id: int, service: RequirementService = Depends(get_requirement_service)
-    
 ):
     # Fixed to pass project_id explicitly so the service processes the query correctly
     return await service.get(project_id=project_id)
@@ -66,9 +65,11 @@ async def update_requirement(
     request_id: int,
     payload: RequirementUpdate,
     service: RequirementService = Depends(get_requirement_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
     return await service.update(
         request_id=request_id,
+        user_id=current_user.id,
         requested_count=payload.requested_count,
         status=payload.status,
         resolved_by=payload.resolved_by,
@@ -79,8 +80,9 @@ async def update_requirement(
 async def delete_requirement(
     request_id: int,
     service: RequirementService = Depends(get_requirement_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.delete(request_id)
+    await service.delete(request_id, current_user.id)
 
 
 @router.post(
@@ -120,9 +122,9 @@ async def remove_stack_requirement(
 
 
 @router.get(
-    "/requirements/{request_id}/matches", 
+    "/requirements/{request_id}/matches",
     response_model=list[MatchedEmployeeResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
 )
 async def get_matching_candidates(
     request_id: int,
@@ -133,11 +135,18 @@ async def get_matching_candidates(
 
 @router.get("/search/matches", response_model=list[MatchedEmployeeResponse])
 async def search_candidates(
-    identifier: str | None = Query(default=None, description="Search parameter accepting an ID, exact Email, or partial Name"),
+    identifier: str | None = Query(
+        default=None,
+        description="Search parameter accepting an ID, exact Email, or partial Name",
+    ),
     skill_ids: list[int] = Query(default=[]),
     availability: AvailabilityFilter = Query(default=AvailabilityFilter.ALL),
-    sort_by_experience: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
-    sort_by_proficiency: bool = Query(default=True, description="True for high-to-low, False for low-to-high"),
+    sort_by_experience: bool = Query(
+        default=True, description="True for high-to-low, False for low-to-high"
+    ),
+    sort_by_proficiency: bool = Query(
+        default=True, description="True for high-to-low, False for low-to-high"
+    ),
     service: RequirementService = Depends(get_requirement_service),
     limit: int | None = Query(default=None, ge=1),
     offset: int | None = Query(default=None, ge=0),
@@ -149,5 +158,5 @@ async def search_candidates(
         sort_by_experience=sort_by_experience,
         sort_by_proficiency=sort_by_proficiency,
         limit=limit,
-        offset=offset
+        offset=offset,
     )
