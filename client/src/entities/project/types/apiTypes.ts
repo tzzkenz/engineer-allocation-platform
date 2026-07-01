@@ -69,8 +69,17 @@ export type UpdateFeedbackRequest = {
 
 export type AssignEngineerPayload = {
   requirement_request_id: number;
-  employee_ids: number[];
-  is_shadow: boolean;
+  employees: {
+    employee_id: number;
+    is_shadow: boolean;
+    start_date?: string;
+  }[];
+};
+
+export type RevokeEngineerPayload = {
+  project_id: number;
+  employee_id: number;
+  project_role_id: number;
 };
 
 export type EmployeeCreateRequest = {
