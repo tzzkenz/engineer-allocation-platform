@@ -17,10 +17,21 @@ import { useParams } from "react-router";
 
 import { PROFICIENCY_LABELS, PROFICIENCY_OPTIONS } from "./constants";
 import type { EmployeeSkillRow } from "./types";
-
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 export default function SkillsTable() {
   const { emp_id } = useParams();
 
+const currentUser = useSelector(
+  (state: RootState) => state.auth.user
+);
+
+const employeeId = emp_id
+  ? Number(emp_id)
+  : currentUser?.id;
+console.log("emp_id:", emp_id);
+console.log("currentUser:", currentUser);
+console.log("currentUser.id:", currentUser?.id);
   const { data: skills = [] } = useGetAllSkillsQuery();
  const [addEmployeeSkills, { isLoading: isAddingSkill }] =
   useAddEmployeeSkillsMutation();
@@ -28,8 +39,9 @@ export default function SkillsTable() {
 const [deleteEmployeeSkill, { isLoading: isDeletingSkill }] =
   useDeleteEmployeeSkillMutation();
 
-  const { data: employeeSkillsApi = [] } = useGetEmployeeSkillsQuery(Number(emp_id), {
-    skip: !emp_id,
+const { data: employeeSkillsApi = [] } =
+  useGetEmployeeSkillsQuery(employeeId!, {
+    skip: !employeeId,
   });
 
   const [value, setValue] = useState<EmployeeSkillRow[]>([]);
@@ -42,24 +54,22 @@ const [deleteEmployeeSkill, { isLoading: isDeletingSkill }] =
   const [selectedProf, setSelectedProf] = useState(3);
 
   useEffect(() => {
-    if (!employeeSkillsApi.length) return;
-
-    setValue(
-      employeeSkillsApi.map((skill) => ({
-        skill_id: skill.skill_id,
-        skill_name: skill.name,
-        proficiency: skill.proficiency,
-        is_interest: skill.is_interest,
-      }))
-    );
-  }, [employeeSkillsApi]);
+  setValue(
+    employeeSkillsApi.map((skill) => ({
+      skill_id: skill.skill_id,
+      skill_name: skill.name,
+      proficiency: skill.proficiency,
+      is_interest: skill.is_interest,
+    }))
+  );
+}, [employeeSkillsApi]);
 
   const availableSkills = skills.filter(
     (skill) => !value.some((employeeSkill) => employeeSkill.skill_id === skill.id)
   );
 
   async function addSkill() {
-    if (!selectedSkill || !emp_id) return;
+    if (!selectedSkill || !employeeId) return;
 
     const skill = availableSkills.find((x) => x.id === selectedSkill);
 
@@ -67,7 +77,7 @@ const [deleteEmployeeSkill, { isLoading: isDeletingSkill }] =
 
     try {
       await addEmployeeSkills({
-        employee_id: Number(emp_id),
+        employee_id: employeeId,
         body: {
           skills: [
             {
@@ -99,11 +109,11 @@ const [deleteEmployeeSkill, { isLoading: isDeletingSkill }] =
   }
 
 async function deleteSkill(skill_id: number) {
-  if (!emp_id) return;
+  if (!employeeId) return;
 
   try {
     await deleteEmployeeSkill({
-      employee_id: Number(emp_id),
+      employee_id: employeeId,
       skill_id,
     }).unwrap();
 
