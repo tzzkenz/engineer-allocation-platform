@@ -11,6 +11,7 @@ from models.feedback import Feedback
 from models.audit_log import AuditLog
 from models.system_role import SystemRole
 from models.project_stacks import ProjectStacks
+from models.insight_report import InsightReport
 
 __all__ = [
     "Test",
@@ -27,4 +28,5 @@ __all__ = [
     "AuditLog",
     "SystemRole",
     "ProjectStacks",
+    "InsightReport",
 ]

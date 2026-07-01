@@ -26,6 +26,9 @@ from features.audit.service import AuditLogService
 from features.reporting.service import ReportingService
 from features.dashboard.repository import DashboardRepository
 from features.dashboard.service import DashboardService
+from features.agent.agent import make_llm
+from features.insights.repository import InsightRepository
+from features.insights.services import InsightService
 
 
 def get_audit_repo(db: AsyncSession) -> AuditLogRepository:
@@ -115,3 +118,7 @@ def get_dashboard_service(
     db: AsyncSession = Depends(get_db),
 ) -> ReportingService:
     return DashboardService(DashboardRepository(db))
+
+
+def get_insight_service(db: AsyncSession = Depends(get_db)) -> InsightService:
+    return InsightService(InsightRepository(db), make_llm())

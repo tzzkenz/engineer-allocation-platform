@@ -13,6 +13,7 @@ from features.audit.router import router as audit_router
 from features.agent.router import router as agent_router
 from features.reporting.router import router as reporting_router
 from features.dashboard.router import router as dashboard_router
+from features.insights.router import router as insight_router
 
 from exceptions.handler import register_exception_handlers
 
@@ -33,6 +34,7 @@ app.include_router(audit_router)
 app.include_router(agent_router)
 app.include_router(reporting_router)
 app.include_router(dashboard_router)
+app.include_router(insight_router)
 
 
 app.add_middleware(
