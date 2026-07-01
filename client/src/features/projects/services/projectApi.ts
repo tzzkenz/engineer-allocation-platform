@@ -8,6 +8,7 @@ import type {
   FeedbackResponse,
   Project,
   RequirementResponse,
+  RevokeEngineerPayload,
   UpdateRequirementRequest,
 } from "@entities/project/types/apiTypes";
 
@@ -82,7 +83,7 @@ const projectApi = employeeBaseApi.injectEndpoints({
         method: "GET",
       }),
       providesTags: (_result, _error, projectId) => [
-        { type: "Requirement", id: `PROJECT-${projectId}` },
+        { type: "Assign", id: `PROJECT-${projectId}` },
       ],
     }),
     getRequirement: builder.query<RequirementResponse, number>({
@@ -99,6 +100,16 @@ const projectApi = employeeBaseApi.injectEndpoints({
         body: payload,
       }),
       invalidatesTags: ["Assign"],
+    }),
+    revokeEmployee: builder.mutation<void, RevokeEngineerPayload>({
+      query: (payload) => ({
+        url: "/projects/employee/remove",
+        method: "DELETE",
+        body: payload,
+      }),
+      invalidatesTags: (_result, _error, payload) => [
+        { type: "Assign", id: `PROJECT-${payload.project_id}` },
+      ],
     }),
     createRequirement: builder.mutation<
       RequirementResponse,
@@ -164,4 +175,5 @@ export const {
   useGetCandidatesQuery,
   useGetProjectEmployeesQuery,
   useAssignEmployeeMutation,
+  useRevokeEmployeeMutation,
 } = projectApi;

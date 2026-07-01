@@ -111,8 +111,13 @@ export default function AssignEngineerDialog({
     try {
       await assignEmployee({
         requirement_request_id: requirement.id,
-        employee_ids: [selectedEmployee?.id],
-        is_shadow: values.shadowAssignment,
+        employees: [
+          {
+            employee_id: selectedEmployee?.id,
+            is_shadow: values.shadowAssignment,
+            start_date: values.startDate !== "" ? values.startDate : undefined,
+          },
+        ],
       }).unwrap();
       onAssign(selectedEmployee);
       handleClear();
