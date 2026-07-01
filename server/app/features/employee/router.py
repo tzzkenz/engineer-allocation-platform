@@ -31,7 +31,7 @@ async def list_employees(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
 ):
-    return await service.list(page=page, limit=limit)
+    return await service.list_all(page=page, limit=limit)
 
 
 @router.get("/me", response_model=EmployeeResponse)
@@ -60,15 +60,27 @@ async def create_employee(
 
 
 @router.post("/upload")
-def upload(file: UploadFile = File(...)):
-    csvReader = csv.DictReader(codecs.iterdecode(file.file, "utf-8"))
-    data = {}
-    for rows in csvReader:
-        key = rows["name"]
-        data[key] = rows
+async def upload(
+    file: UploadFile = File(...),
+    service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    csv_reader = csv.DictReader(codecs.iterdecode(file.file, "utf-8"))
+
+    data = []
+    for row in csv_reader:
+        data.append(
+            {
+                **row,
+                "experience": int(row["experience"]) if row.get("experience") else None,
+                "system_role_id": int(row["system_role_id"])
+                if row.get("system_role_id")
+                else None,
+            }
+        )
 
     file.file.close()
-    return data
+    return await service.create_from_file(data, current_user.id)
 
 
 @router.patch("/{id}", response_model=EmployeeResponse)
