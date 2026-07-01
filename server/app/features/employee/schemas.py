@@ -44,6 +44,7 @@ class EmployeeResponse(EmployeeBase):
     id: int
     system_role_id: int
     system_role_name: str
+    projects_count: int
     created_at: datetime
     updated_at: datetime
 
