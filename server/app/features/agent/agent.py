@@ -16,10 +16,7 @@ from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 
 from core.config import settings
-from features.employee.service import EmployeeService
-from features.project.service import ProjectService
-from features.agent.tools.employee_tools import build_employee_tools
-from features.agent.tools.project_tools import build_project_tools
+
 
 SYSTEM_PROMPT = """
 You are a helpful assistant for the Engineer Allocation Platform.
@@ -53,16 +50,11 @@ checkpointer = InMemorySaver()
 
 
 def make_agent(
-    employee_service: EmployeeService,
-    project_service: ProjectService,
     requesting_role: str | None = None,
 ):
-    tools = build_employee_tools(employee_service, requesting_role=requesting_role)
-    tools += build_project_tools(project_service, requesting_role=requesting_role)
 
     return create_agent(
         model=make_llm(),
-        tools=tools,
         system_prompt=SYSTEM_PROMPT,
         checkpointer=checkpointer,
     )
