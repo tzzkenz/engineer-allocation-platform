@@ -53,13 +53,15 @@ async def update_feedback(
     feedback_id: int,
     payload: FeedbackUpdate,
     service: FeedbackService = Depends(get_feedback_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    return await service.update(feedback_id, payload)
+    return await service.update(feedback_id, payload, current_user.id)
 
 
 @router.delete("/{feedback_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_feedback(
     feedback_id: int,
     service: FeedbackService = Depends(get_feedback_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.delete(feedback_id)
+    await service.delete(feedback_id, current_user.id)

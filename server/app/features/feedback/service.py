@@ -4,11 +4,14 @@ from exceptions import ConflictException, NotFoundException, UnknownException
 from features.feedback.repository import FeedbackRepository
 from features.feedback.schemas import FeedbackCreate, FeedbackUpdate
 from models.feedback import Feedback
+from core.base_service import BaseService
 
 
-class FeedbackService:
-    def __init__(self, repo: FeedbackRepository):
-        self.repo = repo
+class FeedbackService(BaseService):
+    ENTITY_NAME = "FEEDBACK"
+
+    def __init__(self, repo: FeedbackRepository, audit_repo):
+        super().__init__(repo, audit_repo)
 
     async def get(self, feedback_id: int) -> Feedback:
         feedback = await self.repo.get_by_id(feedback_id)
@@ -39,6 +42,8 @@ class FeedbackService:
                 created_by=created_by,
             )
 
+            await self.audit_create(self.ENTITY_NAME, feedback_id, created_by)
+
             await self.repo.db.commit()
             return await self.repo.get_by_id(feedback_id)
 
@@ -54,6 +59,7 @@ class FeedbackService:
         self,
         feedback_id: int,
         data: FeedbackUpdate,
+        updated_by: int,
     ) -> Feedback:
         feedback = await self.get(feedback_id)
 
@@ -69,6 +75,17 @@ class FeedbackService:
             return feedback
 
         try:
+            # capture old values before mutation, for audit diffing
+            old_snapshot = feedback
+
+            await self.audit_update_fields(
+                self.ENTITY_NAME,
+                feedback_id,
+                old_snapshot,
+                update_data,
+                updated_by,
+            )
+
             feedback = await self.repo.update(feedback, **update_data)
             await self.repo.db.commit()
             await self.repo.db.refresh(feedback)
@@ -82,11 +99,14 @@ class FeedbackService:
             await self.repo.db.rollback()
             raise UnknownException(str(e))
 
-    async def delete(self, feedback_id: int) -> None:
+    async def delete(self, feedback_id: int, deleted_by: int) -> None:
         feedback = await self.get(feedback_id)
 
         try:
             await self.repo.soft_delete(feedback)
+
+            await self.audit_delete(self.ENTITY_NAME, feedback_id, deleted_by)
+
             await self.repo.db.commit()
 
         except IntegrityError:
