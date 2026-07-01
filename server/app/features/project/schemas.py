@@ -94,3 +94,26 @@ class ProjectStaffingStatusResponse(BaseModel):
     active_allocated: int
     staffing_balance: int
     status_label: str
+
+
+
+
+class AssignedEmployeeDetailsResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProjectAssignedEmployeeResponse(BaseModel):
+    id: int  
+    project_id: int
+    project_role_id: int
+    project_role_name: str
+    start_date: date
+    is_shadow: bool
+    date_assigned: date
+    employee: AssignedEmployeeDetailsResponse
+
+    model_config = ConfigDict(from_attributes=True)

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 
 from core.dependencies import get_project_service
 from features.project.service import ProjectService
-from features.project.schemas import ProjectCreate, ProjectEmployeeBatchCreate, ProjectEmployeeResponse, ProjectResponse, ProjectStaffingStatusResponse, ProjectUpdate
+from features.project.schemas import ProjectAssignedEmployeeResponse, ProjectCreate, ProjectEmployeeBatchCreate, ProjectEmployeeResponse, ProjectResponse, ProjectStaffingStatusResponse, ProjectUpdate
 from features.auth.dependencies import get_current_user
 from features.auth.schemas import TokenPayload
 
@@ -71,3 +71,10 @@ async def get_project_staffing_status(
     service: ProjectService = Depends(get_project_service),
 ):
     return await service.get_project_staffing_status(project_id)
+
+@router.get("/{project_id}/employees", response_model=list[ProjectAssignedEmployeeResponse])
+async def get_project_employees(
+    project_id: int,
+    service: ProjectService = Depends(get_project_service),
+):
+    return await service.get_project_employees(project_id)
