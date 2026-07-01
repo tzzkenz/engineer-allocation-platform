@@ -311,9 +311,10 @@ class RequirementService(BaseService):
                 "experience": emp.experience,
                 "date_of_joining": emp.date_of_joining,
                 "system_role_id": emp.system_role_id,
+                "system_role_name": system_role_name,  
                 "active_project_count": active_count,
             }
-            for emp, active_count, avg_prof in records
+            for emp, system_role_name, active_count, avg_prof in records
         ]
 
         total_pages = math.ceil(total_count / limit) if limit > 0 else 1

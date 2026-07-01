@@ -229,8 +229,10 @@ class RequirementRepository:
         project_role_id: int | None = None,
         limit: int | None = None,
         offset: int | None = None
-    ) -> tuple[list[tuple[Employee, int, float]], int]:
+    ) -> tuple[list[tuple[Employee, str, int, float]], int]:
         
+        from models.system_role import SystemRole  # Ensure SystemRole is imported
+
         active_allocations_subquery = (
             select(
                 ProjectEmployee.employee_id,
@@ -244,13 +246,16 @@ class RequirementRepository:
             .subquery()
         )
 
+        # Added SystemRole.name to select clause
         stmt = (
             select(
                 Employee,
+                SystemRole.name.label("system_role_name"),
                 func.coalesce(active_allocations_subquery.c.project_count, 0).label("active_projects"),
                 func.avg(EmployeeSkill.proficiency).label("avg_proficiency")
             )
             .join(EmployeeSkill, Employee.id == EmployeeSkill.employee_id)
+            .join(SystemRole, Employee.system_role_id == SystemRole.id)
             .outerjoin(active_allocations_subquery, Employee.id == active_allocations_subquery.c.employee_id)
             .where(Employee.deleted_at.is_(None), EmployeeSkill.deleted_at.is_(None))
         )
@@ -277,12 +282,13 @@ class RequirementRepository:
             elif id_type == "name":
                 stmt = stmt.where(Employee.name.ilike(f"%{val}%"))
 
+        # Added SystemRole.name to group_by clauses
         if skill_ids:
             stmt = stmt.where(EmployeeSkill.skill_id.in_(skill_ids))
-            stmt = stmt.group_by(Employee.id, active_allocations_subquery.c.project_count)
+            stmt = stmt.group_by(Employee.id, SystemRole.name, active_allocations_subquery.c.project_count)
             stmt = stmt.having(func.count(EmployeeSkill.skill_id) == len(skill_ids))
         else:
-            stmt = stmt.group_by(Employee.id, active_allocations_subquery.c.project_count)
+            stmt = stmt.group_by(Employee.id, SystemRole.name, active_allocations_subquery.c.project_count)
 
         if availability == "AVAILABLE":
             stmt = stmt.where(func.coalesce(active_allocations_subquery.c.project_count, 0) < 2)

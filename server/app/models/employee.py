@@ -13,13 +13,12 @@ class Employee(Entity):
     email: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     experience: Mapped[int] = mapped_column(Integer, nullable=False)
     date_of_joining: Mapped[date] = mapped_column(Date, nullable=False)
+    end_date: Mapped[date] = mapped_column(Date, nullable=True)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     system_role_id: Mapped[int] = mapped_column(ForeignKey("system_roles.id"))
 
     role = relationship("SystemRole", back_populates="employees")
     audit_logs = relationship("AuditLog", back_populates="changed_by")
-
-    
 
     employee_skills = relationship(
         "EmployeeSkill", back_populates="employee", cascade="all, delete-orphan"
