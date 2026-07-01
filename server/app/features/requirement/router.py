@@ -42,7 +42,6 @@ async def create_requirement(
 async def get_requirements_for_project(
     project_id: int, service: RequirementService = Depends(get_requirement_service)
 ):
-    # Fixed to pass project_id explicitly so the service processes the query correctly
     return await service.get(project_id=project_id)
 
 

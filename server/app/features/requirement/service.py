@@ -31,6 +31,7 @@ class RequirementService(BaseService):
             if req.project_role
             else "Unknown Role",
             "requested_count": req.requested_count,
+            "assigned_count": req.assigned_count,
             "requested_by": req.requested_by,
             "requested_by_name": req.requested_by_employee.name
             if req.requested_by_employee
