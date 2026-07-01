@@ -57,11 +57,11 @@ const baseQueryWithReauth = async (
 
 const employeeBaseApi = createApi({
   reducerPath: "employeeApi",
-  baseQuery: baseQueryWithReauth,
+  baseQuery: baseQuery,
   refetchOnMountOrArgChange: true,
   refetchOnReconnect: true,
   endpoints: () => ({}),
-  tagTypes: ["Project"],
+  tagTypes: ["Project", "ProjectRole", "Requirement", "Skill", "Feedback", "ASSIGN"],
 });
 
 export default employeeBaseApi;

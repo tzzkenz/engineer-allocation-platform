@@ -7,7 +7,11 @@ from sqlalchemy.exc import IntegrityError
 from exceptions import ConflictException, NotFoundException, UnknownException
 from features.project.repository import ProjectRepository
 from models.project import Project, StatusType
-from features.project.schemas import ProjectCreate, ProjectEmployeeBatchCreate, ProjectUpdate
+from features.project.schemas import (
+    ProjectCreate,
+    ProjectEmployeeBatchCreate,
+    ProjectUpdate,
+)
 from features.audit.schemas import ActionType, EntityName
 from models.project_employee import ProjectEmployee
 from models.project_requirement_request import ProjectRequirementRequest
@@ -62,8 +66,8 @@ class ProjectService:
                 status=data.status,
                 start_date=data.start_date,
                 duration=data.duration,
+                skill_ids=data.skill_ids,
             )
-            # Flush to populate the project ID before audit log generation
             await self.repo.db.flush()
 
             # --- AUDIT LOG ADDED ---
@@ -71,12 +75,12 @@ class ProjectService:
                 entity_name=EntityName.PROJECT,
                 entity_id=project.id,
                 action=ActionType.CREATE,
-                changed_by_id=changed_by_id
+                changed_by_id=changed_by_id,
             )
 
             await self.repo.db.commit()
-            await self.repo.db.refresh(project)
-            return project
+            # await self.repo.db.refresh(project)
+            return await self.repo.get_by_id(project.id)
 
         except IntegrityError:
             await self.repo.db.rollback()
@@ -85,7 +89,9 @@ class ProjectService:
             await self.repo.db.rollback()
             raise UnknownException(str(e))
 
-    async def update(self, project_id: int, data: ProjectUpdate, changed_by_id: int) -> Project:
+    async def update(
+        self, project_id: int, data: ProjectUpdate, changed_by_id: int
+    ) -> Project:
         project = await self.get(project_id)
 
         update_data = {}
@@ -102,11 +108,11 @@ class ProjectService:
         if data.duration is not None:
             update_data["duration"] = data.duration
 
-        if not update_data:
+        if not update_data and data.skill_ids is None:
             return project
 
         try:
-            # --- AUDIT LOG ADDED (Track specific field mutations) ---
+            # --- AUDIT LOG (field mutations) ---
             for field, new_val in update_data.items():
                 old_val = getattr(project, field)
                 old_val_str = str(old_val) if old_val is not None else None
@@ -120,13 +126,32 @@ class ProjectService:
                         field_name=field,
                         old_value=old_val_str,
                         new_value=new_val_str,
-                        changed_by_id=changed_by_id
+                        changed_by_id=changed_by_id,
                     )
 
-            project = await self.repo.update(project, **update_data)
+            if update_data:
+                project = await self.repo.update(project, **update_data)
+
+            if data.skill_ids is not None:
+                old_skill_ids = sorted(ps.skill_id for ps in project.stacks)
+                new_skill_ids = sorted(set(data.skill_ids))
+
+                if old_skill_ids != new_skill_ids:
+                    await self.repo.set_stacks(project, data.skill_ids)
+
+                    await self._stage_audit_log(
+                        entity_name=EntityName.PROJECT,
+                        entity_id=project_id,
+                        action=ActionType.UPDATE,
+                        field_name="stacks",
+                        old_value=str(old_skill_ids),
+                        new_value=str(new_skill_ids),
+                        changed_by_id=changed_by_id,
+                    )
+
             await self.repo.db.commit()
-            await self.repo.db.refresh(project)
-            return project
+
+            return await self.repo.get_by_id(project_id)
 
         except IntegrityError:
             await self.repo.db.rollback()
@@ -146,7 +171,7 @@ class ProjectService:
                 entity_name=EntityName.PROJECT,
                 entity_id=project_id,
                 action=ActionType.DELETE,
-                changed_by_id=changed_by_id
+                changed_by_id=changed_by_id,
             )
 
             await self.repo.db.commit()
@@ -179,74 +204,114 @@ class ProjectService:
 
         return result
 
-    async def allocate_employees_batch(self, data: ProjectEmployeeBatchCreate, changed_by_id: int) -> list[ProjectEmployee]:
+    async def allocate_employees_batch(
+    self, data: ProjectEmployeeBatchCreate, changed_by_id: int
+    ) -> list[ProjectEmployee]:
+        # Fetch requirement request information 
         stmt = select(ProjectRequirementRequest).where(
             ProjectRequirementRequest.id == data.requirement_request_id,
-            ProjectRequirementRequest.deleted_at.is_(None)
-        )
-        result = await self.repo.db.execute(stmt)
-        req_request = result.scalar_one_or_none()
+            ProjectRequirementRequest.deleted_at.is_(None),
+        ) 
+        result = await self.repo.db.execute(stmt) 
+        req_request = result.scalar_one_or_none() 
 
         if req_request is None:
-            raise NotFoundException("Requirement request not found or has been deleted")
+            raise NotFoundException("Requirement request not found or has been deleted") 
 
         allocations = []
         today_date = date.today()
 
         try:
-            for emp_id in data.employee_ids:
+            for emp_data in data.employees:
+                emp_id = emp_data.employee_id
+                is_shadow = emp_data.is_shadow
+
                 existing_active = await self.repo.get_active_allocation(
                     project_id=req_request.project_id,
                     employee_id=emp_id,
-                    project_role_id=req_request.project_role_id
-                )
-                
+                    project_role_id=req_request.project_role_id,
+                ) 
+
                 if existing_active is not None:
                     raise ConflictException(
                         f"Employee with ID {emp_id} is already actively assigned to this project under the same role."
-                    )
+                    ) 
 
                 allocation_dict = {
-                    "project_id": req_request.project_id,
-                    "project_role_id": req_request.project_role_id,
-                    "employee_id": emp_id,
-                    "is_shadow": data.is_shadow,
-                    "requirement_request_id": data.requirement_request_id,
-                    "date_assigned": today_date
+                    "project_id": req_request.project_id, 
+                    "project_role_id": req_request.project_role_id, 
+                    "employee_id": emp_id, 
+                    "is_shadow": is_shadow, 
+                    "requirement_request_id": data.requirement_request_id, 
+                    "date_assigned": today_date, 
+                    "start_date": emp_data.start_date,  
                 }
-                
-                allocation = await self.repo.allocate_employee(allocation_dict)
-                allocations.append(allocation)
 
-            # 1. Flush allocations to generate their unique record primary keys (`id`)
-            await self.repo.db.flush()
+                allocation = await self.repo.allocate_employee(allocation_dict) 
+                allocations.append(allocation) 
 
-            # 2. Stage the audit trail entries *while the session transaction is open*
-            for allocation in allocations:
+            # Flush allocations to database to generate IDs
+            await self.repo.db.flush() 
+
+            for allocation in allocations: 
                 await self._stage_audit_log(
                     entity_name=EntityName.PROJECT_EMPLOYEE,
                     entity_id=allocation.id,
                     action=ActionType.CREATE,
-                    changed_by_id=changed_by_id
+                    changed_by_id=changed_by_id,
                 )
 
-            # 3. Commit both allocations and audit entries atomically
-            await self.repo.db.commit()
+            await self.repo.db.commit() 
 
-            # 4. Refresh objects for the return payload safely
-            for allocation in allocations:
-                await self.repo.db.refresh(allocation)
+            for allocation in allocations: 
+                await self.repo.db.refresh(allocation) 
 
-            return allocations
+            return allocations 
 
-        except (ConflictException, NotFoundException):
-            await self.repo.db.rollback()
-            raise
-        except IntegrityError:
-            await self.repo.db.rollback()
-            raise ConflictException(
-                "Database integrity violation occurred. Verify that all employee IDs exist."
+        except (ConflictException, NotFoundException): 
+            await self.repo.db.rollback() 
+            raise 
+        except IntegrityError: 
+            await self.repo.db.rollback() 
+            raise ConflictException( 
+                "Database integrity violation occurred. Verify that all employee IDs exist." 
             )
-        except Exception as e:
-            await self.repo.db.rollback()
-            raise UnknownException(f"Failed to allocate employees batch: {str(e)}")
+        except Exception as e: 
+            await self.repo.db.rollback() 
+            raise UnknownException(f"Failed to allocate employees batch: {str(e)}") 
+
+    async def get_project_staffing_status(self, project_id: int):
+        """
+        Calculates staffing metrics comparing active allocations vs non-rejected requirements.
+        """
+        await self.get(project_id)
+
+        total_requested = await self.repo.get_total_requested_count(project_id)
+        active_allocated = await self.repo.get_active_allocation_count(project_id)
+
+        staffing_balance = active_allocated - total_requested
+
+        if staffing_balance > 0:
+            status_label = f"Overstaffed by {staffing_balance}"
+        elif staffing_balance < 0:
+            status_label = f"Understaffed by {abs(staffing_balance)}"
+        else:
+            status_label = "Correctly Staffed"
+
+        return {
+            "project_id": project_id,
+            "total_requested": total_requested,
+            "active_allocated": active_allocated,
+            "staffing_balance": staffing_balance,
+            "status_label": status_label,
+        }
+    
+
+    async def get_project_employees(self, project_id: int) -> list[Any]:
+        """
+        Validates project existence and returns active employee allocations 
+        populated with project role names and start dates.
+        """
+        await self.get(project_id)
+        
+        return await self.repo.get_assigned_employees(project_id)

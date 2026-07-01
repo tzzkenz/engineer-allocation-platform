@@ -10,7 +10,7 @@ export interface NavItem {
 
 export const navConfig: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/", end: true },
-  { label: "Projects", icon: FolderKanban, href: "/projects" },
-  { label: "Employees", icon: Users, href: "/employees" },
+  { label: "Projects", icon: FolderKanban, href: "/project" },
+  { label: "Employees", icon: Users, href: "/employee" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
