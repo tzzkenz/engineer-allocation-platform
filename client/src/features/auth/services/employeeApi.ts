@@ -50,19 +50,30 @@ export const employeeApi = employeeBaseApi.injectEndpoints({
         url: `/employees/${employee_id}/skills`,
         method: "POST",
         body,
+
       }),
+      invalidatesTags: (result, error, arg) => [
+    { type: "EmployeeSkills", id: arg.employee_id },
+  ],
     }),
     getEmployeeSkills: builder.query<GetEmployeeSkillsResponse, number>({
       query: (employee_id) => ({
         url: `/employees/${employee_id}/skills`,
         method: "GET",
+
       }),
+      providesTags: (result, error, employee_id) => [
+    { type: "EmployeeSkills", id: employee_id },
+  ],
     }),
     deleteEmployeeSkill: builder.mutation<DeleteEmployeeSkillResponse, DeleteEmployeeSkillRequest>({
       query: ({ employee_id, skill_id }) => ({
         url: `/employees/${employee_id}/skills/${skill_id}`,
         method: "DELETE",
       }),
+      invalidatesTags: (result, error, arg) => [
+    { type: "EmployeeSkills", id: arg.employee_id },
+  ],
     }),
   }),
 });
