@@ -90,7 +90,6 @@ def get_project_role_service(
 ) -> ProjectRoleService:
     return ProjectRoleService(
         ProjectRoleRepository(db),
-        get_audit_repo(db),
     )
 
 

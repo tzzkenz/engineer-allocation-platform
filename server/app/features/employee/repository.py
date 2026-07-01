@@ -22,19 +22,23 @@ class EmployeeRepository:
             select(func.count(ProjectEmployee.id))
             .where(
                 ProjectEmployee.employee_id == Employee.id,
-                ProjectEmployee.date_exited.is_(None),  # Only entries where date_exited is None
-                ProjectEmployee.deleted_at.is_(None)   # Soft-delete check
+                ProjectEmployee.date_exited.is_(
+                    None
+                ),  # Only entries where date_exited is None
+                ProjectEmployee.deleted_at.is_(None),  # Soft-delete check
             )
             .correlate(Employee)
             .scalar_subquery()
         )
 
-    async def get_by_id_with_role(self, employee_id: int) -> tuple[Employee, str, int] | None:
+    async def get_by_id_with_role(
+        self, employee_id: int
+    ) -> tuple[Employee, str, int] | None:
         stmt = (
             select(
-                Employee, 
-                SystemRole.name, 
-                self._get_active_projects_subquery().label("projects_count")
+                Employee,
+                SystemRole.name,
+                self._get_active_projects_subquery().label("projects_count"),
             )
             .join(SystemRole, Employee.system_role_id == SystemRole.id)
             .where(Employee.id == employee_id, Employee.deleted_at.is_(None))
@@ -42,12 +46,14 @@ class EmployeeRepository:
         result = await self.db.execute(stmt)
         return result.first()
 
-    async def get_by_email_with_role(self, email: str) -> tuple[Employee, str, int] | None:
+    async def get_by_email_with_role(
+        self, email: str
+    ) -> tuple[Employee, str, int] | None:
         stmt = (
             select(
-                Employee, 
-                SystemRole.name, 
-                self._get_active_projects_subquery().label("projects_count")
+                Employee,
+                SystemRole.name,
+                self._get_active_projects_subquery().label("projects_count"),
             )
             .join(SystemRole, Employee.system_role_id == SystemRole.id)
             .where(Employee.email == email)
@@ -55,31 +61,37 @@ class EmployeeRepository:
         result = await self.db.execute(stmt)
         return result.first()
 
-    async def list_all_with_role(self, limit: int | None = None, offset: int | None = None) -> tuple[list[tuple[Employee, str, int]], int]:
-        count_stmt = select(func.count(Employee.id)).where(Employee.deleted_at.is_(None))
+    async def list_all_with_role(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> tuple[list[tuple[Employee, str, int]], int]:
+        count_stmt = select(func.count(Employee.id)).where(
+            Employee.deleted_at.is_(None)
+        )
         count_result = await self.db.execute(count_stmt)
         total_count = count_result.scalar() or 0
 
         stmt = (
             select(
-                Employee, 
-                SystemRole.name, 
-                self._get_active_projects_subquery().label("projects_count") 
+                Employee,
+                SystemRole.name,
+                self._get_active_projects_subquery().label("projects_count"),
             )
-            .join(SystemRole, Employee.system_role_id == SystemRole.id) 
-            .where(Employee.deleted_at.is_(None)) 
+            .join(SystemRole, Employee.system_role_id == SystemRole.id)
+            .where(Employee.deleted_at.is_(None))
         )
-        
+
         if limit is not None:
-            stmt = stmt.limit(limit) 
+            stmt = stmt.limit(limit)
         if offset is not None:
-            stmt = stmt.offset(offset) 
-            
+            stmt = stmt.offset(offset)
+
         result = await self.db.execute(stmt)
         return list(result.all()), total_count
 
     async def get_by_id(self, employee_id: int) -> Employee | None:
-        stmt = select(Employee).where(Employee.id == employee_id, Employee.deleted_at.is_(None))
+        stmt = select(Employee).where(
+            Employee.id == employee_id, Employee.deleted_at.is_(None)
+        )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -107,34 +119,42 @@ class EmployeeRepository:
         employee.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()
 
-    async def get_employee_skills(self, employee_id: int) -> list[tuple[EmployeeSkill, Skill]]:
+    async def get_employee_skills(
+        self, employee_id: int
+    ) -> list[tuple[EmployeeSkill, Skill]]:
         stmt = (
             select(EmployeeSkill, Skill)
             .join(Skill, EmployeeSkill.skill_id == Skill.id)
             .where(
                 EmployeeSkill.employee_id == employee_id,
                 EmployeeSkill.deleted_at.is_(None),
-                Skill.deleted_at.is_(None)
+                Skill.deleted_at.is_(None),
             )
         )
         result = await self.db.execute(stmt)
         return list(result.all())
-    
-    async def get_employee_skill(self, employee_id: int, skill_id: int) -> EmployeeSkill | None:
+
+    async def get_employee_skill(
+        self, employee_id: int, skill_id: int
+    ) -> EmployeeSkill | None:
         stmt = select(EmployeeSkill).where(
             EmployeeSkill.employee_id == employee_id,
             EmployeeSkill.deleted_at.is_(None),
-            EmployeeSkill.skill_id == skill_id
+            EmployeeSkill.skill_id == skill_id,
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def add_employee_skills(self, employee_skills: list[EmployeeSkill]) -> list[EmployeeSkill]:
+    async def add_employee_skills(
+        self, employee_skills: list[EmployeeSkill]
+    ) -> list[EmployeeSkill]:
         self.db.add_all(employee_skills)
         await self.db.flush()
         return employee_skills
 
-    async def update_employee_skill(self, employee_skill: EmployeeSkill) -> EmployeeSkill:
+    async def update_employee_skill(
+        self, employee_skill: EmployeeSkill
+    ) -> EmployeeSkill:
         await self.db.flush()
         return employee_skill
 
@@ -143,3 +163,38 @@ class EmployeeRepository:
             raise NotFoundException("Cannot remove a soft-deleted employee skill")
         employee_skill.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()
+
+    #############################################################################
+    #############################AGENT###########################################
+    #############################################################################
+
+    async def list_all_by_skill(
+        self,
+        skill: str | None = None,
+    ) -> tuple[list[tuple[Employee, str, int]], int]:
+        base_filters = [Employee.deleted_at.is_(None)]
+
+        if skill is not None:
+            skill_subq = (
+                select(EmployeeSkill.employee_id)
+                .join(Skill, EmployeeSkill.skill_id == Skill.id)
+                .where(Skill.name == skill)
+            )
+            base_filters.append(Employee.id.in_(skill_subq))
+
+        count_stmt = select(func.count(Employee.id)).where(*base_filters)
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar() or 0
+
+        stmt = (
+            select(
+                Employee,
+                SystemRole.name,
+                self._get_active_projects_subquery().label("projects_count"),
+            )
+            .join(SystemRole, Employee.system_role_id == SystemRole.id)
+            .where(*base_filters)
+        )
+
+        result = await self.db.execute(stmt)
+        return list(result.all()), total_count
