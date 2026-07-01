@@ -4,6 +4,7 @@ from fastapi.params import Query
 from core.dependencies import get_employee_service
 from features.employee.schemas import (
     EmployeeCreate,
+    EmployeePaginatedResponse,
     EmployeeResponse,
     EmployeeSkillAddMultiple,
     EmployeeSkillResponse,
@@ -20,14 +21,14 @@ from features.auth.schemas import TokenPayload
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
 
-@router.get("", response_model=list[EmployeeResponse])
+
+@router.get("", response_model=EmployeePaginatedResponse)
 async def list_employees(
     service: EmployeeService = Depends(get_employee_service),
-    limit: int | None = Query(default=None, ge=1),
-    offset: int | None = Query(default=None, ge=0),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
 ):
-    return await service.list(limit=limit, offset=offset)
-
+    return await service.list(page=page, limit=limit)
 
 @router.get("/me", response_model=EmployeeResponse)
 async def get_current_employee(

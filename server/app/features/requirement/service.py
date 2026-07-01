@@ -264,9 +264,12 @@ class RequirementService(BaseService):
         sort_by_experience: bool,
         sort_by_proficiency: bool,
         identifier: str | None = None,
-        limit: int | None = None,
-        offset: int | None = None,
-    ) -> list:
+        requirement_request_id: int | None = None,
+        page: int = 1,
+        limit: int = 10,
+    ) -> dict:
+        import math
+
         identifier_filter = None
         if identifier:
             identifier = identifier.strip()
@@ -277,16 +280,30 @@ class RequirementService(BaseService):
             else:
                 identifier_filter = ("name", identifier)
 
-        records = await self.repo.search_matching_employees(
+        project_id = None
+        project_role_id = None
+        if requirement_request_id is not None:
+            req_request = await self.repo.get_by_id(requirement_request_id)
+            if req_request is None:
+                raise NotFoundException("Requirement request not found")
+            project_id = req_request.project_id
+            project_role_id = req_request.project_role_id
+
+        offset = (page - 1) * limit
+
+        records, total_count = await self.repo.search_matching_employees(
             skill_ids=skill_ids,
             availability=availability,
             sort_by_exp_desc=sort_by_experience,
             sort_by_prof_desc=sort_by_proficiency,
             identifier_filter=identifier_filter,
+            project_id=project_id,
+            project_role_id=project_role_id,
             limit=limit,
             offset=offset,
         )
-        return [
+        
+        items = [
             {
                 "id": emp.id,
                 "name": emp.name,
@@ -298,3 +315,12 @@ class RequirementService(BaseService):
             }
             for emp, active_count, avg_prof in records
         ]
+
+        total_pages = math.ceil(total_count / limit) if limit > 0 else 1
+
+        return {
+            "items": items,
+            "total_pages": total_pages,
+            "current_page": page,
+            "limit": limit
+        }

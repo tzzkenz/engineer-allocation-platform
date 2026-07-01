@@ -44,6 +44,7 @@ class EmployeeResponse(EmployeeBase):
     id: int
     system_role_id: int
     system_role_name: str
+    projects_count: int
     created_at: datetime
     updated_at: datetime
 
@@ -86,3 +87,11 @@ class EmployeeSkillResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+
+class EmployeePaginatedResponse(BaseModel):
+    items: list[EmployeeResponse]
+    total_pages: int
+    current_page: int
+    limit: int

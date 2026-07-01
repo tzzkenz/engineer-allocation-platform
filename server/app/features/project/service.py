@@ -50,8 +50,21 @@ class ProjectService:
             raise NotFoundException("Project not found in DB")
         return project
 
-    async def list_all(self) -> list[Project]:
-        return await self.repo.list_all()
+    async def list_all(self, page: int = 1, limit: int = 10) -> dict[str, Any]:
+        import math
+        
+        offset = (page - 1) * limit
+        
+        projects, total_count = await self.repo.list_all(limit=limit, offset=offset)
+        
+        total_pages = math.ceil(total_count / limit) if limit > 0 else 1
+        
+        return {
+            "items": projects,
+            "total_pages": total_pages,
+            "current_page": page,
+            "limit": limit
+        }
 
     async def create(self, data: ProjectCreate, changed_by_id: int) -> Project:
         name = data.name.strip()
