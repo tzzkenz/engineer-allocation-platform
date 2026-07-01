@@ -26,10 +26,10 @@ const EmployeeRow = ({ engineer, actions }: EngineerRowProps) => {
 
       <TableCell>{engineer.experience}</TableCell>
 
-      <TableCell>{engineer.active_project_count}</TableCell>
+      <TableCell>{engineer.projects_count}</TableCell>
 
       <TableCell>
-        <StatusBadge status={engineer.active_project_count < 2 ? "AVAILABLE" : "BUSY"} />
+        <StatusBadge status={engineer.projects_count < 2 ? "AVAILABLE" : "BUSY"} />
       </TableCell>
 
       <TableCell className="text-right">{actions}</TableCell>

@@ -3,6 +3,7 @@ import type {
   ProjectRoleResponse,
   ProjectRoleUpdate,
   Skill,
+  SystemRoleResponseWithDatesResponse,
   UpdateSkillPayload,
 } from "@entities/config/types/apiTypes";
 
@@ -95,6 +96,13 @@ export const configApi = employeeBaseApi.injectEndpoints({
         { type: "Skill", id: "LIST" },
       ],
     }),
+    getSystemRoles: builder.query<SystemRoleResponseWithDatesResponse[], void>({
+      query: () => ({
+        url: `/system_roles`,
+        method: "GET",
+      }),
+      providesTags: [{ type: "SystemRole", id: "LIST" }],
+    }),
   }),
   overrideExisting: false,
 });
@@ -110,4 +118,5 @@ export const {
   useLazyGetSkillQuery,
   useCreateSkillMutation,
   useUpdateSkillMutation,
+  useGetSystemRolesQuery,
 } = configApi;

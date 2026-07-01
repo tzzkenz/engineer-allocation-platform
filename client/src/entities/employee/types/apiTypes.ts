@@ -16,7 +16,7 @@ export type EmployeeResponse = BaseEmployeeResponse & {
   date_of_joining: string;
   system_role_id: number;
   system_role_name: string;
-  active_project_count: number;
+  projects_count: number;
   created_at: string;
   updated_at: string;
 };
