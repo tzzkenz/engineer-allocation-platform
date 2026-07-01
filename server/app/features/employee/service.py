@@ -78,9 +78,24 @@ class EmployeeService:
             raise NotFoundException("Employee not found")
         return self._format_employee_response(result[0], result[1], result[2])
 
-    async def list(self, limit: int | None = None, offset: int | None = None) -> list[dict[str, Any]]:
-        records = await self.repo.list_all_with_role(limit=limit, offset=offset)
-        return [self._format_employee_response(emp, role_name, pc) for emp, role_name, pc in records]
+    async def list(self, page: int = 1, limit: int = 10) -> dict[str, Any]:
+        import math
+        
+        # Calculate database offset based on page number
+        offset = (page - 1) * limit
+        
+        records, total_count = await self.repo.list_all_with_role(limit=limit, offset=offset) 
+        
+        total_pages = math.ceil(total_count / limit) if limit > 0 else 1
+        
+        items = [self._format_employee_response(emp, role_name, pc) for emp, role_name, pc in records] 
+        
+        return {
+            "items": items,
+            "total_pages": total_pages,
+            "current_page": page,
+            "limit": limit
+        }
 
     async def create(self, employee_data: dict[str, Any], changed_by_id: int) -> dict[str, Any]:
         employee_data = dict(employee_data)

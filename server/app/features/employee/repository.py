@@ -55,24 +55,28 @@ class EmployeeRepository:
         result = await self.db.execute(stmt)
         return result.first()
 
-    async def list_all_with_role(self, limit: int | None = None, offset: int | None = None) -> list[tuple[Employee, str, int]]:
+    async def list_all_with_role(self, limit: int | None = None, offset: int | None = None) -> tuple[list[tuple[Employee, str, int]], int]:
+        count_stmt = select(func.count(Employee.id)).where(Employee.deleted_at.is_(None))
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar() or 0
+
         stmt = (
             select(
                 Employee, 
                 SystemRole.name, 
-                self._get_active_projects_subquery().label("projects_count")
+                self._get_active_projects_subquery().label("projects_count") 
             )
-            .join(SystemRole, Employee.system_role_id == SystemRole.id)
-            .where(Employee.deleted_at.is_(None))
+            .join(SystemRole, Employee.system_role_id == SystemRole.id) 
+            .where(Employee.deleted_at.is_(None)) 
         )
         
         if limit is not None:
-            stmt = stmt.limit(limit)
+            stmt = stmt.limit(limit) 
         if offset is not None:
-            stmt = stmt.offset(offset)
+            stmt = stmt.offset(offset) 
             
         result = await self.db.execute(stmt)
-        return list(result.all())
+        return list(result.all()), total_count
 
     async def get_by_id(self, employee_id: int) -> Employee | None:
         stmt = select(Employee).where(Employee.id == employee_id, Employee.deleted_at.is_(None))

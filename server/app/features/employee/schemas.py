@@ -87,3 +87,11 @@ class EmployeeSkillResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+
+class EmployeePaginatedResponse(BaseModel):
+    items: list[EmployeeResponse]
+    total_pages: int
+    current_page: int
+    limit: int
