@@ -24,7 +24,9 @@ export type RequirementResponse = {
   id: number;
   project_id: number;
   project_role_id: number;
+  project_role_name: string;
   requested_count: number;
+  assigned_count: number;
   requested_by: number;
   status: RequirementStatus;
   stack_requests: StackRequest[];

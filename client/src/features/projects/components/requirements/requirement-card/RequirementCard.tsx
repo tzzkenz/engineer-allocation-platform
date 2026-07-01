@@ -1,6 +1,8 @@
 import { useState } from "react";
 
 import type { EmployeeResponse } from "@/entities/employee/types/apiTypes";
+import { useDeleteRequirementMutation } from "@/features/projects/services/projectApi";
+import DeleteConfirmationDialog from "@/shared/components/confirm-dlalog/DeleteConfirmationDialog";
 import { Bell, Plus } from "lucide-react";
 
 import type { RequirementResponse } from "@entities/project/types/apiTypes";
@@ -18,14 +20,29 @@ type RequirementsCardProps = {
 };
 
 export function RequirementsCard({ requirements, projectId }: RequirementsCardProps) {
+  const [deleteRequirement, { isLoading: isDeleteLoading }] = useDeleteRequirementMutation();
   const [raiseOpen, setRaiseOpen] = useState(false);
   const [selectedRequirement, setSelectedRequirement] = useState<RequirementResponse | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<RequirementResponse | null>(null);
 
   const handleAssignClick = (requirement: RequirementResponse) => {
     setSelectedRequirement(requirement);
   };
 
-  const handlClear = () => {
+  const handleRemoveClick = (requirement: RequirementResponse) => {
+    setPendingDelete(requirement);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!pendingDelete) return;
+
+    try {
+      await deleteRequirement(pendingDelete.id as number).unwrap();
+      setPendingDelete(null);
+    } catch (err) {}
+  };
+
+  const handleClear = () => {
     setSelectedRequirement(null);
   };
   return (
@@ -35,23 +52,20 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
           <SectionHeader
             title="Project Requirements"
             actions={
-              <>
-                <IconButton
-                  varient="outline"
-                  icon={<Plus className="size-3.5" />}
-                  label="Raise Request"
-                  onClick={() => setRaiseOpen(true)}
-                  className=" text-primary shadow-[6px_6px_12px_rgba(0,0,0,0.05),-6px_-6px_12px_rgba(255,255,255,0.8)]"
-                />
-                <IconButton
-                  varient="outline"
-                  icon={<Bell className="size-3.5 text-muted-foreground" />}
-                  label="Requests"
-                />
-              </>
+              <IconButton
+                varient="outline"
+                icon={<Plus className="size-3.5" />}
+                label="Raise Request"
+                onClick={() => setRaiseOpen(true)}
+                className=" text-primary shadow-[6px_6px_12px_rgba(0,0,0,0.05),-6px_-6px_12px_rgba(255,255,255,0.8)]"
+              />
             }
           />
-          <RequirementTable requirements={requirements} onAssign={handleAssignClick} />
+          <RequirementTable
+            requirements={requirements}
+            onAssign={handleAssignClick}
+            onRemove={handleRemoveClick}
+          />
         </SectionCardInner>
       </SectionCard>
 
@@ -60,8 +74,19 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
         <AssignEngineerDialog
           requirement={selectedRequirement}
           open={true}
-          onOpenChange={handlClear}
-          onAssign={handlClear}
+          onOpenChange={handleClear}
+          onAssign={handleClear}
+        />
+      )}
+
+      {pendingDelete && (
+        <DeleteConfirmationDialog
+          open={true}
+          onOpenChange={() => setPendingDelete(null)}
+          onConfirm={handleDeleteConfirm}
+          isDeleting={isDeleteLoading}
+          title="Delete Requirement"
+          description={`Are you sure you want to delete the requirement? This action cannot be undone.`}
         />
       )}
     </>

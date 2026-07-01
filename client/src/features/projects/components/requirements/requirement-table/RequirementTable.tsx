@@ -1,6 +1,7 @@
 import { TechStackTag } from "@/entities/project/components/TechStack";
 import type { RequirementResponse } from "@/entities/project/types/apiTypes";
 import { REQUIREMENT_NAME_TO_LABEL } from "@/features/projects/utils/status";
+import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
   Table,
@@ -11,20 +12,25 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 
+import { RequirementStatusBadge } from "../requirement-status-badge/RequirementStatusBadge";
+
 const TABLE_HEADS = ["Project Role", "Required Expertise", "Assigned", "Status", "Actions"];
 
 type RequirementTableProps = {
   requirements: RequirementResponse[];
   onAssign: (requirement: RequirementResponse) => void;
+  onRemove: (requirement: RequirementResponse) => void;
 };
 
-export const RequirementTable = ({ requirements, onAssign }: RequirementTableProps) => {
+export const RequirementTable = ({ requirements, onAssign, onRemove }: RequirementTableProps) => {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           {TABLE_HEADS.map((head) => (
-            <TableHead key={head}>{head}</TableHead>
+            <TableHead key={head} className={head === "Actions" ? "text-right" : undefined}>
+              {head}
+            </TableHead>
           ))}
         </TableRow>
       </TableHeader>
@@ -32,7 +38,7 @@ export const RequirementTable = ({ requirements, onAssign }: RequirementTablePro
       <TableBody>
         {requirements.map((req) => (
           <TableRow key={req.id}>
-            <TableCell>{req.project_role_id}</TableCell>
+            <TableCell>{req.project_role_name}</TableCell>
 
             <TableCell>
               {req.stack_requests.map((stack) => (
@@ -40,11 +46,15 @@ export const RequirementTable = ({ requirements, onAssign }: RequirementTablePro
               ))}
             </TableCell>
 
-            <TableCell>0 / {req.requested_count}</TableCell>
-
-            <TableCell>{REQUIREMENT_NAME_TO_LABEL[req.status]}</TableCell>
+            <TableCell>
+              {req.assigned_count} / {req.requested_count}
+            </TableCell>
 
             <TableCell>
+              <RequirementStatusBadge status={req.status} />
+            </TableCell>
+
+            <TableCell className="text-right">
               <Button
                 // variant=""
                 // className=" text-primary"
@@ -53,6 +63,16 @@ export const RequirementTable = ({ requirements, onAssign }: RequirementTablePro
               >
                 Assign
               </Button>
+              {req.status === "PENDING" && (
+                <Button
+                  variant="destructive"
+                  // className=" text-primary"
+                  size="sm"
+                  onClick={() => onRemove(req)}
+                >
+                  Remove
+                </Button>
+              )}
             </TableCell>
           </TableRow>
         ))}
