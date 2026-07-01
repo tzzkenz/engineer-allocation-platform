@@ -1,11 +1,5 @@
 import { Card, CardContent } from "@shared/components/ui/card";
 
-const skills = [
-  { label: "Inventory Sys", pct: 91, tag: "REACT", tagPct: 88 },
-  { label: "JAVA", pct: 76, tag: "FLUTTER", tagPct: 46 },
-  { label: "NODE.JS", pct: 81, tag: "AWS", tagPct: 46 },
-];
-
 function SkillBar({ label, pct }: { label: string; pct: number }) {
   const low = pct < 60;
   return (
@@ -28,12 +22,15 @@ function SkillBar({ label, pct }: { label: string; pct: number }) {
   );
 }
 
-export function SkillCoverage() {
+type SkillCoverageProps = {
+  skills: { label: string; pct: number; tag: string; tagPct: number }[];
+};
+export function SkillCoverage({ skills }: SkillCoverageProps) {
   return (
     <Card className="rounded-2xl p-6 flex flex-col gap-5">
       <h3 className="text-base font-semibold text-foreground">Skill Coverage</h3>
 
-      <CardContent className="grid grid-cols-2 gap-x-8 gap-y-4">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
         {skills.map((s) => (
           <>
             <SkillBar key={s.label} label={s.label} pct={s.pct} />

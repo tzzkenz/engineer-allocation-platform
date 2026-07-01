@@ -1,16 +1,22 @@
+import { PROJECT_STATUS_BADGE_CLASSES } from "@/entities/project/utils/status";
 import { List } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 import { Card, CardContent, CardHeader } from "@shared/components/ui/card";
 
-const data = [
-  { name: "Active", value: 8, color: "#4648D4" },
-  { name: "Closed", value: 40, color: "#e2e4ea" },
-];
+// const data = [
+//   { name: "Active", value: 8, color: "#4648D4" },
+//   { name: "Closed", value: 40, color: "#e2e4ea" },
+// ];
 
-const TOTAL = data.reduce((s, d) => s + d.value, 0);
+type ProjectStatusProps = {
+  data: { name: string; value: number }[];
+  total: number;
+};
 
-export function ProjectStatusChart() {
+// const TOTAL = data.reduce((s, d) => s + d.value, 0);
+
+export function ProjectStatusChart({ data, total }: ProjectStatusProps) {
   return (
     <Card className=" rounded-2xl flex flex-col gap-4">
       <CardHeader className="flex items-center justify-between">
@@ -36,13 +42,13 @@ export function ProjectStatusChart() {
                 strokeWidth={0}
               >
                 {data.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
+                  <Cell key={i} fill={PROJECT_STATUS_BADGE_CLASSES[entry.name]} />
                 ))}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-2xl font-bold text-foreground leading-none">{TOTAL}</span>
+            <span className="text-2xl font-bold text-foreground leading-none">{total}</span>
             <span className="text-[10px] font-extrabold tracking-widest text-muted-foreground uppercase mt-0.5">
               Total
             </span>
@@ -55,7 +61,7 @@ export function ProjectStatusChart() {
               <div className="flex items-center gap-2">
                 <span
                   className="size-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: d.color }}
+                  style={{ backgroundColor: PROJECT_STATUS_BADGE_CLASSES[d.name] }}
                 />
                 <span className="text-sm text-muted-foreground">{d.name}</span>
               </div>

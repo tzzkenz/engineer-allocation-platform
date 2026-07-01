@@ -2,14 +2,10 @@ import { LayoutList } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@shared/components/ui/card";
 
-const roles = [
-  { label: "Technical Lead", count: 18, max: 50 },
-  { label: "Developer", count: 44, max: 50 },
-  { label: "QA Engineer", count: 32, max: 50 },
-  { label: "UI/UX Designer", count: 12, max: 50 },
-];
-
-export function EngineerDistribution() {
+type EngineerDistributionProps = {
+  roles: { label: string; count: number; max: number }[];
+};
+export function EngineerDistribution({ roles }: EngineerDistributionProps) {
   return (
     <Card
       className="rounded-2xl p-6 flex flex-col gap-5"
