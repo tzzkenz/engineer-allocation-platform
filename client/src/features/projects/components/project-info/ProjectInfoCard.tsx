@@ -1,10 +1,11 @@
 import { CheckCircle, Pencil } from "lucide-react";
 
-import type { BaseProject } from "@entities/project/types/apiTypes";
+import type { BaseProject, ProjectStatus } from "@entities/project/types/apiTypes";
 
 import { IconButton } from "@shared/components/icon-button/IconButton";
 import { formatDate } from "@shared/lib/format";
 
+import { getProjectStatusAction } from "../../utils/action";
 import { getProjectDateRange } from "../../utils/duration";
 import { InfoField } from "../info-card/InfoCard";
 import { SectionCard, SectionCardInner, SectionHeader } from "../section/SectionCard";
@@ -12,10 +13,17 @@ import { SectionCard, SectionCardInner, SectionHeader } from "../section/Section
 interface ProjectInfoCardProps {
   project: BaseProject;
   onEdit?: () => void;
-  onMarkComplete?: () => void;
+  onUpdateStatus?: (status: ProjectStatus) => void;
 }
 
-export function ProjectInfoCard({ project, onEdit, onMarkComplete }: ProjectInfoCardProps) {
+export function ProjectInfoCard({ project, onEdit, onUpdateStatus }: ProjectInfoCardProps) {
+  const action = getProjectStatusAction(project.status);
+
+  const handleUpdateStatus = () => {
+    if (onUpdateStatus && action) {
+      onUpdateStatus(action.status);
+    }
+  };
   return (
     <SectionCard>
       <SectionCardInner>
@@ -30,13 +38,15 @@ export function ProjectInfoCard({ project, onEdit, onMarkComplete }: ProjectInfo
                 label="Edit Project"
                 onClick={onEdit}
               />
-              <IconButton
-                varient="outline"
-                className=" bg-green-100 text-green-600"
-                icon={<CheckCircle className="size-3.5" />}
-                label="Mark as Completed"
-                onClick={onMarkComplete}
-              />
+              {action && (
+                <IconButton
+                  varient="outline"
+                  className={action.className}
+                  icon={action.icon}
+                  label={action.label}
+                  onClick={handleUpdateStatus}
+                />
+              )}
             </>
           }
         />
