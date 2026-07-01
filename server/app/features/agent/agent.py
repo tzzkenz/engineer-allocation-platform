@@ -5,6 +5,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 from core.config import settings
 from features.agent.tools.employee_tools import make_employees_tools
 from features.employee.service import EmployeeService
+from features.agent.tools.project_tools import make_project_tools
+from features.project.service import ProjectService
 
 
 SYSTEM_PROMPT = """
@@ -25,9 +27,10 @@ def make_llm():
 checkpointer = InMemorySaver()
 
 
-def make_agent(employee_service: EmployeeService):
+def make_agent(employee_service: EmployeeService, project_service: ProjectService):
 
     tools = make_employees_tools(employee_service)
+    tools += make_project_tools(project_service)
 
     return create_agent(
         model=make_llm(),

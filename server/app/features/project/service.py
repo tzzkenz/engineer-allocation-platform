@@ -356,8 +356,6 @@ class ProjectService:
 
         return await self.repo.get_assigned_employees(project_id)
 
-    # Add this inside the ProjectService class
-
     async def remove_employee_by_details(
         self,
         project_id: int,
@@ -380,11 +378,8 @@ class ProjectService:
             )
 
         try:
-            # 2. Exit the employee (sets date_exited and decrements req count)
-            # (Assuming exit_employee_from_project is in your repository from the previous step)
             await self.repo.exit_employee_from_project(allocation)
 
-            # 3. Stage the audit log
             await self._stage_audit_log(
                 entity_name=EntityName.PROJECT_EMPLOYEE,
                 entity_id=allocation.id,
@@ -400,3 +395,45 @@ class ProjectService:
         except Exception as e:
             await self.repo.db.rollback()
             raise UnknownException(f"Failed to remove employee from project: {str(e)}")
+
+    ######################################################################
+    ######################################################################
+    ######################################################################
+    ###########################AGENT######################################
+    ######################################################################
+    ######################################################################
+    ######################################################################
+
+    def serialize_project(self, p):
+        return {
+            "id": p.id,
+            "name": p.name,
+            "status": p.status,
+            "start_date": p.start_date.isoformat() if p.start_date else None,
+            "end_date": p.end_date.isoformat() if p.end_date else None,
+        }
+
+    async def list_all_for_agent(
+        self,
+        status: StatusType | None = None,
+        identifier: str | None = None,
+        skill_ids: list[int] | None = None,
+    ) -> dict[str, Any]:
+
+        identifier_filter = None
+        if identifier:
+            identifier = identifier.strip()
+            if identifier.isdigit():
+                identifier_filter = ("id", int(identifier))
+            else:
+                identifier_filter = ("name", identifier)
+
+        projects, total_count = await self.repo.list_all(
+            status_filter=status,
+            identifier_filter=identifier_filter,
+            skill_ids=skill_ids,
+        )
+
+        serialized_projects = [self.serialize_project(p) for p in projects]
+
+        return serialized_projects

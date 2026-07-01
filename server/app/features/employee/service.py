@@ -81,12 +81,12 @@ class EmployeeService:
         return self._format_employee_response(result[0], result[1], result[2])
 
     async def list_all(
-        self, 
-        page: int = 1, 
+        self,
+        page: int = 1,
         limit: int = 10,
         identifier: str | None = None,
         system_role_id: int | None = None,
-        skill_ids: list[int] | None = None
+        skill_ids: list[int] | None = None,
     ) -> dict[str, Any]:
         import math
         import re
@@ -108,11 +108,11 @@ class EmployeeService:
         offset = (page - 1) * limit
 
         records, total_count = await self.repo.list_all_with_role(
-            limit=limit, 
+            limit=limit,
             offset=offset,
             identifier_filter=identifier_filter,
             system_role_id=system_role_id,
-            skill_ids=skill_ids
+            skill_ids=skill_ids,
         )
 
         total_pages = math.ceil(total_count / limit) if limit > 0 else 1
@@ -487,6 +487,31 @@ class EmployeeService:
     #############################################################################
     #############################AGENT###########################################
     #############################################################################
+
+    def _format_employee_response_for_agent(
+        self, employee: Employee, role_name: str, projects_count: int
+    ) -> dict[str, Any]:
+        return {
+            "id": employee.id,
+            "name": employee.name,
+            "email": employee.email,
+            "experience": employee.experience,
+            "date_of_joining": (
+                employee.date_of_joining.isoformat()
+                if employee.date_of_joining
+                else None
+            ),
+            "system_role_id": employee.system_role_id,
+            "system_role_name": role_name,
+            "projects_count": projects_count,
+            "created_at": (
+                employee.created_at.isoformat() if employee.created_at else None
+            ),
+            "updated_at": (
+                employee.updated_at.isoformat() if employee.updated_at else None
+            ),
+        }
+
     async def list_all_employees_with_roll_for_agent(
         self,
         skill: str | None = None,
@@ -502,7 +527,9 @@ class EmployeeService:
             ]
 
         result = [
-            self._format_employee_response(employee, role_name, projects_count)
+            self._format_employee_response_for_agent(
+                employee, role_name, projects_count
+            )
             for employee, role_name, projects_count in rows
         ]
 
