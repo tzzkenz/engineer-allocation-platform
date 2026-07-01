@@ -25,6 +25,17 @@ from features.auth.schemas import TokenPayload
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
 
+@router.patch("/password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_employee_password(
+    payload: PasswordChange,
+    service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    await service.change_password(
+        current_user.id, payload.model_dump(), current_user.id
+    )
+
+
 @router.get("", response_model=EmployeePaginatedResponse)
 async def list_employees(
     service: EmployeeService = Depends(get_employee_service),
@@ -111,17 +122,6 @@ async def delete_employee(
     current_user: TokenPayload = Depends(get_current_user),
 ):
     await service.delete(id, current_user.id)
-
-
-@router.patch("/password", status_code=status.HTTP_204_NO_CONTENT)
-async def change_employee_password(
-    payload: PasswordChange,
-    service: EmployeeService = Depends(get_employee_service),
-    current_user: TokenPayload = Depends(get_current_user),
-):
-    await service.change_password(
-        current_user.id, payload.model_dump(), current_user.id
-    )
 
 
 @router.post("/{id}/skills", status_code=status.HTTP_201_CREATED)
