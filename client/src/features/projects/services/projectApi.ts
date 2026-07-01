@@ -2,6 +2,7 @@ import type {
   AdvanceSearchEmployeeParams,
   EmployeeResponse,
 } from "@/entities/employee/types/apiTypes";
+import type { PaginatedResult } from "@/shared/type/pagination";
 
 import type {
   AssignEngineerPayload,
@@ -17,7 +18,7 @@ import employeeBaseApi from "@shared/api/base.api";
 
 const projectApi = employeeBaseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getProjects: builder.query<ProjectListResponse, void>({
+    getProjects: builder.query<PaginatedResult<Project>, void>({
       query: () => ({
         url: "/projects",
         method: "GET",
@@ -56,7 +57,7 @@ const projectApi = employeeBaseApi.injectEndpoints({
         { type: "Feedback", id: `PROJECT-${projectId}` },
       ],
     }),
-    getCandidates: builder.query<EmployeeResponse[], string>({
+    getCandidates: builder.query<PaginatedResult<EmployeeResponse>, string>({
       query: (params) => ({
         url: `/project/search/matches?${params}`,
       }),

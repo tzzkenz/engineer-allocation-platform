@@ -16,19 +16,18 @@ import PageSection from "@shared/components/ui/section";
 export function ProjectList() {
   const navigate = useNavigate();
 
-  const { data: projects = [], isLoading, isError, refetch } = useGetProjectsQuery();
+  const {
+    data: projects = { items: [], total_pages: 0, current_page: 0, limit: 0 },
+    isLoading,
+    isError,
+    refetch,
+  } = useGetProjectsQuery();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
   const handleViewClick = (projectId: number) => {
     navigate(`/project/${projectId}`);
   };
-
-  const filtered = projects.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <>
@@ -73,7 +72,7 @@ export function ProjectList() {
               {isLoading ? (
                 <ProjectTableSkeleton />
               ) : (
-                <ProjectTable employees={filtered} onViewClick={handleViewClick} />
+                <ProjectTable employees={projects.items} onViewClick={handleViewClick} />
               )}
             </CardContent>
           </Card>
