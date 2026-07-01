@@ -23,6 +23,8 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
   const [deleteRequirement, { isLoading: isDeleteLoading }] = useDeleteRequirementMutation();
   const [raiseOpen, setRaiseOpen] = useState(false);
   const [selectedRequirement, setSelectedRequirement] = useState<RequirementResponse | null>(null);
+  const [pendingEdit, setPendingEdit] = useState<RequirementResponse | null>(null);
+
   const [pendingDelete, setPendingDelete] = useState<RequirementResponse | null>(null);
 
   const handleAssignClick = (requirement: RequirementResponse) => {
@@ -45,6 +47,16 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
   const handleClear = () => {
     setSelectedRequirement(null);
   };
+
+  const handleEditClick = (requirement: RequirementResponse) => {
+    setRaiseOpen(true);
+    setPendingEdit(requirement);
+  };
+
+  const handleCloseFormDialog = () => {
+    setRaiseOpen(false);
+    setPendingEdit(null);
+  };
   return (
     <>
       <SectionCard>
@@ -65,11 +77,17 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
             requirements={requirements}
             onAssign={handleAssignClick}
             onRemove={handleRemoveClick}
+            onEdit={handleEditClick}
           />
         </SectionCardInner>
       </SectionCard>
 
-      <RequirementFormDialog projectId={projectId} isOpen={raiseOpen} onOpenChange={setRaiseOpen} />
+      <RequirementFormDialog
+        projectId={projectId}
+        isOpen={raiseOpen}
+        onOpenChange={handleCloseFormDialog}
+        requirement={pendingEdit || undefined}
+      />
       {selectedRequirement && (
         <AssignEngineerDialog
           requirement={selectedRequirement}

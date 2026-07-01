@@ -96,7 +96,11 @@ const RequirementForm = ({
               control={control}
               name="role"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={!!defaultValues}
+                >
                   <SelectTrigger className=" w-full bg-secondary">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
@@ -152,7 +156,7 @@ const RequirementForm = ({
                 >
                   <ComboboxChips ref={anchor}>
                     <ComboboxValue>
-                      {(values) => (
+                      {(values: { id: string; name: string }[]) => (
                         <>
                           {values.map((value) => (
                             <ComboboxChip key={value.id}>{value.name}</ComboboxChip>
@@ -196,7 +200,7 @@ const RequirementForm = ({
           className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
           disabled={isSubmitting}
         >
-          Raise Request
+          {defaultValues ? "Update Request" : "Raise Request"}
         </Button>
       </div>
     </form>

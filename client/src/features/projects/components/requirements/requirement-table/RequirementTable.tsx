@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
+import { Delete, Edit, Pencil, Trash } from "lucide-react";
 
 import { RequirementStatusBadge } from "../requirement-status-badge/RequirementStatusBadge";
 
@@ -20,9 +21,15 @@ type RequirementTableProps = {
   requirements: RequirementResponse[];
   onAssign: (requirement: RequirementResponse) => void;
   onRemove: (requirement: RequirementResponse) => void;
+  onEdit: (requirement: RequirementResponse) => void;
 };
 
-export const RequirementTable = ({ requirements, onAssign, onRemove }: RequirementTableProps) => {
+export const RequirementTable = ({
+  requirements,
+  onAssign,
+  onRemove,
+  onEdit,
+}: RequirementTableProps) => {
   return (
     <Table>
       <TableHeader>
@@ -54,7 +61,7 @@ export const RequirementTable = ({ requirements, onAssign, onRemove }: Requireme
               <RequirementStatusBadge status={req.status} />
             </TableCell>
 
-            <TableCell className="text-right">
+            <TableCell className="text-right flex justify-end items-center gap-1">
               <Button
                 // variant=""
                 // className=" text-primary"
@@ -70,9 +77,17 @@ export const RequirementTable = ({ requirements, onAssign, onRemove }: Requireme
                   size="sm"
                   onClick={() => onRemove(req)}
                 >
-                  Remove
+                  <Trash />
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                // className=" text-primary"
+                size="sm"
+                onClick={() => onEdit(req)}
+              >
+                <Pencil />
+              </Button>
             </TableCell>
           </TableRow>
         ))}

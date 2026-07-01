@@ -135,7 +135,6 @@ const projectApi = employeeBaseApi.injectEndpoints({
         { type: "Requirement", id: "LIST" },
       ],
     }),
-
     deleteRequirement: builder.mutation<void, number>({
       query: (requestId) => ({
         url: `/project/requirements/${requestId}`,
