@@ -1,8 +1,8 @@
 from datetime import datetime
 import re
 from sqlite3 import IntegrityError
-from typing import List
-
+from core.base_service import BaseService
+from features.audit.repository import AuditLogRepository
 from models.project_requirement_request import (
     ProjectRequirementRequest,
     RequestStatus,
@@ -15,13 +15,11 @@ from exceptions import (
     UnknownException,
 )
 from models.skill import SkillType
-from features.requirement.schemas import RequirementResponse, StackRequirementResponse
-from models.employee import Employee
 
 
-class RequirementService:
-    def __init__(self, repo: RequirementRepository):
-        self.repo = repo
+class RequirementService(BaseService):
+    def __init__(self, repo: RequirementRepository, audit_repo: AuditLogRepository):
+        super().__init__(repo, audit_repo)
 
     def _format_requirement_response(self, req: ProjectRequirementRequest) -> dict:
         """Helper to inject dynamic model relationship string properties into a flat dictionary structure."""
@@ -29,10 +27,14 @@ class RequirementService:
             "id": req.id,
             "project_id": req.project_id,
             "project_role_id": req.project_role_id,
-            "project_role_name": req.project_role.name if req.project_role else "Unknown Role",
+            "project_role_name": req.project_role.name
+            if req.project_role
+            else "Unknown Role",
             "requested_count": req.requested_count,
             "requested_by": req.requested_by,
-            "requested_by_name": req.requested_by_employee.name if req.requested_by_employee else "Unknown Employee",
+            "requested_by_name": req.requested_by_employee.name
+            if req.requested_by_employee
+            else "Unknown Employee",
             "resolved_by": req.resolved_by,
             "resolved_at": req.resolved_at,
             "status": req.status,
@@ -41,10 +43,10 @@ class RequirementService:
                     "id": sr.id,
                     "project_requirement_request_id": sr.project_requirement_request_id,
                     "stack_id": sr.stack_id,
-                    "stack_name": sr.stack.name if sr.stack else "Unknown Stack"
+                    "stack_name": sr.stack.name if sr.stack else "Unknown Stack",
                 }
                 for sr in req.stack_requests
-            ]
+            ],
         }
 
     async def get(
@@ -93,6 +95,9 @@ class RequirementService:
 
                     await self.repo.add_stack_to_request(request.id, stack_id)
 
+            await self.audit_create(
+                "PROJECT_REQUIREMENT_REQUEST", request.id, requested_by
+            )
             await self.repo.db.commit()
 
             fresh_request = await self.repo.get_with_stacks(request.id)
@@ -111,6 +116,7 @@ class RequirementService:
     async def update(
         self,
         request_id: int,
+        user_id: int,
         requested_count: int | None = None,
         status: RequestStatus | None = None,
         resolved_by: int | None = None,
@@ -132,19 +138,31 @@ class RequirementService:
             resolved_at=resolved_at,
         )
 
+        new_data = {
+            "requested_count": requested_count,
+            "status": status,
+            "resolved_by": resolved_by,
+            "resolved_at": resolved_at,
+        }
+
+        await self.audit_update_fields(
+            "PROJECT_REQUIREMENT_REQUEST", request_id, updated, new_data, user_id
+        )
+
         await self.repo.db.commit()
-        
+
         # Pull fresh configuration state with relationships fully resolved
         fresh_request = await self.repo.get_by_id(request_id)
         return self._format_requirement_response(fresh_request)
 
-    async def delete(self, request_id: int) -> None:
+    async def delete(self, request_id: int, user_id: int) -> None:
         request = await self.repo.get_by_id(request_id)
         if request is None:
             raise NotFoundException("Requirement request not found")
 
         try:
             await self.repo.soft_delete(request)
+            await self.audit_delete("REQUIREMENT_REQUEST", request_id, user_id)
             await self.repo.db.commit()
         except Exception:
             await self.repo.db.rollback()
@@ -165,14 +183,16 @@ class RequirementService:
         try:
             await self.repo.add_stack_to_request(request_id, stack_id)
             await self.repo.db.commit()
-            
+
             # Fetch complete model row sequence context populated with strings
             stack_request = await self.repo.get_stack_request_by_id(request.id)
             return {
                 "id": stack_request.id,
                 "project_requirement_request_id": stack_request.project_requirement_request_id,
                 "stack_id": stack_request.stack_id,
-                "stack_name": stack_request.stack.name if stack_request.stack else "Unknown Stack"
+                "stack_name": stack_request.stack.name
+                if stack_request.stack
+                else "Unknown Stack",
             }
         except IntegrityError:
             await self.repo.db.rollback()
@@ -192,7 +212,7 @@ class RequirementService:
                 "id": sr.id,
                 "project_requirement_request_id": sr.project_requirement_request_id,
                 "stack_id": sr.stack_id,
-                "stack_name": sr.stack.name if sr.stack else "Unknown Stack"
+                "stack_name": sr.stack.name if sr.stack else "Unknown Stack",
             }
             for sr in stacks
         ]
@@ -217,7 +237,7 @@ class RequirementService:
         except Exception:
             await self.repo.db.rollback()
             raise UnknownException("Failed to delete stack requirement")
-        
+
     async def get_candidate_matches(self, request_id: int) -> list:
         request = await self.repo.get_by_id(request_id)
         if request is None:
@@ -232,7 +252,7 @@ class RequirementService:
                 "experience": emp.experience,
                 "date_of_joining": emp.date_of_joining,
                 "system_role_id": emp.system_role_id,
-                "active_project_count": active_count
+                "active_project_count": active_count,
             }
             for emp, active_count in records
         ]
@@ -264,7 +284,7 @@ class RequirementService:
             sort_by_prof_desc=sort_by_proficiency,
             identifier_filter=identifier_filter,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
         return [
             {
@@ -274,7 +294,7 @@ class RequirementService:
                 "experience": emp.experience,
                 "date_of_joining": emp.date_of_joining,
                 "system_role_id": emp.system_role_id,
-                "active_project_count": active_count
+                "active_project_count": active_count,
             }
             for emp, active_count, avg_prof in records
         ]
