@@ -146,7 +146,9 @@ export default function ProjectCreate() {
                     type="date"
                     placeholder="yyyy-mm-dd"
                     className="h-12 pr-12"
-                    {...checkForm.register("start_date")}
+                    {...checkForm.register("start_date", {
+                      setValueAs: (value) => (value === "" ? undefined : value),
+                    })}
                   />
 
                   <CalendarDays className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
