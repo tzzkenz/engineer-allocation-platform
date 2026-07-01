@@ -9,7 +9,6 @@ import type {
   CreateRequirementRequest,
   FeedbackResponse,
   Project,
-  ProjectListResponse,
   RequirementResponse,
   UpdateRequirementRequest,
 } from "@entities/project/types/apiTypes";
@@ -18,9 +17,9 @@ import employeeBaseApi from "@shared/api/base.api";
 
 const projectApi = employeeBaseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getProjects: builder.query<PaginatedResult<Project>, void>({
-      query: () => ({
-        url: "/projects",
+    getProjects: builder.query<PaginatedResult<Project>, string>({
+      query: (params) => ({
+        url: `/projects?${params}`,
         method: "GET",
       }),
       providesTags: ["Project"],
