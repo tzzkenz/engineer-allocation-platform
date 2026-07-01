@@ -24,7 +24,7 @@ async def get_feedback(
     return await service.get(feedback_id)
 
 
-@router.get("/project/{feedback_id}", response_model=list[FeedbackResponse])
+@router.get("/project/{project_id}", response_model=list[FeedbackResponse])
 async def get_feedbacks_for_project(
     project_id: int,
     service: FeedbackService = Depends(get_feedback_service),

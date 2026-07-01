@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router";
 
 import EmployeeCreate from "@pages/employee-create/EmployeeCreate";
 import EmployeeEdit from "@pages/employee-edit/EmployeeEdit";
+import { EmployeeList } from "@pages/employee-list/EmployeeList";
 import { EmployeeProfile } from "@pages/employee-profile/EmployeeProfile";
 import Login from "@pages/login/Login";
 import ProjectCreate from "@pages/project-create/ProjectCreate";
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
       {
         path: "employee",
         children: [
+          {
+            index: true,
+            element: <EmployeeList />,
+          },
           {
             path: "create",
             element: <EmployeeCreate />,
