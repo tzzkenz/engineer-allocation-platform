@@ -22,13 +22,18 @@ const ProjectEmployees = ({ employees }: ProjectEmployeesProps) => {
           <AssignedEngineerTable
             employees={employees}
             renderActions={(engineer) => (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/employee/${engineer.employee.id}`)}
-              >
-                <Eye />
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/employee/${engineer.employee.id}`)}
+                >
+                  <Eye />
+                </Button>
+                <Button variant="destructive" onClick={() => {}}>
+                  Remove
+                </Button>
+              </>
             )}
           />
         </SectionCardInner>
