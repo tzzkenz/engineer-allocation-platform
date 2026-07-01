@@ -6,6 +6,10 @@ export type BaseEmployeeResponse = {
   role: SystemRoleResponse;
 };
 
+export type BaseEmployeeResponseWithEmail = BaseEmployeeResponse & {
+  email: string;
+};
+
 export type EmployeeResponse = BaseEmployeeResponse & {
   email: string;
   experience: number;

@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Depends, status
+import codecs
+import csv
+
+from click import File
+from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.params import Query
 
 from core.dependencies import get_employee_service
@@ -21,14 +25,14 @@ from features.auth.schemas import TokenPayload
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
 
-
 @router.get("", response_model=EmployeePaginatedResponse)
 async def list_employees(
     service: EmployeeService = Depends(get_employee_service),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
 ):
-    return await service.list(page=page, limit=limit)
+    return await service.list_all(page=page, limit=limit)
+
 
 @router.get("/me", response_model=EmployeeResponse)
 async def get_current_employee(
@@ -53,6 +57,30 @@ async def create_employee(
     current_user: TokenPayload = Depends(get_current_user),
 ):
     return await service.create(payload.model_dump(), current_user.id)
+
+
+@router.post("/upload")
+async def upload(
+    file: UploadFile = File(...),
+    service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    csv_reader = csv.DictReader(codecs.iterdecode(file.file, "utf-8"))
+
+    data = []
+    for row in csv_reader:
+        data.append(
+            {
+                **row,
+                "experience": int(row["experience"]) if row.get("experience") else None,
+                "system_role_id": int(row["system_role_id"])
+                if row.get("system_role_id")
+                else None,
+            }
+        )
+
+    file.file.close()
+    return await service.create_from_file(data, current_user.id)
 
 
 @router.patch("/{id}", response_model=EmployeeResponse)

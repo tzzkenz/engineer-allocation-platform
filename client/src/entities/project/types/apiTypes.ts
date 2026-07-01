@@ -1,5 +1,8 @@
-import type {  StackRequest } from "@/entities/config/types/apiTypes";
-import type { EmployeeResponse } from "@/entities/employee/types/apiTypes";
+import type { StackRequest } from "@/entities/config/types/apiTypes";
+import type {
+  BaseEmployeeResponseWithEmail,
+  EmployeeResponse,
+} from "@/entities/employee/types/apiTypes";
 
 export type ProjectStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "STOPPED" | "DISCARDED";
 export type RequirementStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -68,22 +71,22 @@ export type AssignEngineerPayload = {
   is_shadow: boolean;
 };
 
-export type EmployeeCreateRequest={
+export type EmployeeCreateRequest = {
   name: string;
-  email:string;
+  email: string;
   experience: number;
-  date_of_joining:string;
-  system_role_id:number;
-  password:string;
-}
-export type EmployeeUpdateRequest={
+  date_of_joining: string;
+  system_role_id: number;
+  password: string;
+};
+export type EmployeeUpdateRequest = {
   name: string;
-  email:string;
+  email: string;
   experience: number;
-  date_of_joining:string;
-  system_role_id:number;
-}
-export type EmployeeCreateResponse ={
+  date_of_joining: string;
+  system_role_id: number;
+};
+export type EmployeeCreateResponse = {
   id: number;
   created_at: string;
   updated_at: string;
@@ -102,4 +105,14 @@ export type Skill = {
   type: "STACK" | "SKILL" | "STRENGTH" | "AREA_OF_INTEREST";
 };
 
+export type AssignedEmployeeResponse = {
+  date_assigned: string;
+  employee: BaseEmployeeResponseWithEmail;
+  id: number;
+  is_shadow: boolean;
+  project_id: number;
+  project_role_id: number;
+  project_role_name: string;
+  start_date: string;
+};
 export type GetAllSkillsResponse = Skill[];
