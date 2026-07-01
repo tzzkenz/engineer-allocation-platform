@@ -27,6 +27,8 @@ class ProjectEmployee(Entity):
 
     date_assigned: Mapped[date] = mapped_column(Date, nullable=False)
 
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
     date_exited: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     requirement_request_id: Mapped[int | None] = mapped_column(

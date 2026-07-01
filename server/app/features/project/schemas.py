@@ -65,13 +65,14 @@ class ProjectResponse(BaseModel):
         # v is a list of ProjectStacks ORM rows — pull the related Skill out of each
         return [ps.skill for ps in v]
 
+class ProjectEmployeeCreate(BaseModel):
+    employee_id: int
+    is_shadow: bool = False
+    start_date: date | None = None
 
 class ProjectEmployeeBatchCreate(BaseModel):
     requirement_request_id: int
-    employee_ids: list[int] = Field(
-        ..., min_length=1, description="List of employee IDs to allocate"
-    )
-    is_shadow: bool = False
+    employees: list[ProjectEmployeeCreate]
 
 
 class ProjectEmployeeResponse(BaseModel):

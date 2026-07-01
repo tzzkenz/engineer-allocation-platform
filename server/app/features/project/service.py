@@ -205,51 +205,55 @@ class ProjectService:
         return result
 
     async def allocate_employees_batch(
-        self, data: ProjectEmployeeBatchCreate, changed_by_id: int
+    self, data: ProjectEmployeeBatchCreate, changed_by_id: int
     ) -> list[ProjectEmployee]:
+        # Fetch requirement request information 
         stmt = select(ProjectRequirementRequest).where(
             ProjectRequirementRequest.id == data.requirement_request_id,
             ProjectRequirementRequest.deleted_at.is_(None),
-        )
-        result = await self.repo.db.execute(stmt)
-        req_request = result.scalar_one_or_none()
+        ) 
+        result = await self.repo.db.execute(stmt) 
+        req_request = result.scalar_one_or_none() 
 
         if req_request is None:
-            raise NotFoundException("Requirement request not found or has been deleted")
+            raise NotFoundException("Requirement request not found or has been deleted") 
 
         allocations = []
         today_date = date.today()
 
         try:
-            for emp_id in data.employee_ids:
+            for emp_data in data.employees:
+                emp_id = emp_data.employee_id
+                is_shadow = emp_data.is_shadow
+
                 existing_active = await self.repo.get_active_allocation(
                     project_id=req_request.project_id,
                     employee_id=emp_id,
                     project_role_id=req_request.project_role_id,
-                )
+                ) 
 
                 if existing_active is not None:
                     raise ConflictException(
                         f"Employee with ID {emp_id} is already actively assigned to this project under the same role."
-                    )
+                    ) 
 
                 allocation_dict = {
-                    "project_id": req_request.project_id,
-                    "project_role_id": req_request.project_role_id,
-                    "employee_id": emp_id,
-                    "is_shadow": data.is_shadow,
-                    "requirement_request_id": data.requirement_request_id,
-                    "date_assigned": today_date,
+                    "project_id": req_request.project_id, 
+                    "project_role_id": req_request.project_role_id, 
+                    "employee_id": emp_id, 
+                    "is_shadow": is_shadow, 
+                    "requirement_request_id": data.requirement_request_id, 
+                    "date_assigned": today_date, 
+                    "start_date": emp_data.start_date,  
                 }
 
-                allocation = await self.repo.allocate_employee(allocation_dict)
-                allocations.append(allocation)
+                allocation = await self.repo.allocate_employee(allocation_dict) 
+                allocations.append(allocation) 
 
-            # 1. Flush allocations to generate their unique record primary keys (`id`)
-            await self.repo.db.flush()
+            # Flush allocations to database to generate IDs
+            await self.repo.db.flush() 
 
-            # 2. Stage the audit trail entries *while the session transaction is open*
-            for allocation in allocations:
+            for allocation in allocations: 
                 await self._stage_audit_log(
                     entity_name=EntityName.PROJECT_EMPLOYEE,
                     entity_id=allocation.id,
@@ -257,26 +261,24 @@ class ProjectService:
                     changed_by_id=changed_by_id,
                 )
 
-            # 3. Commit both allocations and audit entries atomically
-            await self.repo.db.commit()
+            await self.repo.db.commit() 
 
-            # 4. Refresh objects for the return payload safely
-            for allocation in allocations:
-                await self.repo.db.refresh(allocation)
+            for allocation in allocations: 
+                await self.repo.db.refresh(allocation) 
 
-            return allocations
+            return allocations 
 
-        except (ConflictException, NotFoundException):
-            await self.repo.db.rollback()
-            raise
-        except IntegrityError:
-            await self.repo.db.rollback()
-            raise ConflictException(
-                "Database integrity violation occurred. Verify that all employee IDs exist."
+        except (ConflictException, NotFoundException): 
+            await self.repo.db.rollback() 
+            raise 
+        except IntegrityError: 
+            await self.repo.db.rollback() 
+            raise ConflictException( 
+                "Database integrity violation occurred. Verify that all employee IDs exist." 
             )
-        except Exception as e:
-            await self.repo.db.rollback()
-            raise UnknownException(f"Failed to allocate employees batch: {str(e)}")
+        except Exception as e: 
+            await self.repo.db.rollback() 
+            raise UnknownException(f"Failed to allocate employees batch: {str(e)}") 
 
     async def get_project_staffing_status(self, project_id: int):
         """
