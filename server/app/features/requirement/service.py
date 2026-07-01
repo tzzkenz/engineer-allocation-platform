@@ -163,7 +163,7 @@ class RequirementService(BaseService):
 
         try:
             await self.repo.soft_delete(request)
-            await self.audit_delete("REQUIREMENT_REQUEST", request_id, user_id)
+            await self.audit_delete("PROJECT_REQUIREMENT_REQUEST", request_id, user_id)
             await self.repo.db.commit()
         except Exception:
             await self.repo.db.rollback()
