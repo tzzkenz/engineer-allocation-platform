@@ -1,7 +1,10 @@
 import { useState } from "react";
 
 import type { EmployeeResponse } from "@/entities/employee/types/apiTypes";
-import { useDeleteRequirementMutation } from "@/features/projects/services/projectApi";
+import {
+  useDeleteRequirementMutation,
+  useUpdateRequirementMutation,
+} from "@/features/projects/services/projectApi";
 import DeleteConfirmationDialog from "@/shared/components/confirm-dlalog/DeleteConfirmationDialog";
 import { Bell, Plus } from "lucide-react";
 
@@ -20,6 +23,7 @@ type RequirementsCardProps = {
 };
 
 export function RequirementsCard({ requirements, projectId }: RequirementsCardProps) {
+  const [updateRequirement, { isLoading: isUpdateLoading }] = useUpdateRequirementMutation();
   const [deleteRequirement, { isLoading: isDeleteLoading }] = useDeleteRequirementMutation();
   const [raiseOpen, setRaiseOpen] = useState(false);
   const [selectedRequirement, setSelectedRequirement] = useState<RequirementResponse | null>(null);
@@ -57,6 +61,18 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
     setRaiseOpen(false);
     setPendingEdit(null);
   };
+
+  const handleApproveClick = async (requirement: RequirementResponse) => {
+    try {
+      await updateRequirement({
+        requestId: requirement.id as number,
+        body: {
+          status: "APPROVED",
+        },
+      }).unwrap();
+    } catch (err) {}
+  };
+
   return (
     <>
       <SectionCard>
@@ -78,6 +94,7 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
             onAssign={handleAssignClick}
             onRemove={handleRemoveClick}
             onEdit={handleEditClick}
+            onApprove={handleApproveClick}
           />
         </SectionCardInner>
       </SectionCard>
