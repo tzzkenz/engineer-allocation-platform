@@ -225,9 +225,11 @@ class RequirementRepository:
         sort_by_exp_desc: bool,
         sort_by_prof_desc: bool,
         identifier_filter: tuple[str, Any] | None = None,
+        project_id: int | None = None,
+        project_role_id: int | None = None,
         limit: int | None = None,
         offset: int | None = None
-    ) -> list[tuple[Employee, int, float]]:
+    ) -> tuple[list[tuple[Employee, int, float]], int]:
         
         active_allocations_subquery = (
             select(
@@ -253,6 +255,19 @@ class RequirementRepository:
             .where(Employee.deleted_at.is_(None), EmployeeSkill.deleted_at.is_(None))
         )
 
+        # Exclusion Rule: Exclude employees already assigned to this project + role combination
+        if project_id is not None and project_role_id is not None:
+            exclusion_stmt = (
+                select(ProjectEmployee.employee_id)
+                .where(
+                    ProjectEmployee.project_id == project_id,
+                    ProjectEmployee.project_role_id == project_role_id,
+                    ProjectEmployee.date_exited.is_(None),
+                    ProjectEmployee.deleted_at.is_(None)
+                )
+            )
+            stmt = stmt.where(Employee.id.not_in(exclusion_stmt))
+
         if identifier_filter:
             id_type, val = identifier_filter
             if id_type == "id":
@@ -274,6 +289,11 @@ class RequirementRepository:
         elif availability == "UNAVAILABLE":
             stmt = stmt.where(func.coalesce(active_allocations_subquery.c.project_count, 0) >= 2)
 
+        # Generate total matches count dynamically before applying slice boundaries
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar() or 0
+
         order_by_clauses = []
         if sort_by_exp_desc:
             order_by_clauses.append(desc(Employee.experience))
@@ -293,4 +313,4 @@ class RequirementRepository:
             stmt = stmt.offset(offset)
 
         result = await self.db.execute(stmt)
-        return list(result.all())
+        return list(result.all()), total_count
