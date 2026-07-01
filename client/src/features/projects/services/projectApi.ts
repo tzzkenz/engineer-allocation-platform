@@ -71,7 +71,15 @@ const projectApi = employeeBaseApi.injectEndpoints({
         { type: "Requirement", id: `PROJECT-${projectId}` },
       ],
     }),
-
+    getProjectEmployees: builder.query<EmployeeResponse[], string>({
+      query: (projectId) => ({
+        url: `/projects/${projectId}/employees`,
+        method: "GET",
+      }),
+      providesTags: (_result, _error, projectId) => [
+        { type: "Requirement", id: `PROJECT-${projectId}` },
+      ],
+    }),
     getRequirement: builder.query<RequirementResponse, number>({
       query: (requestId) => ({
         url: `/project/requirements/${requestId}`,
@@ -150,5 +158,6 @@ export const {
   useDeleteRequirementMutation,
   useGetProjectNotesQuery,
   useGetCandidatesQuery,
+  useGetProjectEmployeesQuery,
   useAssignEmployeeMutation,
 } = projectApi;
