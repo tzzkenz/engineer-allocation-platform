@@ -1,10 +1,14 @@
+import json
+
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from features.agent.agent import make_agent
 from features.auth.dependencies import get_current_user
 from core.dependencies import get_employee_service
 from features.employee.service import EmployeeService
+from langchain_core.messages import HumanMessage
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
@@ -17,7 +21,7 @@ class ChatResponse(BaseModel):
     response: str
 
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post("/chat")
 async def chat(
     payload: ChatRequest,
     current_user=Depends(get_current_user),
@@ -25,10 +29,23 @@ async def chat(
 ):
     agent = make_agent(employee_service)
 
-    result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": payload.message}]},
-        config={"configurable": {"thread_id": f"employee-{current_user.id}"}},
-    )
+    async def event_stream():
+        messages = {"messages": [HumanMessage(content=payload.message)]}
 
-    last_message = result["messages"][-1]
-    return ChatResponse(response=last_message.content)
+        config = {"configurable": {"thread_id": f"employee-{current_user.id}"}}
+
+        async for event in agent.astream_events(messages, config=config):
+            if event["event"] == "on_chat_model_stream":
+                chunk = event["data"]["chunk"]
+
+                if chunk.content:
+                    yield (
+                        f"data: {json.dumps({'content': chunk.content, 'type': 'delta'})}\n\n"
+                    )
+
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+    )
