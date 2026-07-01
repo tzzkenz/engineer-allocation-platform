@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query, status
 
 from core.dependencies import get_requirement_service
@@ -151,6 +153,10 @@ async def search_candidates(
         default=None,
         description="Requirement request ID to check assignment exclusions against",
     ),
+    available_after: date | None = Query(
+        default=None, 
+        description="Show employees whose capacity and contracts are valid after this date"
+    ),
     service: RequirementService = Depends(get_requirement_service),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
@@ -161,7 +167,8 @@ async def search_candidates(
         availability=availability.value,
         sort_by_experience=sort_by_experience,
         sort_by_proficiency=sort_by_proficiency,
+        requirement_request_id=requirement_request_id,
+        available_after=available_after,
         page=page,
         limit=limit,
-        requirement_request_id=requirement_request_id,
     )
