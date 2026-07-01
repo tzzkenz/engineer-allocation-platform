@@ -51,15 +51,15 @@ class ProjectService:
         return project
 
     async def list_all(
-        self, 
-        page: int = 1, 
+        self,
+        page: int = 1,
         limit: int = 10,
         status: StatusType | None = None,
         identifier: str | None = None,
-        skill_ids: list[int] | None = None
+        skill_ids: list[int] | None = None,
     ) -> dict[str, Any]:
         import math
-        
+
         identifier_filter = None
         if identifier:
             identifier = identifier.strip()
@@ -72,22 +72,22 @@ class ProjectService:
 
         # Calculate database window dimension offset
         offset = (page - 1) * limit
-        
+
         projects, total_count = await self.repo.list_all(
-            limit=limit, 
+            limit=limit,
             offset=offset,
             status_filter=status,
             identifier_filter=identifier_filter,
-            skill_ids=skill_ids
+            skill_ids=skill_ids,
         )
-        
+
         total_pages = math.ceil(total_count / limit) if limit > 0 else 1
-        
+
         return {
             "items": projects,
             "total_pages": total_pages,
             "current_page": page,
-            "limit": limit
+            "limit": limit,
         }
 
     async def create(self, data: ProjectCreate, changed_by_id: int) -> Project:
@@ -144,6 +144,9 @@ class ProjectService:
 
         if data.duration is not None:
             update_data["duration"] = data.duration
+
+        if data.status is not None:
+            update_data["status"] = data.status
 
         if not update_data and data.skill_ids is None:
             return project
@@ -242,18 +245,18 @@ class ProjectService:
         return result
 
     async def allocate_employees_batch(
-    self, data: ProjectEmployeeBatchCreate, changed_by_id: int
+        self, data: ProjectEmployeeBatchCreate, changed_by_id: int
     ) -> list[ProjectEmployee]:
-        # Fetch requirement request information 
+        # Fetch requirement request information
         stmt = select(ProjectRequirementRequest).where(
             ProjectRequirementRequest.id == data.requirement_request_id,
             ProjectRequirementRequest.deleted_at.is_(None),
-        ) 
-        result = await self.repo.db.execute(stmt) 
-        req_request = result.scalar_one_or_none() 
+        )
+        result = await self.repo.db.execute(stmt)
+        req_request = result.scalar_one_or_none()
 
         if req_request is None:
-            raise NotFoundException("Requirement request not found or has been deleted") 
+            raise NotFoundException("Requirement request not found or has been deleted")
 
         allocations = []
         today_date = date.today()
@@ -267,29 +270,31 @@ class ProjectService:
                     project_id=req_request.project_id,
                     employee_id=emp_id,
                     project_role_id=req_request.project_role_id,
-                ) 
+                )
 
                 if existing_active is not None:
                     raise ConflictException(
                         f"Employee with ID {emp_id} is already actively assigned to this project under the same role."
-                    ) 
+                    )
 
                 allocation_dict = {
-                    "project_id": req_request.project_id, 
-                    "project_role_id": req_request.project_role_id, 
-                    "employee_id": emp_id, 
-                    "is_shadow": is_shadow, 
-                    "requirement_request_id": data.requirement_request_id, 
-                    "date_assigned": today_date, 
-                    "start_date": emp_data.start_date,  
+                    "project_id": req_request.project_id,
+                    "project_role_id": req_request.project_role_id,
+                    "employee_id": emp_id,
+                    "is_shadow": is_shadow,
+                    "requirement_request_id": data.requirement_request_id,
+                    "date_assigned": today_date,
+                    "start_date": emp_data.start_date,
                 }
 
-                allocation = await self.repo.allocate_employee(allocation_dict,requirement_request_id=req_request.id) 
-                allocations.append(allocation) 
+                allocation = await self.repo.allocate_employee(
+                    allocation_dict, requirement_request_id=req_request.id
+                )
+                allocations.append(allocation)
 
-            await self.repo.db.flush() 
+            await self.repo.db.flush()
 
-            for allocation in allocations: 
+            for allocation in allocations:
                 await self._stage_audit_log(
                     entity_name=EntityName.PROJECT_EMPLOYEE,
                     entity_id=allocation.id,
@@ -297,24 +302,24 @@ class ProjectService:
                     changed_by_id=changed_by_id,
                 )
 
-            await self.repo.db.commit() 
+            await self.repo.db.commit()
 
-            for allocation in allocations: 
-                await self.repo.db.refresh(allocation) 
+            for allocation in allocations:
+                await self.repo.db.refresh(allocation)
 
-            return allocations 
+            return allocations
 
-        except (ConflictException, NotFoundException): 
-            await self.repo.db.rollback() 
-            raise 
-        except IntegrityError: 
-            await self.repo.db.rollback() 
-            raise ConflictException( 
-                "Database integrity violation occurred. Verify that all employee IDs exist." 
+        except (ConflictException, NotFoundException):
+            await self.repo.db.rollback()
+            raise
+        except IntegrityError:
+            await self.repo.db.rollback()
+            raise ConflictException(
+                "Database integrity violation occurred. Verify that all employee IDs exist."
             )
-        except Exception as e: 
-            await self.repo.db.rollback() 
-            raise UnknownException(f"Failed to allocate employees batch: {str(e)}") 
+        except Exception as e:
+            await self.repo.db.rollback()
+            raise UnknownException(f"Failed to allocate employees batch: {str(e)}")
 
     async def get_project_staffing_status(self, project_id: int):
         """
@@ -341,40 +346,44 @@ class ProjectService:
             "staffing_balance": staffing_balance,
             "status_label": status_label,
         }
-    
 
     async def get_project_employees(self, project_id: int) -> list[Any]:
         """
-        Validates project existence and returns active employee allocations 
+        Validates project existence and returns active employee allocations
         populated with project role names and start dates.
         """
         await self.get(project_id)
-        
+
         return await self.repo.get_assigned_employees(project_id)
-    
 
     # Add this inside the ProjectService class
 
     async def remove_employee_by_details(
-        self, project_id: int, employee_id: int, project_role_id: int, changed_by_id: int
+        self,
+        project_id: int,
+        employee_id: int,
+        project_role_id: int,
+        changed_by_id: int,
     ) -> None:
         """Finds an active allocation by project, employee, and role IDs and removes them."""
-        
+
         # 1. Find the active allocation using the existing repository method
         allocation = await self.repo.get_active_allocation(
             project_id=project_id,
             employee_id=employee_id,
-            project_role_id=project_role_id
+            project_role_id=project_role_id,
         )
-        
+
         if allocation is None:
-            raise NotFoundException("Active employee allocation not found for the provided details.")
-            
+            raise NotFoundException(
+                "Active employee allocation not found for the provided details."
+            )
+
         try:
             # 2. Exit the employee (sets date_exited and decrements req count)
             # (Assuming exit_employee_from_project is in your repository from the previous step)
             await self.repo.exit_employee_from_project(allocation)
-            
+
             # 3. Stage the audit log
             await self._stage_audit_log(
                 entity_name=EntityName.PROJECT_EMPLOYEE,
@@ -385,9 +394,9 @@ class ProjectService:
                 new_value=str(allocation.date_exited),
                 changed_by_id=changed_by_id,
             )
-            
+
             await self.repo.db.commit()
-            
+
         except Exception as e:
             await self.repo.db.rollback()
             raise UnknownException(f"Failed to remove employee from project: {str(e)}")
