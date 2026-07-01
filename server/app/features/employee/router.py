@@ -83,16 +83,6 @@ async def upload(
     return await service.create_from_file(data, current_user.id)
 
 
-@router.patch("/{id}", response_model=EmployeeResponse)
-async def update_employee(
-    id: int,
-    payload: EmployeeUpdate,
-    service: EmployeeService = Depends(get_employee_service),
-    current_user: TokenPayload = Depends(get_current_user),
-):
-    return await service.update(id, payload.model_dump(), current_user.id)
-
-
 @router.patch("/me", response_model=EmployeeResponse)
 async def update_employee_self(
     payload: EmployeeUpdateSelf,
@@ -102,6 +92,16 @@ async def update_employee_self(
     return await service.update(
         current_user.id, payload.model_dump(exclude_none=True), current_user.id
     )
+
+
+@router.patch("/{id}", response_model=EmployeeResponse)
+async def update_employee(
+    id: int,
+    payload: EmployeeUpdate,
+    service: EmployeeService = Depends(get_employee_service),
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    return await service.update(id, payload.model_dump(), current_user.id)
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
