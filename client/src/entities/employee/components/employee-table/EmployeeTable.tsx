@@ -1,4 +1,3 @@
-import { Button } from "@shared/components/ui/button";
 import {
   Table,
   TableBody,
@@ -18,7 +17,7 @@ type Props = {
   renderActions: (engineer: EmployeeResponse) => React.ReactNode;
 };
 
-const tableHeads = ["Engineer", "Role", "Experience", "Projects", "Availability", "Actions"];
+const tableHeads = ["Engineer", "Role", "Experience", "Active Projects", "Availability", "Actions"];
 
 export default function EmployeeTable({ employees, renderActions }: Props) {
   return (
