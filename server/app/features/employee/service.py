@@ -458,3 +458,15 @@ class EmployeeService:
             )
             for emp_skill, skill in records
         ]
+
+    #############################################################################
+    #############################AGENT###########################################
+    #############################################################################
+    async def list_all_employees_with_roll_for_agent(self):
+        rows, total_count = await self.repo.list_all_with_role()
+        result = [
+            self._format_employee_response(employee, role_name, projects_count)
+            for employee, role_name, projects_count in rows
+        ]
+        print(result)
+        return result
