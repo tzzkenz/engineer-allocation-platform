@@ -71,7 +71,6 @@ def get_skill_service(
 ) -> SkillService:
     return SkillService(
         SkillRepository(db),
-        get_audit_repo(db),
     )
 
 
