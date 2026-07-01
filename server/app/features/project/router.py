@@ -58,8 +58,9 @@ async def update_project(
 async def delete_project(
     project_id: int,
     service: ProjectService = Depends(get_project_service),
+    current_user: TokenPayload = Depends(get_current_user),
 ):
-    await service.delete(project_id)
+    await service.delete(project_id, current_user.id)
 
 
 @router.post(
