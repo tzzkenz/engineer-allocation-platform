@@ -62,14 +62,16 @@ class EmployeeRepository:
         return result.first()
 
     async def list_all_with_role(
-        self, limit: int | None = None, offset: int | None = None
+        self, 
+        limit: int | None = None, 
+        offset: int | None = None,
+        identifier_filter: tuple[str, Any] | None = None,
+        system_role_id: int | None = None,
+        skill_ids: list[int] | None = None
     ) -> tuple[list[tuple[Employee, str, int]], int]:
-        count_stmt = select(func.count(Employee.id)).where(
-            Employee.deleted_at.is_(None)
-        )
-        count_result = await self.db.execute(count_stmt)
-        total_count = count_result.scalar() or 0
-
+        from models.employee_skill import EmployeeSkill
+        
+        # Base statement selecting employee profile details alongside role and active project counts
         stmt = (
             select(
                 Employee,
@@ -79,12 +81,43 @@ class EmployeeRepository:
             .join(SystemRole, Employee.system_role_id == SystemRole.id)
             .where(Employee.deleted_at.is_(None))
         )
-
+        
+        # 1. Filter by specific system role if provided
+        if system_role_id is not None:
+            stmt = stmt.where(Employee.system_role_id == system_role_id)
+            
+        # 2. Apply combined identifier filter criteria
+        if identifier_filter is not None:
+            id_type, val = identifier_filter
+            if id_type == "id":
+                stmt = stmt.where(Employee.id == val)
+            elif id_type == "email":
+                stmt = stmt.where(Employee.email == val)
+            elif id_type == "name":
+                stmt = stmt.where(Employee.name.ilike(f"%{val}%"))
+                
+        # 3. Enforce skill/stack requirement intersections
+        if skill_ids:
+            stmt = stmt.join(EmployeeSkill, Employee.id == EmployeeSkill.employee_id).where(
+                EmployeeSkill.skill_id.in_(skill_ids),
+                EmployeeSkill.deleted_at.is_(None)
+            )
+            # Group rows to check that the employee matches ALL of the requested stack IDs
+            stmt = stmt.group_by(Employee.id, SystemRole.name).having(
+                func.count(EmployeeSkill.skill_id) == len(skill_ids)
+            )
+        
+        # Execute scalar count calculation wrapper before applying pagination window limits
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar() or 0
+        
+        # Apply window bounds
         if limit is not None:
             stmt = stmt.limit(limit)
         if offset is not None:
             stmt = stmt.offset(offset)
-
+            
         result = await self.db.execute(stmt)
         return list(result.all()), total_count
 
