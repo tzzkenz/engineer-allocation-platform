@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from core.dependencies import get_project_service
 from features.project.service import ProjectService
-from features.project.schemas import ProjectAssignedEmployeeResponse, ProjectCreate, ProjectEmployeeBatchCreate, ProjectEmployeeResponse, ProjectResponse, ProjectStaffingStatusResponse, ProjectUpdate
+from features.project.schemas import ProjectAssignedEmployeeResponse, ProjectCreate, ProjectEmployeeBatchCreate, ProjectEmployeeResponse, ProjectPaginatedResponse, ProjectResponse, ProjectStaffingStatusResponse, ProjectUpdate
 from features.auth.dependencies import get_current_user
 from features.auth.schemas import TokenPayload
 
@@ -10,12 +10,13 @@ from features.auth.schemas import TokenPayload
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
-@router.get("", response_model=list[ProjectResponse])
+@router.get("", response_model=ProjectPaginatedResponse)
 async def list_projects(
     service: ProjectService = Depends(get_project_service),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
 ):
-    return await service.list_all()
-
+    return await service.list_all(page=page, limit=limit)
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(

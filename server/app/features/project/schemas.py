@@ -118,3 +118,10 @@ class ProjectAssignedEmployeeResponse(BaseModel):
     employee: AssignedEmployeeDetailsResponse
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProjectPaginatedResponse(BaseModel):
+    items: list[ProjectResponse]
+    total_pages: int
+    current_page: int
+    limit: int
