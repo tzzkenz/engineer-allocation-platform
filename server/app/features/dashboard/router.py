@@ -11,4 +11,4 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 async def get_dashboard_summary(
     service: DashboardService = Depends(get_dashboard_service),
 ):
-    return await service.get_dashboard_summary()
+    return await service.get_dashboard()
