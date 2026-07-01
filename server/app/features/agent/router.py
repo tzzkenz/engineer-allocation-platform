@@ -1,14 +1,3 @@
-"""
-Chat endpoint for the AI assistant.
-
-Assumes you already have:
-  - a `get_employee_service` dependency that yields a request-scoped
-    EmployeeService (DB session per request)
-  - a `get_current_user` dependency that yields the authenticated user,
-    used both for the thread_id (so conversation memory is per-user) and
-    for role-based tool authorization
-"""
-
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
