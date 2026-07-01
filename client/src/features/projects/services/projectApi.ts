@@ -1,11 +1,9 @@
-import type {
-  AdvanceSearchEmployeeParams,
-  EmployeeResponse,
-} from "@/entities/employee/types/apiTypes";
+import type { EmployeeResponse } from "@/entities/employee/types/apiTypes";
 import type { PaginatedResult } from "@/shared/type/pagination";
 
 import type {
   AssignEngineerPayload,
+  AssignedEmployeeResponse,
   CreateRequirementRequest,
   FeedbackResponse,
   Project,
@@ -52,8 +50,12 @@ const projectApi = employeeBaseApi.injectEndpoints({
         url: `/feedbacks/project/${projectId}`,
         method: "GET",
       }),
-      providesTags: (_result, _error, projectId) => [
+      providesTags: (result, _error, projectId) => [
         { type: "Feedback", id: `PROJECT-${projectId}` },
+        ...(result?.map((feedback) => ({
+          type: "Feedback" as const,
+          id: feedback.id,
+        })) ?? []),
       ],
     }),
     getCandidates: builder.query<PaginatedResult<EmployeeResponse>, string>({
@@ -66,11 +68,15 @@ const projectApi = employeeBaseApi.injectEndpoints({
         url: `/project/${projectId}/requirements`,
         method: "GET",
       }),
-      providesTags: (_result, _error, projectId) => [
+      providesTags: (result, _error, projectId) => [
         { type: "Requirement", id: `PROJECT-${projectId}` },
+        ...(result?.map((requirement) => ({
+          type: "Requirement" as const,
+          id: requirement.id,
+        })) ?? []),
       ],
     }),
-    getProjectEmployees: builder.query<EmployeeResponse[], string>({
+    getProjectEmployees: builder.query<AssignedEmployeeResponse[], string>({
       query: (projectId) => ({
         url: `/projects/${projectId}/employees`,
         method: "GET",
@@ -92,7 +98,7 @@ const projectApi = employeeBaseApi.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["ASSIGN"],
+      invalidatesTags: ["Assign"],
     }),
     createRequirement: builder.mutation<
       RequirementResponse,
@@ -129,7 +135,6 @@ const projectApi = employeeBaseApi.injectEndpoints({
         { type: "Requirement", id: "LIST" },
       ],
     }),
-
     deleteRequirement: builder.mutation<void, number>({
       query: (requestId) => ({
         url: `/project/requirements/${requestId}`,

@@ -27,7 +27,7 @@ const NotesTable = ({ notes, onEdit, onDelete }: ProjectNotesCardProps) => {
           <TableHead>Date</TableHead>
           <TableHead>Added By</TableHead>
           <TableHead>Note</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead className=" text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
 
@@ -47,7 +47,7 @@ const NotesTable = ({ notes, onEdit, onDelete }: ProjectNotesCardProps) => {
 
               <TableCell>{note.note}</TableCell>
 
-              <TableCell>
+              <TableCell className=" text-right">
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="ghost"

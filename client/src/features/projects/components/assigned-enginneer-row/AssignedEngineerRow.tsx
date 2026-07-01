@@ -29,7 +29,7 @@ const AssignedEmployeeRow = ({ engineer, actions }: EngineerRowProps) => {
 
       <TableCell>{formatDate(engineer.start_date)}</TableCell>
 
-      <TableCell className="text-right">{actions}</TableCell>
+      <TableCell className="text-right flex justify-end items-center">{actions}</TableCell>
     </TableRow>
   );
 };

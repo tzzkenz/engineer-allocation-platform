@@ -45,7 +45,7 @@ export const feedbackApi = employeeBaseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_result, _error, projectId) => [
+      invalidatesTags: (_result, _error, { projectId, body }) => [
         { type: "Feedback", id: "LIST" },
         { type: "Feedback", id: `PROJECT-${projectId}` },
       ],

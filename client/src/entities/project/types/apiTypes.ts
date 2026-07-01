@@ -4,7 +4,7 @@ import type {
   EmployeeResponse,
 } from "@/entities/employee/types/apiTypes";
 
-export type ProjectStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "STOPPED" | "DISCARDED";
+export type ProjectStatus = "NOT_STARTED" | "ONGOING" | "COMPLETED" | "STOPPED" | "DISCARDED";
 export type RequirementStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type FeedbackType = "PERFORMANCE" | "ISSUE" | "GENERAL";
 
@@ -24,7 +24,9 @@ export type RequirementResponse = {
   id: number;
   project_id: number;
   project_role_id: number;
+  project_role_name: string;
   requested_count: number;
+  assigned_count: number;
   requested_by: number;
   status: RequirementStatus;
   stack_requests: StackRequest[];

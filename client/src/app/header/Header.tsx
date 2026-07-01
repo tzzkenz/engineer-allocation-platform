@@ -1,6 +1,5 @@
-import { Button } from "@/shared/components/ui/button";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
-import { Bell } from "lucide-react";
+import { User } from "lucide-react";
 
 const Header = () => {
   return (
@@ -10,12 +9,8 @@ const Header = () => {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button className="relative p-2 rounded-full  transition-colors">
-          <Bell />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-600" />
-        </Button>
         <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary text-primary-foreground text-sm font-bold ml-1">
-          AM
+          <User size={16} />
         </div>
       </div>
     </header>
