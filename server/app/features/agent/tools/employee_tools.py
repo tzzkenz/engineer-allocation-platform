@@ -1,8 +1,12 @@
-import json
 from datetime import datetime
 
 from langchain_core.tools import tool
 from features.employee.service import EmployeeService
+from features.agent.tools.helpers import (
+    error_response,
+    log_tool_event,
+    success_response,
+)
 
 
 def make_employees_tools(employee_service: EmployeeService):
@@ -54,41 +58,33 @@ def make_employees_tools(employee_service: EmployeeService):
                 check_for_available=check_for_available,
             )
 
-            response = json.dumps(data, indent=2, default=str)
+            log_tool_event(
+                "employee_tool_logs.jsonl",
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "input": {
+                        "skill": skill,
+                        "check_for_available": check_for_available,
+                    },
+                    "output": data,
+                },
+            )
 
-            with open("employee_tool_logs.jsonl", "a") as f:
-                f.write(
-                    json.dumps(
-                        {
-                            "timestamp": datetime.utcnow().isoformat(),
-                            "input": {
-                                "skill": skill,
-                                "check_for_available": check_for_available,
-                            },
-                            "output": data,
-                        }
-                    )
-                    + "\n"
-                )
-            return response
+            return success_response(data)
 
         except Exception as e:
-            error_response = {"error": str(e)}
+            log_tool_event(
+                "employee_tool_logs.jsonl",
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "input": {
+                        "skill": skill,
+                        "check_for_available": check_for_available,
+                    },
+                    "error": str(e),
+                },
+            )
 
-            with open("employee_tool_logs.jsonl", "a") as f:
-                f.write(
-                    json.dumps(
-                        {
-                            "timestamp": datetime.utcnow().isoformat(),
-                            "input": {
-                                "skill": skill,
-                                "check_for_available": check_for_available,
-                            },
-                            "error": str(e),
-                        }
-                    )
-                    + "\n"
-                )
-            return json.dumps(error_response)
+            return error_response(e)
 
     return [find_resources]
