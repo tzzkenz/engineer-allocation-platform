@@ -1,109 +1,88 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from models.project import Project
-from models.employee import Employee
-from models.system_role import SystemRole
-from models.project_employee import ProjectEmployee
-from models.employee_skill import EmployeeSkill
 from models.project_stacks import ProjectStacks
+from models.project_employee import ProjectEmployee
+from models.employee import Employee
+from models.employee_skill import EmployeeSkill
+from models.skill import Skill
 
 
 class DashboardRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def project_count(self):
-        stmt = select(Project.status, func.count(Project.id)).group_by(Project.status)
-
-        result = await self.db.execute(stmt)
-        rows = result.all()
-
-        return {status: count for status, count in rows}
-
     async def employee_count(self):
-        stmt = select(func.count(Employee.id))
-
+        stmt = select(func.count(Employee.id)).where(Employee.deleted_at.is_(None))
         result = await self.db.execute(stmt)
         return result.scalar()
 
     async def employee_count_by_role(self):
         stmt = (
-            select(SystemRole.name, func.count(Employee.id))
-            .join(Employee, Employee.system_role_id == SystemRole.id)
-            .group_by(SystemRole.name)
+            select(Employee.system_role_id, func.count(Employee.id))
+            .where(Employee.deleted_at.is_(None))
+            .group_by(Employee.system_role_id)
         )
 
         result = await self.db.execute(stmt)
-        rows = result.all()
+        return dict(result.all())
 
-        return {role: count for role, count in rows}
+    async def project_count(self):
+        stmt = select(func.count(Project.id)).where(Project.deleted_at.is_(None))
+        result = await self.db.execute(stmt)
+        return result.scalar()
 
-    async def get_project_with_skills(self, project_id: int):
+    async def project_count_with_status(self):
         stmt = (
-            select(Project)
-            .where(Project.id == project_id)
-            .options(
-                selectinload(Project.stacks),
-                selectinload(Project.project_employees)
-                .selectinload(ProjectEmployee.employee)
-                .selectinload(Employee.employee_skills)
-                .selectinload(EmployeeSkill.skill),
-            )
+            select(Project.status, func.count(Project.id))
+            .where(Project.deleted_at.is_(None))
+            .group_by(Project.status)
         )
 
         result = await self.db.execute(stmt)
-        return result.scalar_one_or_none()
+        return dict(result.all())
 
-    async def all_project_coverage(self):
-        stmt = select(Project).options(
-            selectinload(Project.stacks).selectinload(ProjectStacks.skill),
-            selectinload(Project.project_employees)
-            .selectinload(ProjectEmployee.employee)
-            .selectinload(Employee.employee_skills)
-            .selectinload(EmployeeSkill.skill),
+    async def skill_coverage_by_skill(self):
+
+        required_stmt = (
+            select(
+                Skill.name.label("skill"),
+                func.count(ProjectStacks.id).label("required"),
+            )
+            .select_from(ProjectStacks)
+            .join(Project, Project.id == ProjectStacks.project_id)
+            .join(Skill, Skill.id == ProjectStacks.skill_id)
+            .where(Project.deleted_at.is_(None))
+            .group_by(Skill.name)
         )
 
-        result = await self.db.execute(stmt)
-        projects = result.scalars().all()
+        required_result = await self.db.execute(required_stmt)
+        required_data = {row.skill: row.required for row in required_result.all()}
 
-        response = []
-
-        for project in projects:
-            required = {}
-            total_required = 0
-
-            for req in project.stacks:
-                name = req.skill.name
-                required[name] = required.get(name, 0) + 1
-                total_required += 1
-
-            available = {}
-
-            for pe in project.project_employees:
-                for es in pe.employee.employee_skills:
-                    name = es.skill.name
-                    available[name] = available.get(name, 0) + 1
-
-            filled = 0
-
-            for skill, req_count in required.items():
-                avail_count = available.get(skill, 0)
-                filled += min(req_count, avail_count)
-
-            coverage = (
-                round((filled / total_required) * 100, 2) if total_required else 0
+        filled_stmt = (
+            select(
+                Skill.name.label("skill"),
+                func.count(ProjectEmployee.id).label("filled"),
             )
+            .select_from(ProjectEmployee)
+            .join(Project, Project.id == ProjectEmployee.project_id)
+            .join(Employee, Employee.id == ProjectEmployee.employee_id)
+            .join(EmployeeSkill, EmployeeSkill.employee_id == Employee.id)
+            .join(Skill, Skill.id == EmployeeSkill.skill_id)
+            .where(Project.deleted_at.is_(None))
+            .group_by(Skill.name)
+        )
 
-            response.append(
-                {
-                    "project_id": project.id,
-                    "project_name": project.name,
-                    "required_positions": total_required,
-                    "filled_positions": filled,
-                    "skill_coverage": coverage,
-                }
-            )
+        filled_result = await self.db.execute(filled_stmt)
+        filled_data = {row.skill: row.filled for row in filled_result.all()}
 
-        return response
+        all_skills = set(required_data.keys()) | set(filled_data.keys())
+
+        return {
+            skill: {
+                "required": required_data.get(skill, 0),
+                "filled": filled_data.get(skill, 0),
+            }
+            for skill in all_skills
+        }
