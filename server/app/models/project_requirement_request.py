@@ -30,6 +30,7 @@ class ProjectRequirementRequest(Entity):
     )
 
     requested_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    assigned_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
 
     requested_by: Mapped[int] = mapped_column(
         ForeignKey("employees.id"), nullable=False, index=True

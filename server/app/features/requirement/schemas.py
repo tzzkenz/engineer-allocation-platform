@@ -39,6 +39,7 @@ class RequirementResponse(BaseModel):
     project_role_id: int
     project_role_name: str
     requested_count: int
+    assigned_count: int
     requested_by: int
     requested_by_name: str
     resolved_by: int | None
