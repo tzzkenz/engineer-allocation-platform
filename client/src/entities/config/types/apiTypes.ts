@@ -1,3 +1,5 @@
+export type SkillType = "TECHNICAL" | "STACK" | "NON_TECHNICAL";
+
 export type ProjectRoleResponse = {
   id: number;
   name: string;
@@ -12,7 +14,7 @@ export type ProjectRoleUpdate = {
 export type Skill = {
   id: number;
   name: string;
-  description: string | null;
+  type: SkillType;
 };
 
 export type StackRequest = {

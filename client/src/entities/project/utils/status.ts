@@ -8,6 +8,14 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   STOPPED: "Stopped",
 };
 
+export const PROJECT_STATUSES: ProjectStatus[] = [
+  "NOT_STARTED",
+  "STOPPED",
+  "ONGOING",
+  "DISCARDED",
+  "COMPLETED",
+];
+
 export const PROJECT_STATUS_BADGE_CLASSES: Record<ProjectStatus, string> = {
   COMPLETED: "#059669", // Green
   DISCARDED: "#ef4444", // Red

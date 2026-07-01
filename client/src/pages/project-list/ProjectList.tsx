@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useGetProjectsQuery } from "@/features/projects/services/projectApi";
 import { Paginated } from "@/shared/components/paginated/Paginated";
@@ -14,18 +14,34 @@ import { Button } from "@shared/components/ui/button";
 import { Card, CardContent } from "@shared/components/ui/card";
 import PageSection from "@shared/components/ui/section";
 
+const generateProjectFilterPayload = (urlParams: URLSearchParams, filters: ProjectFilters) => {
+  const newParams = new URLSearchParams(urlParams);
+
+  filters.skills.forEach((skill) => newParams.append("skills", skill.id.toString()));
+
+  if (filters.identifier.trim() !== "") newParams.set("identifier", filters.identifier);
+
+  if (!(filters.status === "all")) newParams.set("status", filters.status);
+
+  return newParams;
+};
+
 export function ProjectList() {
   const navigate = useNavigate();
+
   const [searchParams, setSearchParams] = useSearchParams();
+  const [filters, setFilters] = useState<ProjectFilters>({
+    identifier: "",
+    skills: [],
+    status: "all",
+  });
 
   const {
     data: projects = { items: [], total_pages: 0, current_page: 0, limit: 0 },
     isLoading,
     isError,
     refetch,
-  } = useGetProjectsQuery(searchParams.toString());
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  } = useGetProjectsQuery(generateProjectFilterPayload(searchParams, filters).toString());
 
   const handleViewClick = (projectId: number) => {
     navigate(`/project/${projectId}`);
@@ -38,6 +54,12 @@ export function ProjectList() {
       return newParams;
     });
   };
+
+  const handleFilterChange = (name: string, value: any) => {
+    console.log(name, value);
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
   return (
     <>
       <PageSection
@@ -66,13 +88,7 @@ export function ProjectList() {
         <>
           <Card className=" p-0 mb-2">
             <CardContent className=" p-0 ">
-              <ProjectFilters
-                filters={{ search, status: statusFilter }}
-                onFilterChange={(key, value) => {
-                  if (key === "search") setSearch(value);
-                  if (key === "status") setStatusFilter(value);
-                }}
-              />
+              <ProjectFilters filters={filters} onFilterChange={handleFilterChange} />
             </CardContent>
           </Card>
 
