@@ -125,3 +125,9 @@ class ProjectPaginatedResponse(BaseModel):
     total_pages: int
     current_page: int
     limit: int
+
+
+class ProjectEmployeeRemove(BaseModel):
+    project_id: int
+    employee_id: int
+    project_role_id: int
