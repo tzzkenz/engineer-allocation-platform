@@ -12,5 +12,5 @@ export const navConfig: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/", end: true },
   { label: "Projects", icon: FolderKanban, href: "/project" },
   { label: "Employees", icon: Users, href: "/employee" },
-  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Profile", icon: Settings, href: "/profile" },
 ];

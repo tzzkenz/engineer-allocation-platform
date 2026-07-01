@@ -4,8 +4,8 @@ import { Badge } from "@shared/components/ui/badge";
 import { cn } from "@shared/lib/utils";
 
 const statusConfig: Record<ProjectStatus, { label: string; className: string }> = {
-  IN_PROGRESS: {
-    label: "IN PROGRESS",
+  ONGOING: {
+    label: "ONGOING",
     className:
       "bg-[rgba(70,72,212,0.1)] text-[#4648d4] border-transparent hover:bg-[rgba(70,72,212,0.1)]",
   },
@@ -42,11 +42,11 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     <Badge
       className={cn(
         "rounded-full px-3 py-0.5 text-[11px] font-bold uppercase tracking-tight",
-        config.className,
+        config?.className,
         className
       )}
     >
-      {config.label}
+      {config?.label}
     </Badge>
   );
 }
