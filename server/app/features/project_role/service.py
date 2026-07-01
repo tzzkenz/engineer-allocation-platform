@@ -3,7 +3,6 @@ from sqlalchemy.exc import IntegrityError
 from models.project_role import ProjectRole
 from features.project_role.repository import ProjectRoleRepository
 from exceptions import ConflictException, NotFoundException, UnknownException
-from features import project_role
 
 
 class ProjectRoleService:
@@ -25,14 +24,13 @@ class ProjectRoleService:
             existing = await self.repo.get_by_name(name)
             if existing:
                 raise ConflictException("Project role with this name already exists")
-            
+
             result = await self.repo.create(name)
-            
+
             await self.repo.db.commit()
             await self.repo.db.refresh(result)
 
             return result
-            
 
         except ConflictException:
             raise
@@ -52,7 +50,11 @@ class ProjectRoleService:
             if existing and existing.id != role_id:
                 raise ConflictException("Project role with this name already exists")
 
-            return await self.repo.update(role, name)
+            result = await self.repo.update(role, name)
+            await self.repo.db.commit()
+            await self.repo.db.refresh(result)
+
+            return result
 
         except (NotFoundException, ConflictException):
             raise
@@ -68,6 +70,7 @@ class ProjectRoleService:
                 raise NotFoundException("Project role not found")
 
             await self.repo.soft_delete(role)
+            await self.repo.db.commit()
 
         except NotFoundException:
             raise
