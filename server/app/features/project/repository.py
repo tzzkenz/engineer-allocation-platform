@@ -31,14 +31,24 @@ class ProjectRepository:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def list_all(self) -> list[Project]:
+    async def list_all(self, limit: int | None = None, offset: int | None = None) -> tuple[list[Project], int]:
+        count_stmt = select(func.count(Project.id)).where(Project.deleted_at.is_(None))
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar() or 0
+
         stmt = (
             select(Project)
             .options(selectinload(Project.stacks).selectinload(ProjectStacks.skill))
             .where(Project.deleted_at.is_(None))
         )
+        
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
+            
         result = await self.db.execute(stmt)
-        return result.scalars().all()
+        return list(result.scalars().all()), total_count
 
     async def create(
         self,

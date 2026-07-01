@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.employee import Employee
@@ -9,44 +9,74 @@ from models.employee_skill import EmployeeSkill
 from models.skill import Skill
 from models.system_role import SystemRole
 from exceptions import NotFoundException
+from models.project_employee import ProjectEmployee
 
 
 class EmployeeRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_by_id_with_role(self, employee_id: int) -> tuple[Employee, str] | None:
+    def _get_active_projects_subquery(self):
+        """Helper to build a scalar subquery counting active allocations."""
+        return (
+            select(func.count(ProjectEmployee.id))
+            .where(
+                ProjectEmployee.employee_id == Employee.id,
+                ProjectEmployee.date_exited.is_(None),  # Only entries where date_exited is None
+                ProjectEmployee.deleted_at.is_(None)   # Soft-delete check
+            )
+            .correlate(Employee)
+            .scalar_subquery()
+        )
+
+    async def get_by_id_with_role(self, employee_id: int) -> tuple[Employee, str, int] | None:
         stmt = (
-            select(Employee, SystemRole.name)
+            select(
+                Employee, 
+                SystemRole.name, 
+                self._get_active_projects_subquery().label("projects_count")
+            )
             .join(SystemRole, Employee.system_role_id == SystemRole.id)
             .where(Employee.id == employee_id, Employee.deleted_at.is_(None))
         )
         result = await self.db.execute(stmt)
         return result.first()
 
-    async def get_by_email_with_role(self, email: str) -> tuple[Employee, str] | None:
+    async def get_by_email_with_role(self, email: str) -> tuple[Employee, str, int] | None:
         stmt = (
-            select(Employee, SystemRole.name)
+            select(
+                Employee, 
+                SystemRole.name, 
+                self._get_active_projects_subquery().label("projects_count")
+            )
             .join(SystemRole, Employee.system_role_id == SystemRole.id)
             .where(Employee.email == email)
         )
         result = await self.db.execute(stmt)
         return result.first()
 
-    async def list_all_with_role(self, limit: int | None = None, offset: int | None = None) -> list[tuple[Employee, str]]:
+    async def list_all_with_role(self, limit: int | None = None, offset: int | None = None) -> tuple[list[tuple[Employee, str, int]], int]:
+        count_stmt = select(func.count(Employee.id)).where(Employee.deleted_at.is_(None))
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar() or 0
+
         stmt = (
-            select(Employee, SystemRole.name)
-            .join(SystemRole, Employee.system_role_id == SystemRole.id)
-            .where(Employee.deleted_at.is_(None))
+            select(
+                Employee, 
+                SystemRole.name, 
+                self._get_active_projects_subquery().label("projects_count") 
+            )
+            .join(SystemRole, Employee.system_role_id == SystemRole.id) 
+            .where(Employee.deleted_at.is_(None)) 
         )
         
         if limit is not None:
-            stmt = stmt.limit(limit)
+            stmt = stmt.limit(limit) 
         if offset is not None:
-            stmt = stmt.offset(offset)
+            stmt = stmt.offset(offset) 
             
         result = await self.db.execute(stmt)
-        return list(result.all())
+        return list(result.all()), total_count
 
     async def get_by_id(self, employee_id: int) -> Employee | None:
         stmt = select(Employee).where(Employee.id == employee_id, Employee.deleted_at.is_(None))

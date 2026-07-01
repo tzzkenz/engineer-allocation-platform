@@ -1,12 +1,13 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from enum import Enum
-from typing import Any
+
 
 class ActionType(str, Enum):
     CREATE = "CREATE"
     UPDATE = "UPDATE"
     DELETE = "DELETE"
+
 
 class EntityName(str, Enum):
     EMPLOYEE = "EMPLOYEE"
@@ -16,6 +17,8 @@ class EntityName(str, Enum):
     PROJECT_REQUIREMENT_REQUEST = "PROJECT_REQUIREMENT_REQUEST"
     FEEDBACK = "FEEDBACK"
     EMPLOYEE_SKILL = "EMPLOYEE_SKILL"
+    SYSTEM_ROLE = "SYSTEM_ROLE"
+
 
 class AuditLogCreate(BaseModel):
     entity_name: EntityName
@@ -25,6 +28,7 @@ class AuditLogCreate(BaseModel):
     old_value: str | None = None
     new_value: str | None = None
     changed_by_id: int
+
 
 class AuditLogResponse(BaseModel):
     id: int

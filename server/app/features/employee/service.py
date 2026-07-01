@@ -37,7 +37,7 @@ class EmployeeService:
         self.repo = repo
         self.audit_repo = audit_repo
 
-    def _format_employee_response(self, employee: Employee, role_name: str) -> dict[str, Any]:
+    def _format_employee_response(self, employee: Employee, role_name: str, projects_count: int) -> dict[str, Any]:
         return {
             "id": employee.id,
             "name": employee.name,
@@ -46,6 +46,7 @@ class EmployeeService:
             "date_of_joining": employee.date_of_joining,
             "system_role_id": employee.system_role_id,
             "system_role_name": role_name,
+            "projects_count": projects_count,
             "created_at": employee.created_at,
             "updated_at": employee.updated_at,
         }
@@ -75,11 +76,26 @@ class EmployeeService:
         result = await self.repo.get_by_id_with_role(employee_id)
         if result is None:
             raise NotFoundException("Employee not found")
-        return self._format_employee_response(result[0], result[1])
+        return self._format_employee_response(result[0], result[1], result[2])
 
-    async def list(self, limit: int | None = None, offset: int | None = None) -> list[dict[str, Any]]:
-        records = await self.repo.list_all_with_role(limit=limit, offset=offset)
-        return [self._format_employee_response(emp, role_name) for emp, role_name in records]
+    async def list(self, page: int = 1, limit: int = 10) -> dict[str, Any]:
+        import math
+        
+        # Calculate database offset based on page number
+        offset = (page - 1) * limit
+        
+        records, total_count = await self.repo.list_all_with_role(limit=limit, offset=offset) 
+        
+        total_pages = math.ceil(total_count / limit) if limit > 0 else 1
+        
+        items = [self._format_employee_response(emp, role_name, pc) for emp, role_name, pc in records] 
+        
+        return {
+            "items": items,
+            "total_pages": total_pages,
+            "current_page": page,
+            "limit": limit
+        }
 
     async def create(self, employee_data: dict[str, Any], changed_by_id: int) -> dict[str, Any]:
         employee_data = dict(employee_data)
@@ -110,7 +126,7 @@ class EmployeeService:
             await self.repo.db.commit()
             
             result = await self.repo.get_by_id_with_role(employee.id)
-            return self._format_employee_response(result[0], result[1])
+            return self._format_employee_response(result[0], result[1], result[2])
         except IntegrityError:
             await self.repo.db.rollback()
             raise ConflictException(
@@ -157,7 +173,7 @@ class EmployeeService:
             await self.repo.db.commit()
             
             result = await self.repo.get_by_id_with_role(employee_id)
-            return self._format_employee_response(result[0], result[1])
+            return self._format_employee_response(result[0], result[1], result[2])
         except Exception:
             await self.repo.db.rollback()
             raise BadRequestException("Something went wrong during employee update")

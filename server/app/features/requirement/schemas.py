@@ -68,3 +68,10 @@ class MatchedEmployeeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+
+class MatchedEmployeePaginatedResponse(BaseModel):
+    items: list[MatchedEmployeeResponse]
+    total_pages: int
+    current_page: int
+    limit: int
+
