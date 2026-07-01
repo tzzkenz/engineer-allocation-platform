@@ -50,12 +50,36 @@ class ProjectService:
             raise NotFoundException("Project not found in DB")
         return project
 
-    async def list_all(self, page: int = 1, limit: int = 10) -> dict[str, Any]:
+    async def list_all(
+        self, 
+        page: int = 1, 
+        limit: int = 10,
+        status: StatusType | None = None,
+        identifier: str | None = None,
+        skill_ids: list[int] | None = None
+    ) -> dict[str, Any]:
         import math
         
+        identifier_filter = None
+        if identifier:
+            identifier = identifier.strip()
+            # If the text is purely digits, treat it as an explicit Project ID search
+            if identifier.isdigit():
+                identifier_filter = ("id", int(identifier))
+            # Otherwise, evaluate as a partial project name filter
+            else:
+                identifier_filter = ("name", identifier)
+
+        # Calculate database window dimension offset
         offset = (page - 1) * limit
         
-        projects, total_count = await self.repo.list_all(limit=limit, offset=offset)
+        projects, total_count = await self.repo.list_all(
+            limit=limit, 
+            offset=offset,
+            status_filter=status,
+            identifier_filter=identifier_filter,
+            skill_ids=skill_ids
+        )
         
         total_pages = math.ceil(total_count / limit) if limit > 0 else 1
         
@@ -327,3 +351,43 @@ class ProjectService:
         await self.get(project_id)
         
         return await self.repo.get_assigned_employees(project_id)
+    
+
+    # Add this inside the ProjectService class
+
+    async def remove_employee_by_details(
+        self, project_id: int, employee_id: int, project_role_id: int, changed_by_id: int
+    ) -> None:
+        """Finds an active allocation by project, employee, and role IDs and removes them."""
+        
+        # 1. Find the active allocation using the existing repository method
+        allocation = await self.repo.get_active_allocation(
+            project_id=project_id,
+            employee_id=employee_id,
+            project_role_id=project_role_id
+        )
+        
+        if allocation is None:
+            raise NotFoundException("Active employee allocation not found for the provided details.")
+            
+        try:
+            # 2. Exit the employee (sets date_exited and decrements req count)
+            # (Assuming exit_employee_from_project is in your repository from the previous step)
+            await self.repo.exit_employee_from_project(allocation)
+            
+            # 3. Stage the audit log
+            await self._stage_audit_log(
+                entity_name=EntityName.PROJECT_EMPLOYEE,
+                entity_id=allocation.id,
+                action=ActionType.UPDATE,
+                field_name="date_exited",
+                old_value="None",
+                new_value=str(allocation.date_exited),
+                changed_by_id=changed_by_id,
+            )
+            
+            await self.repo.db.commit()
+            
+        except Exception as e:
+            await self.repo.db.rollback()
+            raise UnknownException(f"Failed to remove employee from project: {str(e)}")
