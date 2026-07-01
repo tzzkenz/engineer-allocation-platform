@@ -260,10 +260,9 @@ class ProjectService:
                     "start_date": emp_data.start_date,  
                 }
 
-                allocation = await self.repo.allocate_employee(allocation_dict) 
+                allocation = await self.repo.allocate_employee(allocation_dict,requirement_request_id=req_request.id) 
                 allocations.append(allocation) 
 
-            # Flush allocations to database to generate IDs
             await self.repo.db.flush() 
 
             for allocation in allocations: 
