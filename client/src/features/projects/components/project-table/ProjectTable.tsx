@@ -1,5 +1,12 @@
-import { StatusBadge } from "@/features/employees/components/status-badge/StatusBadge";
-import { Button } from "@/shared/components/ui/button";
+import { formatDate } from "@/shared/lib/format";
+import { Eye, MoreHorizontal } from "lucide-react";
+import { useNavigate } from "react-router";
+
+import { StatusBadge } from "@features/employees/components/status-badge/StatusBadge";
+
+import type { ProjectListResponse } from "@entities/project/types/apiTypes";
+
+import { Button } from "@shared/components/ui/button";
 import {
   Table,
   TableBody,
@@ -7,13 +14,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { cn } from "@/shared/lib/utils";
-import { Eye, MoreHorizontal } from "lucide-react";
-import { useNavigate } from "react-router";
-
-import type { ProjectListResponse } from "@entities/project/types/apiTypes";
+} from "@shared/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@shared/components/ui/tooltip";
+import { cn } from "@shared/lib/utils";
 
 import DurationCell from "../duration-cell/DurationCell";
 
@@ -22,7 +25,7 @@ type ProjectTableProps = {
   onViewClick: (projectId: number) => void;
 };
 
-const ProjectTableHeads = ["Project Name", "Status", "Duration", "Engineers", "Actions"];
+const ProjectTableHeads = ["Project Name", "Status", "Start Date", "Duration", "Actions"];
 
 const ProjectTable = ({ employees, onViewClick }: ProjectTableProps) => {
   const navigate = useNavigate();
@@ -58,25 +61,10 @@ const ProjectTable = ({ employees, onViewClick }: ProjectTableProps) => {
               <StatusBadge status={project.status} />
             </TableCell>
 
+            <TableCell className="pr-6 py-4">{formatDate(project.start_date) || "N/A"}</TableCell>
+
             <TableCell className="pr-6 py-5">
               <DurationCell project={project} />
-            </TableCell>
-
-            <TableCell className="pr-6 py-4">
-              {/* {project.engineers.length === 0 ? (
-                <span
-                  className={cn(
-                    "text-[13px] font-bold italic",
-                    project.maxEngineers > 0 ? "text-red-600" : "text-gray-200"
-                  )}
-                >
-                  {project.maxEngineers > 0 ? `Needs ${project.maxEngineers}` : "—"}
-                </span>
-              ) : (
-                <span className="text-[13px] font-bold">
-                  {project.engineers.length} / {project.maxEngineers}
-                </span>
-              )} */}
             </TableCell>
 
             {/* Actions */}
