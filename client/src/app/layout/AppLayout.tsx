@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useAppDispatch } from "@/store/store";
-import { Outlet } from "react-router";
+import { Navigate, Outlet } from "react-router";
 
 import { useGetCurrentUserQuery } from "@features/auth/services/authApi";
 import { initialize } from "@features/auth/slice/authReducer";
@@ -14,18 +14,28 @@ import AppSidebar from "../sidebar/AppSidebar";
 
 export function AppLayout() {
   const dispatch = useAppDispatch();
-  const { data: user, isLoading: isLoadingUser, isError } = useGetCurrentUserQuery();
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const { data: user, isLoading: isActualLoading, isError } = useGetCurrentUserQuery();
 
   useEffect(() => {
-    if (isLoadingUser || isError) return;
+    if (isActualLoading || isError) return;
 
-    if (!user) return;
+    if (!user) {
+      setIsLoadingUser(false);
+      return;
+    }
 
+    setIsLoadingUser(false);
     dispatch(initialize(user));
-  }, [user, isLoadingUser, isError]);
+  }, [user, isActualLoading, setIsLoadingUser, isError]);
 
+  console.log(isLoadingUser, "Loading");
   if (isLoadingUser) {
     return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
   }
 
   return (
