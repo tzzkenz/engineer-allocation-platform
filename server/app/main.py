@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from features.system_role.router import router as system_role_router
 from features.project.router import router as project_router
 from features.feedback.router import router as feedback_router
@@ -16,6 +15,7 @@ from features.dashboard.router import router as dashboard_router
 from features.insights.router import router as insight_router
 
 from exceptions.handler import register_exception_handlers
+from middleware.logger import RequestLoggingMiddleware
 
 app = FastAPI(
     title="Employee CRUD API",
@@ -36,7 +36,7 @@ app.include_router(reporting_router)
 app.include_router(dashboard_router)
 app.include_router(insight_router)
 
-
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
