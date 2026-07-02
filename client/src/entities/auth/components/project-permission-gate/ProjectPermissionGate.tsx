@@ -6,7 +6,7 @@ type ProjectPermissionGateProps = {
   children: ReactNode;
 };
 
-const PermissionGate = ({ children }: ProjectPermissionGateProps) => {
+const ProjectPermissionGate = ({ children }: ProjectPermissionGateProps) => {
   const { user, context } = useAppSelector((state) => state.auth);
 
   if (!context.projectRole || !user) return;
@@ -20,4 +20,4 @@ const PermissionGate = ({ children }: ProjectPermissionGateProps) => {
   return <>{children}</>;
 };
 
-export default PermissionGate;
+export default ProjectPermissionGate;
