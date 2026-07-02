@@ -1,7 +1,11 @@
+import { useEffect } from "react";
+
+import { useGetSystemRolesQuery } from "@/entities/config/services/configApi";
 import {
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
 } from "@/features/auth/services/employeeApi";
+import { useGetEmployeeByIdQuery } from "@/features/auth/services/employeeApi";
 import { employeeCreateSchema } from "@/schemas/employeeCreateSchema";
 import { type EmployeeFormData } from "@/schemas/employeeForm";
 import { employeeUpdateSchema } from "@/schemas/employeeUpdateSchema";
@@ -20,18 +24,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { useParams } from "react-router";
-import { useGetEmployeeByIdQuery } from "@/features/auth/services/employeeApi";
-import { useEffect } from "react";
+
 export default function FormField() {
   const [updateEmployee, { isLoading: isUpdateLoading }] = useUpdateEmployeeMutation();
   const [createEmployee, { isLoading: isCreateLoading }] = useCreateEmployeeMutation();
+  const { data: systemRoles = [] } = useGetSystemRolesQuery();
   const isLoading = isCreateLoading || isUpdateLoading;
   const { emp_id } = useParams();
   const isEdit = !!emp_id;
   const schema = isEdit ? employeeUpdateSchema : employeeCreateSchema;
   const navigate = useNavigate();
-  const { data: employee, isLoading: isEmployeeLoading } =
-  useGetEmployeeByIdQuery(Number(emp_id), {
+  const { data: employee, isLoading: isEmployeeLoading } = useGetEmployeeByIdQuery(Number(emp_id), {
     skip: !isEdit,
   });
 
@@ -48,16 +51,16 @@ export default function FormField() {
     },
   });
   useEffect(() => {
-  if (!employee) return;
+    if (!employee) return;
 
-  form.reset({
-    name: employee.name,
-    email: employee.email,
-    experience: employee.experience,
-    date_of_joining: employee.date_of_joining,
-    system_role_id: employee.system_role_id,
-  });
-}, [employee, form]);
+    form.reset({
+      name: employee.name,
+      email: employee.email,
+      experience: employee.experience,
+      date_of_joining: employee.date_of_joining,
+      system_role_id: employee.system_role_id,
+    });
+  }, [employee, form]);
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
@@ -125,7 +128,6 @@ export default function FormField() {
                 )}
               </div>
             )}
-            
           </div>
 
           <div className="sm:flex gap-5 ">
@@ -138,9 +140,8 @@ export default function FormField() {
               {form.formState.errors.email && (
                 <p className="text-sm text-red-500 mt-1">{form.formState.errors.email.message}</p>
               )}
-            
             </div>
-          <div className="w-full">
+            <div className="w-full">
               <Label className="ml-2 pb-2">
                 JOINING DATE <span className="text-red-500">*</span>
               </Label>
@@ -152,7 +153,6 @@ export default function FormField() {
                 </p>
               )}
             </div>
-            
           </div>
           <div className="sm:flex gap-5">
             <div className="w-full">
@@ -192,9 +192,9 @@ export default function FormField() {
                     </SelectTrigger>
 
                     <SelectContent>
-                      <SelectItem value="1">HR</SelectItem>
-                      <SelectItem value="2">QA</SelectItem>
-                      <SelectItem value="3">DEVOPS</SelectItem>
+                      {systemRoles.map((systemRole) => (
+                        <SelectItem value={systemRole.id.toString()}>{systemRole.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
