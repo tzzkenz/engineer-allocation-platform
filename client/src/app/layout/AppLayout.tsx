@@ -18,7 +18,12 @@ export function AppLayout() {
   const { data: user, isLoading: isActualLoading, isError } = useGetCurrentUserQuery();
 
   useEffect(() => {
-    if (isActualLoading || isError) return;
+    if (isActualLoading) return;
+
+    if (isError) {
+      setIsLoadingUser(false);
+      return;
+    }
 
     if (!user) {
       setIsLoadingUser(false);
