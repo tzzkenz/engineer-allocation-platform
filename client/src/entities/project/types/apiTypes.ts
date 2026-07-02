@@ -109,6 +109,7 @@ export type EmployeeCreateResponse = {
   date_of_joining: string;
   system_role_id: number;
   system_role_name: string;
+  projects_count: number;
 };
 export type Skill = {
   id: number;

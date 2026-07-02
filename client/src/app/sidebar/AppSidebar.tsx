@@ -1,7 +1,7 @@
+import { ChevronRight, User, Zap } from "lucide-react";
 import { useAppSelector } from "@/store/store";
-import { ChevronRight, Zap } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
-
+import type { RootState } from "@/store/store";
 import { Avatar, AvatarFallback } from "@shared/components/ui/avatar";
 import {
   Sidebar,
@@ -14,13 +14,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "@shared/components/ui/sidebar";
 import { cn } from "@shared/lib/utils";
+import { useSelector } from "react-redux";
 
-import { getAllowedConfigs, navConfig } from "./navConfig";
+import { getAllowedConfigs } from "./navConfig";
 
 const AppSidebar = () => {
+  const currentUser = useSelector(
+  (state: RootState) => state.auth.user
+);
   const { pathname } = useLocation();
 
   const { user: authUser } = useAppSelector((state) => state.auth);
@@ -93,11 +96,11 @@ const AppSidebar = () => {
       <SidebarFooter className="px-4 py-4">
         <div className="flex items-center gap-3">
           <Avatar className="size-8 shrink-0">
-            <AvatarFallback className="bg-primary text-white text-sm font-bold">AM</AvatarFallback>
+            <AvatarFallback className="bg-primary text-white text-sm font-bold"><User size={16} /></AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold  truncate">Alex Manager</p>
-            <p className="text-xs opacity-80 truncate">admin@helix.com</p>
+            <p className="text-sm font-semibold  truncate">{currentUser?.name}</p>
+            <p className="text-xs opacity-80 truncate">{currentUser?.email}</p>
           </div>
         </div>
       </SidebarFooter>

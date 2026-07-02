@@ -6,6 +6,7 @@ import { useGetEmployeeSkillsQuery } from "@/features/auth/services/employeeApi"
 import {
   useAddEmployeeSkillsMutation,
   useDeleteEmployeeSkillMutation,
+  useUpdateEmployeeSkillInterestMutation
 } from "@/features/auth/services/employeeApi";
 import { useGetAllSkillsQuery } from "@/features/auth/services/skillsApi";
 import { Button } from "@/shared/components/ui/button";
@@ -27,7 +28,7 @@ import type { EmployeeSkillRow } from "./types";
 
 export default function SkillsTable() {
   const { emp_id } = useParams();
-
+  const [updateEmployeeSkillInterest] = useUpdateEmployeeSkillInterestMutation();
   const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const employeeId = emp_id ? Number(emp_id) : currentUser?.id;
@@ -119,6 +120,32 @@ export default function SkillsTable() {
       setValue((prev) => prev.filter((skill) => skill.skill_id !== skill_id));
     } catch (err) {
       console.error(err);
+    }
+  }
+  async function updateInterest(skill_id: number, is_interest: boolean) {
+    if (!employeeId) return;
+
+    // optimistic update
+    setValue((prev) =>
+      prev.map((skill) => (skill.skill_id === skill_id ? { ...skill, is_interest } : skill))
+    );
+
+    try {
+      await updateEmployeeSkillInterest({
+        employee_id: employeeId,
+        skill_id,
+        body: {
+          is_interest,
+        },
+      }).unwrap();
+    } catch (err) {
+      console.error(err);
+
+      setValue((prev) =>
+        prev.map((skill) =>
+          skill.skill_id === skill_id ? { ...skill, is_interest: !is_interest } : skill
+        )
+      );
     }
   }
   return (
@@ -237,14 +264,20 @@ export default function SkillsTable() {
                   </span>
                 </td>
 
-                <td>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs ${
-                      skill.is_interest ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
-                    }`}
+                <td className="py-4">
+                  <Select
+                    value={String(skill.is_interest)}
+                    onValueChange={(value) => updateInterest(skill.skill_id, value === "true")}
                   >
-                    {skill.is_interest ? "Interest" : "Skill"}
-                  </span>
+                    <SelectTrigger  className="w-25">
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent >
+                      <SelectItem  value="false">Skill</SelectItem>
+                      <SelectItem value="true">Interest</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </td>
                 <td>
                   <div className="flex justify-center">

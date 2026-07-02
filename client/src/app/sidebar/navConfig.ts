@@ -1,5 +1,4 @@
-import type { SystemRoleResponse } from "@/entities/config/types/apiTypes";
-import { FolderKanban, LayoutDashboard, type LucideIcon, Settings, Users } from "lucide-react";
+import { FolderKanban, LayoutDashboard, type LucideIcon, User, Users } from "lucide-react";
 
 export interface NavItem {
   label: string;
@@ -14,7 +13,7 @@ export const navConfig: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/", end: true, allowedRoles: ["HR"] },
   { label: "Projects", icon: FolderKanban, href: "/project", allowedRoles: "*" },
   { label: "Employees", icon: Users, href: "/employee", allowedRoles: "*" },
-  { label: "Profile", icon: Settings, href: "/profile", allowedRoles: "*" },
+  { label: "Profile", icon: User, href: "/profile", allowedRoles: "*" },
 ];
 
 export const getAllowedConfigs = (userRole: string) => {

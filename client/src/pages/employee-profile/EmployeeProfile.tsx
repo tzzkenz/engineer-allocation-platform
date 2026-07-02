@@ -59,14 +59,13 @@ export function EmployeeProfile() {
               <CardContent className="p-8">
                 <div className="flex flex-col-reverse sm:flex-row items-center gap-12">
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
-                    <InfoField label="FULL NAME" value={currentEmployee?.name} />
-                    <InfoField label="EMAIL ADDRESS" value={currentEmployee?.email} />
-                    <InfoField label="CURRENT ROLE" value={currentEmployee?.system_role_name} />
-                    <InfoField label="TOTAL EXPERIENCE" value={currentEmployee?.experience} />
+                    <InfoField label="FULL NAME" value={currentEmployee?.name || "N/A"} />
+                    <InfoField label="EMAIL ADDRESS" value={currentEmployee?.email || "N/A"} />
+                    <InfoField label="CURRENT ROLE" value={currentEmployee?.system_role_name || "N/A"} />
+                    <InfoField label="TOTAL EXPERIENCE" value={currentEmployee?.experience || "N/A"} />
                     <InfoField
-                      type="date"
                       label="DATE OF JOINING"
-                      value={currentEmployee?.date_of_joining}
+                      value={currentEmployee?.date_of_joining || "N/A"}
                     />
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-extrabold tracking-[0.5px] opacity-60 uppercase">
@@ -74,7 +73,7 @@ export function EmployeeProfile() {
                       </span>
                       <div className="flex items-center gap-2 mt-1">
                         <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                        <span className="text-base">Available</span>
+                        <span className="text-base">{currentEmployee?.projects_count < 2 ? "Available" : "Not Available"}</span>
                       </div>
                     </div>
                   </div>
