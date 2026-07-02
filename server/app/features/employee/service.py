@@ -82,13 +82,13 @@ class EmployeeService:
         return self._format_employee_response(result[0], result[1], result[2])
 
     async def list_all(
-        self, 
-        page: int = 1, 
+        self,
+        page: int = 1,
         limit: int = 10,
         identifier: str | None = None,
         system_role_id: int | None = None,
         skill_ids: list[int] | None = None,
-        current_user: TokenPayload = None
+        current_user: TokenPayload = None,
     ) -> dict[str, Any]:
         import math
         import re
@@ -118,13 +118,13 @@ class EmployeeService:
         offset = (page - 1) * limit
 
         records, total_count = await self.repo.list_all_with_role(
-            limit=limit, 
+            limit=limit,
             offset=offset,
             identifier_filter=identifier_filter,
             system_role_id=system_role_id,  # Keeps search query parameter filtering active
             skill_ids=skill_ids,
             current_user_id=current_user_id,
-            is_hr=is_hr
+            is_hr=is_hr,
         )
 
         total_pages = math.ceil(total_count / limit) if limit > 0 else 1
@@ -140,8 +140,6 @@ class EmployeeService:
             "current_page": page,
             "limit": limit,
         }
-
-
 
     async def create(
         self, employee_data: dict[str, Any], changed_by_id: int
@@ -548,3 +546,28 @@ class EmployeeService:
         ]
 
         return result
+
+    async def get_employee_by_name_for_agent(self, name: str) -> list[dict]:
+        rows = await self.repo.get_by_name_for_agent(name)
+
+        return [
+            {
+                "id": employee.id,
+                "name": employee.name,
+                "email": employee.email,
+                "experience": employee.experience,
+                "date_of_joining": employee.date_of_joining.isoformat()
+                if employee.date_of_joining
+                else None,
+                "system_role_id": employee.system_role_id,
+                "system_role_name": role_name,
+                "projects_count": projects_count,
+                "created_at": employee.created_at.isoformat()
+                if employee.created_at
+                else None,
+                "updated_at": employee.updated_at.isoformat()
+                if employee.updated_at
+                else None,
+            }
+            for employee, role_name, projects_count in rows
+        ]
