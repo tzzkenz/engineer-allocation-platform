@@ -16,6 +16,8 @@ from features.audit.schemas import ActionType, EntityName
 from models.project_employee import ProjectEmployee
 from models.project_requirement_request import ProjectRequirementRequest
 from features.audit.repository import AuditLogRepository
+from models.employee import Employee
+from models.system_role import SystemRole
 
 
 class ProjectService:
@@ -57,18 +59,34 @@ class ProjectService:
         status: StatusType | None = None,
         identifier: str | None = None,
         skill_ids: list[int] | None = None,
+        current_user: Any = None,  # <-- Added token parameter
     ) -> dict[str, Any]:
         import math
 
         identifier_filter = None
         if identifier:
             identifier = identifier.strip()
-            # If the text is purely digits, treat it as an explicit Project ID search
             if identifier.isdigit():
                 identifier_filter = ("id", int(identifier))
-            # Otherwise, evaluate as a partial project name filter
             else:
                 identifier_filter = ("name", identifier)
+
+        # Resolve if the token owner belongs to the "HR" role name
+        is_hr = False
+        current_user_id = None
+        if current_user is not None:
+            current_user_id = current_user.id
+            # Re-use the employee repo model logic to verify the user's role name
+            user_info = await self.repo.db.execute(
+                select(Employee, SystemRole.name)
+                .join(SystemRole, Employee.system_role_id == SystemRole.id)
+                .where(Employee.id == current_user_id, Employee.deleted_at.is_(None))
+            )
+            user_row = user_info.first()
+            if user_row and len(user_row) > 1:
+                role_name = str(user_row[1]).strip().upper()
+                if role_name == "HR":
+                    is_hr = True
 
         # Calculate database window dimension offset
         offset = (page - 1) * limit
@@ -79,6 +97,8 @@ class ProjectService:
             status_filter=status,
             identifier_filter=identifier_filter,
             skill_ids=skill_ids,
+            current_user_id=current_user_id,  # <-- Passed context
+            is_hr=is_hr                       # <-- Passed flag
         )
 
         total_pages = math.ceil(total_count / limit) if limit > 0 else 1

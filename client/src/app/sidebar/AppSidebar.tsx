@@ -1,4 +1,5 @@
 import { ChevronRight, User, Zap } from "lucide-react";
+import { useAppSelector } from "@/store/store";
 import { NavLink, useLocation } from "react-router";
 import type { RootState } from "@/store/store";
 import { Avatar, AvatarFallback } from "@shared/components/ui/avatar";
@@ -13,17 +14,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "@shared/components/ui/sidebar";
 import { cn } from "@shared/lib/utils";
 import { useSelector } from "react-redux";
-import { navConfig } from "./navConfig";
+
+import { getAllowedConfigs } from "./navConfig";
 
 const AppSidebar = () => {
   const currentUser = useSelector(
   (state: RootState) => state.auth.user
 );
   const { pathname } = useLocation();
+
+  const { user: authUser } = useAppSelector((state) => state.auth);
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r-0 shadow-[4px_0_24px_rgba(0,0,0,0.04)]">
@@ -48,7 +51,7 @@ const AppSidebar = () => {
 
           <SidebarGroupContent>
             <SidebarMenu className=" gap-0.5">
-              {navConfig.map((item) => {
+              {getAllowedConfigs(authUser!.system_role_name).map((item) => {
                 const isActive = item.end ? pathname === item.href : pathname.startsWith(item.href);
 
                 return (

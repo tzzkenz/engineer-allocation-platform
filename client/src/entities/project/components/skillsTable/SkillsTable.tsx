@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 
+import PermissionGate from "@/entities/auth/components/permission-gate/PermissionGate";
+import { SYSTEM_ROLES } from "@/entities/config/lib/roles";
 import { useGetEmployeeSkillsQuery } from "@/features/auth/services/employeeApi";
 import {
   useAddEmployeeSkillsMutation,
   useDeleteEmployeeSkillMutation,
-  useUpdateEmployeeSkillInterestMutation,
+  useUpdateEmployeeSkillInterestMutation
 } from "@/features/auth/services/employeeApi";
 import { useGetAllSkillsQuery } from "@/features/auth/services/skillsApi";
 import { Button } from "@/shared/components/ui/button";
@@ -150,11 +152,12 @@ export default function SkillsTable() {
     <Card className="rounded-3xl">
       <CardHeader className="flex flex-row justify-between items-center">
         <h2 className="text-xl font-semibold">Skills</h2>
-
-        <Button variant="secondary" disabled={adding} onClick={() => setAdding(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Skill
-        </Button>
+        <PermissionGate requiredRoles={[SYSTEM_ROLES.HR]}>
+          <Button variant="secondary" disabled={adding} onClick={() => setAdding(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Skill
+          </Button>
+        </PermissionGate>
       </CardHeader>
 
       <CardContent>
@@ -166,8 +169,9 @@ export default function SkillsTable() {
               <th className="pb-4">Proficiency</th>
 
               <th className="pb-4">Interest</th>
-
-              <th className="pb-4 text-center">Actions</th>
+              <PermissionGate requiredRoles={[SYSTEM_ROLES.HR]}>
+                <th className="pb-4 text-center">Actions</th>
+              </PermissionGate>
             </tr>
           </thead>
 
@@ -277,10 +281,12 @@ export default function SkillsTable() {
                 </td>
                 <td>
                   <div className="flex justify-center">
-                    <Trash2
-                      className="h-5 w-5 cursor-pointer text-red-500"
-                      onClick={() => deleteSkill(skill.skill_id)}
-                    />
+                    <PermissionGate requiredRoles={[SYSTEM_ROLES.HR]}>
+                      <Trash2
+                        className="h-5 w-5 cursor-pointer text-red-500"
+                        onClick={() => deleteSkill(skill.skill_id)}
+                      />
+                    </PermissionGate>
                   </div>
                 </td>
               </tr>

@@ -27,6 +27,7 @@ Rules:
     "data": ...,
     "error": string | null
   }
+- DON'T ANSWER ANY OTHER QUESTIONS!!!!
 
 - If success is false:
   - Do NOT crash

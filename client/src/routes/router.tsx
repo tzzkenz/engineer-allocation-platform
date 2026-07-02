@@ -1,4 +1,6 @@
 import { AppLayout } from "@/app/layout/AppLayout";
+import PermissionGate from "@/entities/auth/components/permission-gate/PermissionGate";
+import { SYSTEM_ROLES } from "@/entities/config/lib/roles";
 import { createBrowserRouter } from "react-router";
 
 import { Dashboard } from "@pages/dashboard/Dashboard";
@@ -11,6 +13,8 @@ import ProjectCreate from "@pages/project-create/ProjectCreate";
 import { ProjectDetails } from "@pages/project-details/ProjectDetails";
 import { ProjectList } from "@pages/project-list/ProjectList";
 
+import RouteGate from "./route-gate/RouteGate";
+
 const router = createBrowserRouter([
   {
     path: "/login",
@@ -22,7 +26,11 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Dashboard />,
+        element: (
+          <RouteGate requiredRoles={[SYSTEM_ROLES.HR]}>
+            <Dashboard />
+          </RouteGate>
+        ),
       },
       {
         path: "profile",
@@ -38,16 +46,24 @@ const router = createBrowserRouter([
           },
           {
             path: "create",
-            element: <EmployeeCreate />,
+            element: (
+              <RouteGate requiredRoles={[SYSTEM_ROLES.HR]}>
+                <EmployeeCreate />{" "}
+              </RouteGate>
+            ),
           },
           {
-            path:":emp_id/edit",
-            element:<EmployeeEdit/>,
+            path: ":emp_id/edit",
+            element: (
+              <RouteGate requiredRoles={[SYSTEM_ROLES.HR]}>
+                <EmployeeEdit />{" "}
+              </RouteGate>
+            ),
           },
           {
             path: ":emp_id",
             element: <EmployeeProfile />,
-          }
+          },
         ],
       },
       {
@@ -59,7 +75,11 @@ const router = createBrowserRouter([
           },
           {
             path: "create",
-            element: <ProjectCreate />,
+            element: (
+              <RouteGate requiredRoles={[SYSTEM_ROLES.HR]}>
+                <ProjectCreate />{" "}
+              </RouteGate>
+            ),
           },
           {
             path: ":id",
@@ -67,7 +87,11 @@ const router = createBrowserRouter([
           },
           {
             path: ":projectId/edit",
-            element: <ProjectCreate />,
+            element: (
+              <RouteGate requiredRoles={[SYSTEM_ROLES.HR]}>
+                <ProjectCreate />
+              </RouteGate>
+            ),
           },
         ],
       },

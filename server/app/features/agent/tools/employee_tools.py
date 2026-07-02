@@ -87,4 +87,65 @@ def make_employees_tools(employee_service: EmployeeService):
 
             return error_response(e)
 
-    return [find_resources]
+    @tool
+    async def get_employee_by_name(
+        name: str,
+    ):
+        """
+        Find employees by name (case-insensitive, partial match).
+
+        Use this tool when the user asks about a specific employee by name,
+        e.g., "who is John Smith" or "find employee named Priya".
+
+        Args:
+            name:
+                Required. Full or partial employee name to search for.
+                Example: "john", "Priya Nair"
+
+        Returns:
+            A JSON string representing a list of matching employees. Each employee
+            object contains:
+            - id: Unique employee identifier
+            - name: Employee name
+            - email: Employee email
+            - experience: Years of experience
+            - date_of_joining: ISO formatted date (or null)
+            - system_role_id: Role ID
+            - system_role_name: Role name (e.g., Backend Engineer)
+            - projects_count: Number of active projects
+            - created_at: ISO formatted timestamp (or null)
+            - updated_at: ISO formatted timestamp (or null)
+
+        Notes:
+            - The response is returned as a JSON string.
+            - Matching is partial and case-insensitive, so multiple employees
+              may be returned if names are similar.
+        """
+
+        try:
+            data = await employee_service.get_employee_by_name_for_agent(name=name)
+
+            log_tool_event(
+                "employee_tool_logs.jsonl",
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "input": {"name": name},
+                    "output": data,
+                },
+            )
+
+            return success_response(data)
+
+        except Exception as e:
+            log_tool_event(
+                "employee_tool_logs.jsonl",
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "input": {"name": name},
+                    "error": str(e),
+                },
+            )
+
+            return error_response(e)
+
+    return [find_resources, get_employee_by_name]

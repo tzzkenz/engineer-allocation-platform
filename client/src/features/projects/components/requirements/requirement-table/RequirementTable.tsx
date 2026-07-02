@@ -1,3 +1,6 @@
+import PermissionGate from "@/entities/auth/components/permission-gate/PermissionGate";
+import ProjectPermissionGate from "@/entities/auth/components/project-permission-gate/ProjectPermissionGate";
+import { SYSTEM_ROLES } from "@/entities/config/lib/roles";
 import { Pencil, Trash } from "lucide-react";
 
 import { TechStackTag } from "@entities/project/components/TechStack";
@@ -69,29 +72,36 @@ export const RequirementTable = ({
             </TableCell>
 
             <TableCell className="text-right flex justify-end items-center gap-1">
-              {req.status === "APPROVED" && (
-                <Button size="sm" onClick={() => onAssign(req)}>
-                  Assign
+              <ProjectPermissionGate>
+                {req.status === "APPROVED" && (
+                  <Button size="sm" onClick={() => onAssign(req)}>
+                    Assign
+                  </Button>
+                )}
+
+                {req.status === "PENDING" && (
+                  <>
+                    <PermissionGate requiredRoles={[SYSTEM_ROLES.HR]}>
+                      <Button
+                        variant="ghost"
+                        className=" bg-green-100 text-green-600 hover:bg-green-200"
+                        size="sm"
+                        onClick={() => onApprove(req)}
+                      >
+                        Approve
+                      </Button>
+                    </PermissionGate>
+                    <ProjectPermissionGate>
+                      <Button variant="destructive" size="sm" onClick={() => onRemove(req)}>
+                        <Trash />
+                      </Button>
+                    </ProjectPermissionGate>
+                  </>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => onEdit(req)}>
+                  <Pencil />
                 </Button>
-              )}
-              {req.status === "PENDING" && (
-                <>
-                  <Button
-                    variant="ghost"
-                    className=" bg-green-100 text-green-600 hover:bg-green-200"
-                    size="sm"
-                    onClick={() => onApprove(req)}
-                  >
-                    Approve
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => onRemove(req)}>
-                    <Trash />
-                  </Button>
-                </>
-              )}
-              <Button variant="ghost" size="sm" onClick={() => onEdit(req)}>
-                <Pencil />
-              </Button>
+              </ProjectPermissionGate>
             </TableCell>
           </TableRow>
         ))}

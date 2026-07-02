@@ -1,3 +1,4 @@
+import ProjectPermissionGate from "@/entities/auth/components/project-permission-gate/ProjectPermissionGate";
 import { Pencil, Trash2 } from "lucide-react";
 
 import type { FeedbackResponse } from "@entities/project/types/apiTypes";
@@ -49,23 +50,25 @@ const NotesTable = ({ notes, onEdit, onDelete }: ProjectNotesCardProps) => {
 
               <TableCell className=" text-right">
                 <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    className=" text-primary"
-                    size="icon"
-                    onClick={() => onEdit(note)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <ProjectPermissionGate>
+                    <Button
+                      variant="ghost"
+                      className=" text-primary"
+                      size="icon"
+                      onClick={() => onEdit(note)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
 
-                  <Button
-                    variant="ghost"
-                    className=" hover:bg-red-100 text-red-600"
-                    size="icon"
-                    onClick={() => onDelete(note)}
-                  >
-                    <Trash2 className="h-4 w-4 " />
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      className=" hover:bg-red-100 text-red-600"
+                      size="icon"
+                      onClick={() => onDelete(note)}
+                    >
+                      <Trash2 className="h-4 w-4 " />
+                    </Button>
+                  </ProjectPermissionGate>
                 </div>
               </TableCell>
             </TableRow>
