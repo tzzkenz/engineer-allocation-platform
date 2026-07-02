@@ -1,4 +1,5 @@
 import json
+import asyncio
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -34,19 +35,32 @@ async def chat(
 
     async def event_stream():
         messages = {"messages": [HumanMessage(content=payload.message)]}
-
         config = {"configurable": {"thread_id": f"employee-{current_user.id}"}}
 
-        async for event in agent.astream_events(messages, config=config):
-            if event["event"] == "on_chat_model_stream":
-                chunk = event["data"]["chunk"]
+        stream = agent.astream_events(messages, config=config)
 
-                if chunk.content:
-                    yield (
-                        f"data: {json.dumps({'content': chunk.content, 'type': 'delta'})}\n\n"
-                    )
+        try:
+            while True:
+                try:
+                    event = await asyncio.wait_for(stream.__anext__(), timeout=15)
+                except StopAsyncIteration:
+                    break
 
-        yield "data: [DONE]\n\n"
+                if event["event"] == "on_chat_model_stream":
+                    chunk = event["data"]["chunk"]
+
+                    if chunk.content:
+                        yield (
+                            f"data: {json.dumps({'content': chunk.content, 'type': 'delta'})}\n\n"
+                        )
+
+            yield "data: [DONE]\n\n"
+
+        except asyncio.TimeoutError:
+            yield (
+                f"data: {json.dumps({'type': 'error', 'message': 'Request timed out'})}\n\n"
+            )
+            yield "data: [DONE]\n\n"
 
     return StreamingResponse(
         event_stream(),
