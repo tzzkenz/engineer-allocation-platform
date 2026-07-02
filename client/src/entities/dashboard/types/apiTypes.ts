@@ -11,3 +11,13 @@ export type DashboardSummaryResponse = {
   };
   skill_coverage: Record<string, { required: number; filled: number }>;
 };
+
+export type DashboardInsightsResponse = {
+  id: number;
+  period_start: string;
+  period_end: string;
+  metrics_json: string; // JSON string, parse into DashboardMetrics
+  summary_text: string;
+  generated_by: string;
+  created_at: string;
+};
