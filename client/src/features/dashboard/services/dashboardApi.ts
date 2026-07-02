@@ -1,4 +1,7 @@
-import { type DashboardSummaryResponse } from "@/entities/dashboard/types/apiTypes";
+import {
+  type DashboardInsightsResponse,
+  type DashboardSummaryResponse,
+} from "@/entities/dashboard/types/apiTypes";
 import employeeBaseApi from "@/shared/api/base.api";
 
 const dashboardApi = employeeBaseApi.injectEndpoints({
@@ -9,7 +12,23 @@ const dashboardApi = employeeBaseApi.injectEndpoints({
         method: "GET",
       }),
     }),
+    getInsights: builder.mutation<DashboardInsightsResponse, void>({
+      query: () => ({
+        url: "/insights/generate",
+        method: "POST",
+      }),
+    }),
+    getLatestInsightsSummary: builder.query<DashboardInsightsResponse, void>({
+      query: () => ({
+        url: "/insights/latest",
+        method: "GET",
+      }),
+    }),
   }),
 });
 
-export const { useGetDashboardSummaryQuery } = dashboardApi;
+export const {
+  useGetDashboardSummaryQuery,
+  useGetInsightsMutation,
+  useLazyGetLatestInsightsSummaryQuery,
+} = dashboardApi;

@@ -1,20 +1,60 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type { ProjectStatus } from "@/entities/project/types/apiTypes";
 import { PROJECT_STATUS_LABELS } from "@/entities/project/utils/status";
-import { useGetDashboardSummaryQuery } from "@/features/dashboard/services/dashboardApi";
+import { InsightDialog } from "@/features/dashboard/components/InsightDialog";
+import { Button } from "@/shared/components/ui/button";
 import PageSection from "@/shared/components/ui/section";
-import { AlertTriangle, LayoutGrid, Target, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  LayoutGrid,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  Target,
+  Users,
+} from "lucide-react";
 
 import { EngineerDistribution } from "@features/dashboard/components/EngineerDistribution";
 import { ProjectStatusChart } from "@features/dashboard/components/ProjectStatusChart";
 import { SkillCoverage } from "@features/dashboard/components/SkillCoverage";
 import { StatCard } from "@features/dashboard/components/StatCard";
+import {
+  useGetDashboardSummaryQuery,
+  useGetInsightsMutation,
+  useLazyGetLatestInsightsSummaryQuery,
+} from "@features/dashboard/services/dashboardApi";
 
 export function Dashboard() {
   const { data: dashboardSummary } = useGetDashboardSummaryQuery(undefined, {
     refetchOnMountOrArgChange: false,
   });
+
+  const [generateInsight, { isLoading: isGenerating, data: generatedInsight }] =
+    useGetInsightsMutation();
+  const [getLatestInsight, { isLoading: isLatestLoading, data: latestInsight }] =
+    useLazyGetLatestInsightsSummaryQuery();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"latest" | "generated">("latest");
+
+  const handleGetLatest = async () => {
+    setDialogMode("latest");
+
+    try {
+      await getLatestInsight().unwrap();
+      setDialogOpen(true);
+    } catch (err) {}
+  };
+
+  /** Simulates a network call to generate a fresh insight, then opens the dialog. */
+  const handleGetInsight = async () => {
+    setDialogMode("generated");
+    try {
+      await generateInsight().unwrap();
+      setDialogOpen(true);
+    } catch (err) {}
+  };
 
   const skillCoverage = (() => {
     if (!dashboardSummary?.skill_coverage) return "0%";
@@ -43,6 +83,7 @@ export function Dashboard() {
     ? Object.entries(dashboardSummary.projects.by_status).map(([status, value]) => ({
         name: PROJECT_STATUS_LABELS[status as ProjectStatus],
         value,
+        status: status as ProjectStatus,
       }))
     : [];
 
@@ -66,7 +107,38 @@ export function Dashboard() {
   return (
     <>
       <div className="flex items-start justify-between ">
-        <PageSection title="Dashboard" description="Resource allocation and staffing insights." />
+        <PageSection
+          title="Dashboard"
+          description="Resource allocation and staffing insights."
+          additionalContent={
+            <div className=" w-full flex items-center justify-end gap-2">
+              {/* Get Latest Insight */}
+              <Button
+                variant="outline"
+                onClick={handleGetLatest}
+                className="gap-2 h-10 px-4 rounded-xl border-border-strong text-sm font-medium hover:bg-secondary"
+                disabled={isLatestLoading}
+              >
+                <RefreshCw className="size-3.5" />
+                {isLatestLoading ? "Fetching.." : "Get Latest Insight"}
+              </Button>
+
+              {/* Get Insight (generates fresh) */}
+              <Button
+                onClick={handleGetInsight}
+                disabled={isGenerating}
+                className="gap-2 h-10 px-4 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 text-sm font-medium shadow-none"
+              >
+                {isGenerating ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="size-3.5" />
+                )}
+                {isGenerating ? "Generating…" : "Get Insight"}
+              </Button>
+            </div>
+          }
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -108,6 +180,15 @@ export function Dashboard() {
       </div>
 
       <SkillCoverage skills={skillCoverageData} />
+
+      {dialogOpen && (
+        <InsightDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          insight={dialogMode === "generated" ? generatedInsight : latestInsight}
+          mode={dialogMode}
+        />
+      )}
     </>
   );
 }
