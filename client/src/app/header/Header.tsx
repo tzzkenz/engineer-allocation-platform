@@ -10,8 +10,8 @@ const Header = () => {
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary text-primary-foreground text-sm font-bold ml-1">
-          <User size={16} onClick={() => navigate("/profile")} />
+        <div onClick={() => navigate("/profile")}  className="w-8 h-8 rounded-full flex items-center justify-center bg-primary text-primary-foreground text-sm font-bold ml-1">
+          <User size={16} />
         </div>
       </div>
     </header>

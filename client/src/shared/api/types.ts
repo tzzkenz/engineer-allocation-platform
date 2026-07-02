@@ -71,3 +71,7 @@ export type DeleteEmployeeSkillRequest = {
 export type DeleteEmployeeSkillResponse = {
   message: string;
 };
+export interface UpdateEmployeeSkillInterestRequest {
+  is_interest: boolean;
+}
+

@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 
 import { useGetEmployeeSkillsQuery } from "@/features/auth/services/employeeApi";
-import { useAddEmployeeSkillsMutation, useDeleteEmployeeSkillMutation,} from "@/features/auth/services/employeeApi";
+import {
+  useAddEmployeeSkillsMutation,
+  useDeleteEmployeeSkillMutation,
+  useUpdateEmployeeSkillInterestMutation,
+} from "@/features/auth/services/employeeApi";
 import { useGetAllSkillsQuery } from "@/features/auth/services/skillsApi";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
@@ -12,35 +16,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import type { RootState } from "@/store/store";
 import { Plus, Trash2 } from "lucide-react";
+import { useSelector } from "react-redux";
 import { useParams } from "react-router";
 
 import { PROFICIENCY_LABELS, PROFICIENCY_OPTIONS } from "./constants";
 import type { EmployeeSkillRow } from "./types";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store/store";
+
 export default function SkillsTable() {
   const { emp_id } = useParams();
+  const [updateEmployeeSkillInterest] = useUpdateEmployeeSkillInterestMutation();
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
-const currentUser = useSelector(
-  (state: RootState) => state.auth.user
-);
-
-const employeeId = emp_id
-  ? Number(emp_id)
-  : currentUser?.id;
-console.log("emp_id:", emp_id);
-console.log("currentUser:", currentUser);
-console.log("currentUser.id:", currentUser?.id);
+  const employeeId = emp_id ? Number(emp_id) : currentUser?.id;
+  console.log("emp_id:", emp_id);
+  console.log("currentUser:", currentUser);
+  console.log("currentUser.id:", currentUser?.id);
   const { data: skills = [] } = useGetAllSkillsQuery();
- const [addEmployeeSkills, { isLoading: isAddingSkill }] =
-  useAddEmployeeSkillsMutation();
+  const [addEmployeeSkills, { isLoading: isAddingSkill }] = useAddEmployeeSkillsMutation();
 
-const [deleteEmployeeSkill, { isLoading: isDeletingSkill }] =
-  useDeleteEmployeeSkillMutation();
+  const [deleteEmployeeSkill, { isLoading: isDeletingSkill }] = useDeleteEmployeeSkillMutation();
 
-const { data: employeeSkillsApi = [] } =
-  useGetEmployeeSkillsQuery(employeeId!, {
+  const { data: employeeSkillsApi = [] } = useGetEmployeeSkillsQuery(employeeId!, {
     skip: !employeeId,
   });
 
@@ -54,15 +52,15 @@ const { data: employeeSkillsApi = [] } =
   const [selectedProf, setSelectedProf] = useState(3);
 
   useEffect(() => {
-  setValue(
-    employeeSkillsApi.map((skill) => ({
-      skill_id: skill.skill_id,
-      skill_name: skill.name,
-      proficiency: skill.proficiency,
-      is_interest: skill.is_interest,
-    }))
-  );
-}, [employeeSkillsApi]);
+    setValue(
+      employeeSkillsApi.map((skill) => ({
+        skill_id: skill.skill_id,
+        skill_name: skill.name,
+        proficiency: skill.proficiency,
+        is_interest: skill.is_interest,
+      }))
+    );
+  }, [employeeSkillsApi]);
 
   const availableSkills = skills.filter(
     (skill) => !value.some((employeeSkill) => employeeSkill.skill_id === skill.id)
@@ -108,22 +106,46 @@ const { data: employeeSkillsApi = [] } =
     }
   }
 
-async function deleteSkill(skill_id: number) {
-  if (!employeeId) return;
+  async function deleteSkill(skill_id: number) {
+    if (!employeeId) return;
 
-  try {
-    await deleteEmployeeSkill({
-      employee_id: employeeId,
-      skill_id,
-    }).unwrap();
+    try {
+      await deleteEmployeeSkill({
+        employee_id: employeeId,
+        skill_id,
+      }).unwrap();
 
-    setValue((prev) =>
-      prev.filter((skill) => skill.skill_id !== skill_id)
-    );
-  } catch (err) {
-    console.error(err);
+      setValue((prev) => prev.filter((skill) => skill.skill_id !== skill_id));
+    } catch (err) {
+      console.error(err);
+    }
   }
-}
+  async function updateInterest(skill_id: number, is_interest: boolean) {
+    if (!employeeId) return;
+
+    // optimistic update
+    setValue((prev) =>
+      prev.map((skill) => (skill.skill_id === skill_id ? { ...skill, is_interest } : skill))
+    );
+
+    try {
+      await updateEmployeeSkillInterest({
+        employee_id: employeeId,
+        skill_id,
+        body: {
+          is_interest,
+        },
+      }).unwrap();
+    } catch (err) {
+      console.error(err);
+
+      setValue((prev) =>
+        prev.map((skill) =>
+          skill.skill_id === skill_id ? { ...skill, is_interest: !is_interest } : skill
+        )
+      );
+    }
+  }
   return (
     <Card className="rounded-3xl">
       <CardHeader className="flex flex-row justify-between items-center">
@@ -238,14 +260,20 @@ async function deleteSkill(skill_id: number) {
                   </span>
                 </td>
 
-                <td>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs ${
-                      skill.is_interest ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
-                    }`}
+                <td className="py-4">
+                  <Select
+                    value={String(skill.is_interest)}
+                    onValueChange={(value) => updateInterest(skill.skill_id, value === "true")}
                   >
-                    {skill.is_interest ? "Interest" : "Skill"}
-                  </span>
+                    <SelectTrigger  className="w-25">
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent >
+                      <SelectItem  value="false">Skill</SelectItem>
+                      <SelectItem value="true">Interest</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </td>
                 <td>
                   <div className="flex justify-center">

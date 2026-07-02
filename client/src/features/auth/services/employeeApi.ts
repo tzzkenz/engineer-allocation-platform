@@ -10,6 +10,7 @@ import {
   type DeleteEmployeeSkillRequest,
   type DeleteEmployeeSkillResponse,
   type GetEmployeeSkillsResponse,
+  type UpdateEmployeeSkillInterestRequest,
 } from "@/shared/api/types";
 
 export const employeeApi = employeeBaseApi.injectEndpoints({
@@ -75,6 +76,23 @@ export const employeeApi = employeeBaseApi.injectEndpoints({
     { type: "EmployeeSkills", id: arg.employee_id },
   ],
     }),
+    updateEmployeeSkillInterest: builder.mutation<
+  void,
+  {
+    employee_id: number;
+    skill_id: number;
+    body: UpdateEmployeeSkillInterestRequest;
+  }
+>({
+  query: ({ employee_id, skill_id, body }) => ({
+    url: `/employees/${employee_id}/skills/${skill_id}/interest`,
+    method: "PATCH",
+    body,
+  }),
+  invalidatesTags: (result, error, arg) => [
+    { type: "EmployeeSkills", id: arg.employee_id },
+  ],
+}),
   }),
 });
 
@@ -85,4 +103,5 @@ export const {
   useAddEmployeeSkillsMutation,
   useGetEmployeeSkillsQuery,
   useDeleteEmployeeSkillMutation,
+  useUpdateEmployeeSkillInterestMutation,
 } = employeeApi;

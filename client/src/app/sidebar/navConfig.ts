@@ -1,4 +1,4 @@
-import { FolderKanban, LayoutDashboard, type LucideIcon, Settings, Users } from "lucide-react";
+import { FolderKanban, LayoutDashboard, type LucideIcon, User, Users } from "lucide-react";
 
 export interface NavItem {
   label: string;
@@ -12,5 +12,5 @@ export const navConfig: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/", end: true },
   { label: "Projects", icon: FolderKanban, href: "/project" },
   { label: "Employees", icon: Users, href: "/employee" },
-  { label: "Profile", icon: Settings, href: "/profile" },
+  { label: "Profile", icon: User, href: "/profile" },
 ];
