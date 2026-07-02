@@ -408,7 +408,7 @@ class ProjectService:
         return {
             "id": p.id,
             "name": p.name,
-            "status": p.status,
+            "status": p.status.value if p.status else None,
             "start_date": p.start_date.isoformat() if p.start_date else None,
             "end_date": p.end_date.isoformat() if p.end_date else None,
         }
