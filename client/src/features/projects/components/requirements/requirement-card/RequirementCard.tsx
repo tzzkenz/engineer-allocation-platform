@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import ProjectPermissionGate from "@/entities/auth/components/project-permission-gate/ProjectPermissionGate";
 import type { EmployeeResponse } from "@/entities/employee/types/apiTypes";
 import {
   useDeleteRequirementMutation,
@@ -80,13 +81,15 @@ export function RequirementsCard({ requirements, projectId }: RequirementsCardPr
           <SectionHeader
             title="Project Requirements"
             actions={
-              <IconButton
-                varient="outline"
-                icon={<Plus className="size-3.5" />}
-                label="Raise Request"
-                onClick={() => setRaiseOpen(true)}
-                className=" text-primary shadow-[6px_6px_12px_rgba(0,0,0,0.05),-6px_-6px_12px_rgba(255,255,255,0.8)]"
-              />
+              <ProjectPermissionGate>
+                <IconButton
+                  varient="outline"
+                  icon={<Plus className="size-3.5" />}
+                  label="Raise Request"
+                  onClick={() => setRaiseOpen(true)}
+                  className=" text-primary shadow-[6px_6px_12px_rgba(0,0,0,0.05),-6px_-6px_12px_rgba(255,255,255,0.8)]"
+                />
+              </ProjectPermissionGate>
             }
           />
           <RequirementTable

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import ProjectPermissionGate from "@/entities/auth/components/project-permission-gate/ProjectPermissionGate";
 import type { AssignedEmployeeResponse } from "@/entities/project/types/apiTypes";
 import DeleteConfirmationDialog from "@/shared/components/confirm-dlalog/DeleteConfirmationDialog";
 import { Button } from "@/shared/components/ui/button";
@@ -57,9 +58,11 @@ const ProjectEmployees = ({ employees }: ProjectEmployeesProps) => {
                 >
                   <Eye />
                 </Button>
-                <Button variant="destructive" onClick={() => handleRemoveClick(engineer)}>
-                  Remove
-                </Button>
+                <ProjectPermissionGate>
+                  <Button variant="destructive" onClick={() => handleRemoveClick(engineer)}>
+                    Remove
+                  </Button>
+                </ProjectPermissionGate>
               </>
             )}
           />

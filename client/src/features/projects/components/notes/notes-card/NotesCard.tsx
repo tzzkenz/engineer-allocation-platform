@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import ProjectPermissionGate from "@/entities/auth/components/project-permission-gate/ProjectPermissionGate";
 import {
   useCreateFeedbackMutation,
   useDeleteFeedbackMutation,
@@ -67,13 +68,15 @@ export function ProjectNotesCard({ projectId, notes }: ProjectNotesCardProps) {
           <SectionHeader
             title="Project Notes"
             actions={
-              <IconButton
-                varient="outline"
-                className=" text-primary"
-                icon={<MessageSquarePlus className="size-3.5" />}
-                label="Add Note"
-                onClick={() => setIsNoteDialogOpen(true)}
-              />
+              <ProjectPermissionGate>
+                <IconButton
+                  varient="outline"
+                  className=" text-primary"
+                  icon={<MessageSquarePlus className="size-3.5" />}
+                  label="Add Note"
+                  onClick={() => setIsNoteDialogOpen(true)}
+                />
+              </ProjectPermissionGate>
             }
           />
 
