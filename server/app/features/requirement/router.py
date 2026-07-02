@@ -37,6 +37,7 @@ async def create_requirement(
         requested_count=payload.requested_count,
         requested_by=current_user.id,
         stack_ids=payload.stack_ids,
+        current_user=current_user,
     )
 
 

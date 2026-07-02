@@ -15,11 +15,15 @@ from exceptions import (
     UnknownException,
 )
 from models.skill import SkillType
+from features.auth.schemas import TokenPayload
+from features.employee.repository import EmployeeRepository
 
 
 class RequirementService(BaseService):
-    def __init__(self, repo: RequirementRepository, audit_repo: AuditLogRepository):
+    def __init__(self, repo: RequirementRepository, audit_repo: AuditLogRepository, emp_repo: EmployeeRepository):
         super().__init__(repo, audit_repo)
+        self.emp_repo = emp_repo
+        
 
     def _format_requirement_response(self, req: ProjectRequirementRequest) -> dict:
         """Helper to inject dynamic model relationship string properties into a flat dictionary structure."""
@@ -73,13 +77,28 @@ class RequirementService(BaseService):
         requested_count: int,
         requested_by: int,
         stack_ids: list[int] | None = None,
+        current_user: TokenPayload | None = None,
     ) -> dict:
         try:
+
+            is_hr = False
+            current_user_id = None
+            if current_user is not None:
+                current_user_id = current_user.id
+                user_info = await self.emp_repo.get_by_id_with_role(current_user_id)
+                # user_info tuple structure is: (Employee, system_role_name, projects_count)
+                if user_info and len(user_info) > 1:
+                    role_name = str(user_info[1]).strip().upper()
+                    if role_name == "HR":
+                        is_hr = True
+            
+
             request = await self.repo.create(
                 project_id=project_id,
                 project_role_id=project_role_id,
                 requested_count=requested_count,
                 requested_by=requested_by,
+                status=RequestStatus.APPROVED if is_hr else RequestStatus.PENDING,
             )
 
             if stack_ids:
