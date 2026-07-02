@@ -27,7 +27,7 @@ const generateEmployeeFilterPayload = (
 
   const skills = filters.nonTechnicals.concat(filters.technicals, filters.stacks);
   console.log(skills, "COMBINED SKILLS");
-  skills.forEach((skill) => newParams.append("skills", skill.id.toString()));
+  skills.forEach((skill) => newParams.append("skill_ids", skill.id.toString()));
 
   if (filters.identifier.trim() !== "") newParams.set("identifier", filters.identifier);
 
