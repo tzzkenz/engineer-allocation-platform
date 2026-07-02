@@ -85,6 +85,7 @@ def get_requirement_service(
     return RequirementService(
         RequirementRepository(db),
         get_audit_repo(db),
+        EmployeeRepository(db),
     )
 
 
