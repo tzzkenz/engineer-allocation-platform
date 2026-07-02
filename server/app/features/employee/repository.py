@@ -62,18 +62,18 @@ class EmployeeRepository:
         return result.first()
 
     async def list_all_with_role(
-        self, 
-        limit: int | None = None, 
+        self,
+        limit: int | None = None,
         offset: int | None = None,
         identifier_filter: tuple[str, Any] | None = None,
         system_role_id: int | None = None,
         skill_ids: list[int] | None = None,
         current_user_id: int | None = None,
-        is_hr: bool = False
+        is_hr: bool = False,
     ) -> tuple[list[tuple[Employee, str, int]], int]:
         from models.employee_skill import EmployeeSkill
         from models.project_employee import ProjectEmployee
-        
+
         # Base statement selecting employee profile details alongside role and active project counts
         stmt = (
             select(
@@ -84,42 +84,35 @@ class EmployeeRepository:
             .join(SystemRole, Employee.system_role_id == SystemRole.id)
             .where(Employee.deleted_at.is_(None))
         )
-        
+
         # --- ROLE-BASED SCOPING PRIVILEGES ---
         # If the user is HR, we skip this block completely, granting them access to EVERYONE.
         if not is_hr and current_user_id is not None:
             # 1. Gather all active project IDs the current user is part of
-            active_projects_stmt = (
-                select(ProjectEmployee.project_id)
-                .where(
-                    ProjectEmployee.employee_id == current_user_id,
-                    ProjectEmployee.date_exited.is_(None),
-                    ProjectEmployee.deleted_at.is_(None)
-                )
+            active_projects_stmt = select(ProjectEmployee.project_id).where(
+                ProjectEmployee.employee_id == current_user_id,
+                ProjectEmployee.date_exited.is_(None),
+                ProjectEmployee.deleted_at.is_(None),
             )
-            
+
             # 2. Find all employees who are actively assigned to those same projects
-            peer_employees_stmt = (
-                select(ProjectEmployee.employee_id)
-                .where(
-                    ProjectEmployee.project_id.in_(active_projects_stmt),
-                    ProjectEmployee.date_exited.is_(None),
-                    ProjectEmployee.deleted_at.is_(None)
-                )
+            peer_employees_stmt = select(ProjectEmployee.employee_id).where(
+                ProjectEmployee.project_id.in_(active_projects_stmt),
+                ProjectEmployee.date_exited.is_(None),
+                ProjectEmployee.deleted_at.is_(None),
             )
-            
+
             # 3. Filter employees to include peers or the user themselves
             stmt = stmt.where(
                 or_(
-                    Employee.id == current_user_id,
-                    Employee.id.in_(peer_employees_stmt)
+                    Employee.id == current_user_id, Employee.id.in_(peer_employees_stmt)
                 )
             )
 
         # Apply incoming query parameters filters if provided
         if system_role_id is not None:
             stmt = stmt.where(Employee.system_role_id == system_role_id)
-            
+
         if identifier_filter is not None:
             id_type, val = identifier_filter
             if id_type == "id":
@@ -128,29 +121,30 @@ class EmployeeRepository:
                 stmt = stmt.where(Employee.email == val)
             elif id_type == "name":
                 stmt = stmt.where(Employee.name.ilike(f"%{val}%"))
-               
+
         if skill_ids:
-            stmt = stmt.join(EmployeeSkill, Employee.id == EmployeeSkill.employee_id).where(
+            stmt = stmt.join(
+                EmployeeSkill, Employee.id == EmployeeSkill.employee_id
+            ).where(
                 EmployeeSkill.skill_id.in_(skill_ids),
-                EmployeeSkill.deleted_at.is_(None)
+                EmployeeSkill.deleted_at.is_(None),
             )
             stmt = stmt.group_by(Employee.id, SystemRole.name).having(
                 func.count(EmployeeSkill.skill_id) == len(skill_ids)
             )
-        
+
         # Calculate total matching dataset count safely before pagination window cuts
         count_stmt = select(func.count()).select_from(stmt.subquery())
         count_result = await self.db.execute(count_stmt)
         total_count = count_result.scalar() or 0
-        
+
         if limit is not None:
             stmt = stmt.limit(limit)
         if offset is not None:
             stmt = stmt.offset(offset)
-            
+
         result = await self.db.execute(stmt)
         return list(result.all()), total_count
-    
 
     async def get_by_id(self, employee_id: int) -> Employee | None:
         stmt = select(Employee).where(
@@ -262,3 +256,22 @@ class EmployeeRepository:
 
         result = await self.db.execute(stmt)
         return list(result.all()), total_count
+
+    async def get_by_name_for_agent(
+        self,
+        name: str,
+    ) -> list[tuple[Employee, str, int]]:
+        stmt = (
+            select(
+                Employee,
+                SystemRole.name,
+                self._get_active_projects_subquery().label("projects_count"),
+            )
+            .join(SystemRole, Employee.system_role_id == SystemRole.id)
+            .where(
+                Employee.deleted_at.is_(None),
+                Employee.name.ilike(f"%{name}%"),
+            )
+        )
+        result = await self.db.execute(stmt)
+        return list(result.all())

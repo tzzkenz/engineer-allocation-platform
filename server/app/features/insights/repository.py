@@ -20,9 +20,6 @@ class InsightRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    # ----------------------------
-    # ACTIVE PROJECT COUNTS
-    # ----------------------------
     async def get_active_project_counts(self) -> dict[int, int]:
         stmt = (
             select(
@@ -40,17 +37,11 @@ class InsightRepository:
         result = await self.db.execute(stmt)
         return dict(result.all())
 
-    # ----------------------------
-    # ACTIVE EMPLOYEES
-    # ----------------------------
     async def get_active_employees(self) -> list[Employee]:
         stmt = select(Employee).where(Employee.end_date.is_(None))
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    # ----------------------------
-    # STALE ASSIGNMENTS (SAFE JOIN)
-    # ----------------------------
     async def get_stale_assignments(self) -> list[tuple[ProjectEmployee, str]]:
         cutoff = date.today() - timedelta(days=ROTATION_THRESHOLD_DAYS)
 
@@ -68,9 +59,6 @@ class InsightRepository:
         result = await self.db.execute(stmt)
         return list(result.all())
 
-    # ----------------------------
-    # OPEN REQUIREMENT REQUESTS (FIXED LAZY LOAD)
-    # ----------------------------
     async def get_open_requirement_requests(self) -> list[ProjectRequirementRequest]:
         stmt = (
             select(ProjectRequirementRequest)
@@ -84,9 +72,6 @@ class InsightRepository:
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    # ----------------------------
-    # QUALIFIED EMPLOYEES COUNT
-    # ----------------------------
     async def count_qualified_employees(self, stack_ids: list[int]) -> int:
         if not stack_ids:
             return 0
@@ -100,9 +85,6 @@ class InsightRepository:
         result = await self.db.execute(stmt)
         return result.scalar() or 0
 
-    # ----------------------------
-    # INTERESTED EMPLOYEES
-    # ----------------------------
     async def get_interested_low_proficiency_employees(
         self, stack_ids: list[int]
     ) -> list[int]:
@@ -118,18 +100,12 @@ class InsightRepository:
         result = await self.db.execute(stmt)
         return [row[0] for row in result.all()]
 
-    # ----------------------------
-    # CREATE REPORT
-    # ----------------------------
     async def create_report(self, report_data: dict[str, Any]) -> InsightReport:
         report = InsightReport(**report_data)
         self.db.add(report)
         await self.db.flush()
         return report
 
-    # ----------------------------
-    # LATEST REPORT
-    # ----------------------------
     async def get_latest_report(self) -> InsightReport | None:
         stmt = select(InsightReport).order_by(InsightReport.created_at.desc()).limit(1)
 
