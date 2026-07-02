@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import PermissionGate from "@/entities/auth/components/permission-gate/PermissionGate";
+import { SYSTEM_ROLES } from "@/entities/config/lib/roles";
 import { Eye, Plus } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -75,13 +77,15 @@ export function EmployeeList() {
         title="Employees"
         description="Manage your employees and their associated tasks."
         additionalContent={
-          <Button
-            onClick={() => navigate("/employee/create")}
-            className="gap-2 h-11 px-6 rounded-md"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Create Employee
-          </Button>
+          <PermissionGate requiredRoles={[SYSTEM_ROLES.HR]}>
+            <Button
+              onClick={() => navigate("/employee/create")}
+              className="gap-2 h-11 px-6 rounded-md"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Create Employee
+            </Button>
+          </PermissionGate>
         }
       />
 

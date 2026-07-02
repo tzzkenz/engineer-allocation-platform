@@ -1,4 +1,5 @@
 import { useGetProjectRolesQuery, useGetSkillsQuery } from "@/entities/config/services/configApi";
+import { transformByType } from "@/entities/config/utils/transform";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -85,6 +86,7 @@ const RequirementForm = ({
     onCancel();
   };
 
+  const { stacks } = transformByType(skills);
   return (
     <form onSubmit={handleSubmit(handleProjectRoleObject)} className="space-y-4 py-2">
       <FieldGroup>
@@ -146,7 +148,7 @@ const RequirementForm = ({
               render={({ field }) => (
                 <Combobox
                   multiple
-                  items={skills}
+                  items={stacks}
                   value={field.value}
                   onValueChange={(value, event) => {
                     console.log(value);

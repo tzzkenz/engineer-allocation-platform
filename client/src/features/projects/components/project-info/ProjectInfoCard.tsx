@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import PermissionGate from "@/entities/auth/components/permission-gate/PermissionGate";
+import { SYSTEM_ROLES } from "@/entities/config/lib/roles";
 import {
   PROJECT_STATUS_BADGE_CLASSES,
   PROJECT_STATUS_LABELS,
@@ -66,30 +68,33 @@ export function ProjectInfoCard({ project, onEdit, onUpdateStatus }: ProjectInfo
               <Badge className={PROJECT_STATUS_BADGE_CLASSES[project.status]}>
                 {PROJECT_STATUS_LABELS[project.status]}
               </Badge>
-              <IconButton
-                varient="outline"
-                className=" text-primary"
-                icon={<Pencil className="size-3.5" />}
-                label="Edit Project"
-                onClick={onEdit}
-              />
-              {action && (
+
+              <PermissionGate requiredRoles={[SYSTEM_ROLES.HR]}>
                 <IconButton
                   varient="outline"
-                  className={action.className}
-                  icon={action.icon}
-                  label={action.label}
-                  onClick={handleUpdateStatus}
+                  className=" text-primary"
+                  icon={<Pencil className="size-3.5" />}
+                  label="Edit Project"
+                  onClick={onEdit}
                 />
-              )}
+                {action && (
+                  <IconButton
+                    varient="outline"
+                    className={action.className}
+                    icon={action.icon}
+                    label={action.label}
+                    onClick={handleUpdateStatus}
+                  />
+                )}
 
-              <IconButton
-                varient="destructive"
-                className=""
-                icon={<Trash size="3.5" />}
-                label="Discard Project"
-                onClick={handleDeleteClick}
-              />
+                <IconButton
+                  varient="destructive"
+                  className=""
+                  icon={<Trash size="3.5" />}
+                  label="Discard Project"
+                  onClick={handleDeleteClick}
+                />
+              </PermissionGate>
             </>
           }
         />

@@ -34,7 +34,6 @@ export function SkillCoverage({ skills }: SkillCoverageProps) {
         {skills.map((s) => (
           <>
             <SkillBar key={s.label} label={s.label} pct={s.pct} />
-            <SkillBar key={s.tag} label={s.tag} pct={s.tagPct} />
           </>
         ))}
       </CardContent>
