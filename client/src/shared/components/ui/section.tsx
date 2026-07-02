@@ -13,7 +13,7 @@ const PageSection: React.FC<PageSectionProps> = ({
   additionalContent,
 }) => {
   return (
-    <Card className=" bg-transparent ring-0">
+    <Card className=" w-full bg-transparent ring-0">
       <CardContent className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-[30px] font-bold  tracking-tight leading-9">{title}</h1>

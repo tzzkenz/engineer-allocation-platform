@@ -1,3 +1,4 @@
+import type { ProjectStatus } from "@/entities/project/types/apiTypes";
 import { PROJECT_STATUS_BADGE_CLASSES } from "@/entities/project/utils/status";
 import { List } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
@@ -10,13 +11,14 @@ import { Card, CardContent, CardHeader } from "@shared/components/ui/card";
 // ];
 
 type ProjectStatusProps = {
-  data: { name: string; value: number }[];
+  data: { name: string; value: number; status: ProjectStatus }[];
   total: number;
 };
 
 // const TOTAL = data.reduce((s, d) => s + d.value, 0);
 
 export function ProjectStatusChart({ data, total }: ProjectStatusProps) {
+  console.log(PROJECT_STATUS_BADGE_CLASSES, data);
   return (
     <Card className=" rounded-2xl flex flex-col gap-4">
       <CardHeader className="flex items-center justify-between">
@@ -42,7 +44,7 @@ export function ProjectStatusChart({ data, total }: ProjectStatusProps) {
                 strokeWidth={0}
               >
                 {data.map((entry, i) => (
-                  <Cell key={i} fill={PROJECT_STATUS_BADGE_CLASSES[entry.name]} />
+                  <Cell key={i} fill={PROJECT_STATUS_BADGE_CLASSES[entry.status]} />
                 ))}
               </Pie>
             </PieChart>
@@ -61,7 +63,7 @@ export function ProjectStatusChart({ data, total }: ProjectStatusProps) {
               <div className="flex items-center gap-2">
                 <span
                   className="size-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: PROJECT_STATUS_BADGE_CLASSES[d.name] }}
+                  style={{ backgroundColor: PROJECT_STATUS_BADGE_CLASSES[d.status] }}
                 />
                 <span className="text-sm text-muted-foreground">{d.name}</span>
               </div>
