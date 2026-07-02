@@ -1,13 +1,15 @@
 import { type ReactNode } from "react";
 
+import { useAppSelector } from "@/store/store";
+
 type PermissionGateProps = {
-  userRoles: string[];
   requiredRoles: string[];
   children: ReactNode;
 };
 
-const PermissionGate = ({ userRoles, requiredRoles, children }: PermissionGateProps) => {
-  const hasPermission = requiredRoles.some((role) => userRoles.includes(role));
+const PermissionGate = ({ requiredRoles, children }: PermissionGateProps) => {
+  const { user: authUser } = useAppSelector((state) => state.auth);
+  const hasPermission = requiredRoles.some((role) => authUser!.system_role_name === role);
 
   if (!hasPermission) {
     return null;

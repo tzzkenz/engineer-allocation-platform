@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 
+import PermissionGate from "@/entities/auth/components/permission-gate/PermissionGate";
 import { useGetProjectsQuery } from "@/features/projects/services/projectApi";
 import { Paginated } from "@/shared/components/paginated/Paginated";
 import { Plus } from "lucide-react";
@@ -66,13 +67,15 @@ export function ProjectList() {
         title="Projects"
         description="Manage your projects and their associated tasks."
         additionalContent={
-          <Button
-            onClick={() => navigate("/project/create")}
-            className="gap-2 h-11 px-6 rounded-md"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Create Project
-          </Button>
+          <PermissionGate requiredRoles={["HR"]}>
+            <Button
+              onClick={() => navigate("/project/create")}
+              className="gap-2 h-11 px-6 rounded-md"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Create Project
+            </Button>
+          </PermissionGate>
         }
       />
 
