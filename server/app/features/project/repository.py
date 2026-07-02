@@ -38,53 +38,54 @@ class ProjectRepository:
         status_filter: StatusType | None = None,
         identifier_filter: tuple[str, Any] | None = None,
         skill_ids: list[int] | None = None,
+        current_user_id: int | None = None,
+        is_hr: bool = False,
     ) -> tuple[list[Project], int]:
-        # 1. Base statement matching active (non-deleted) projects
         stmt = (
             select(Project)
             .options(selectinload(Project.stacks).selectinload(ProjectStacks.skill))
             .where(Project.deleted_at.is_(None))
         )
 
-        # 2. Apply status filter if provided
+        if not is_hr and current_user_id is not None:
+            my_projects_stmt = (
+                select(ProjectEmployee.project_id)
+                .where(
+                    ProjectEmployee.employee_id == current_user_id,
+                    ProjectEmployee.date_exited.is_(None),
+                    ProjectEmployee.deleted_at.is_(None),
+                )
+            )
+            stmt = stmt.where(Project.id.in_(my_projects_stmt))
+
         if status_filter is not None:
             stmt = stmt.where(Project.status == status_filter)
 
-        # 3. Apply identifier filter (Strictly Project ID or Name now)
         if identifier_filter is not None:
-            filter_type, val = identifier_filter
-            if filter_type == "id":
-                stmt = stmt.where(Project.id == val)
-            elif filter_type == "name":
-                stmt = stmt.where(Project.name.ilike(f"%{val}%"))
+            id_type, value = identifier_filter
+            if id_type == "id":
+                stmt = stmt.where(Project.id == value)
+            elif id_type == "name":
+                stmt = stmt.where(Project.name.ilike(f"%{value}%"))
 
-        # 4. Filter by the list of Stack IDs if provided
         if skill_ids:
-            # Join with project stacks and look for matches inside the provided skill IDs list
-            stmt = stmt.join(
-                ProjectStacks, Project.id == ProjectStacks.project_id
-            ).where(
-                ProjectStacks.skill_id.in_(skill_ids),
-                ProjectStacks.deleted_at.is_(None),
-            )
-            # Enforce that the project contains ALL of the requested stacks (Intersection check)
-            stmt = stmt.group_by(Project.id).having(
-                func.count(ProjectStacks.skill_id) == len(skill_ids)
-            )
+            stmt = stmt.join(Project.stacks).where(ProjectStacks.skill_id.in_(skill_ids))
+            stmt = stmt.distinct()
 
-        # 5. Execute companion statement to calculate total pages safely before pagination slicing
         count_stmt = select(func.count()).select_from(stmt.subquery())
-        count_result = await self.db.execute(count_stmt)
-        total_count = count_result.scalar() or 0
+        paged_stmt = stmt.order_by(Project.id.asc())
 
-        # 6. Apply pagination slices
-        if limit is not None:
-            stmt = stmt.limit(limit)
         if offset is not None:
-            stmt = stmt.offset(offset)
+            paged_stmt = paged_stmt.offset(offset)
+        if limit is not None:
+            paged_stmt = paged_stmt.limit(limit)
 
-        result = await self.db.execute(stmt)
-        return list(result.scalars().all()), total_count
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar_one()
+
+        result = await self.db.execute(paged_stmt)
+        projects = list(result.scalars().unique().all())
+        return projects, total_count
 
     async def create(
         self,

@@ -19,14 +19,18 @@ async def list_projects(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
     service: ProjectService = Depends(get_project_service),
+    current_user: TokenPayload = Depends(get_current_user),  
 ):
     return await service.list_all(
         page=page, 
         limit=limit, 
         status=status, 
         identifier=identifier,
-        skill_ids=skill_ids
+        skill_ids=skill_ids,
+        current_user=current_user 
     )
+
+
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: int,
