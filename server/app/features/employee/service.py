@@ -20,6 +20,7 @@ from features.employee.schemas import (
     UpdateInterest,
     UpdateProficiency,
 )
+from features.auth.schemas import TokenPayload
 
 
 def _coerce_date(value: Any) -> date:
@@ -81,12 +82,13 @@ class EmployeeService:
         return self._format_employee_response(result[0], result[1], result[2])
 
     async def list_all(
-        self,
-        page: int = 1,
+        self, 
+        page: int = 1, 
         limit: int = 10,
         identifier: str | None = None,
         system_role_id: int | None = None,
         skill_ids: list[int] | None = None,
+        current_user: TokenPayload = None
     ) -> dict[str, Any]:
         import math
         import re
@@ -94,25 +96,35 @@ class EmployeeService:
         identifier_filter = None
         if identifier:
             identifier = identifier.strip()
-            # If the value is entirely numeric, process as an explicit ID check
             if identifier.isdigit():
                 identifier_filter = ("id", int(identifier))
-            # If the format conforms to an email string pattern, process as a strict Email match
             elif re.match(r"[^@]+@[^@]+\.[^@]+", identifier):
                 identifier_filter = ("email", identifier.lower())
-            # Otherwise, execute a partial textual name comparison
             else:
                 identifier_filter = ("name", identifier)
 
-        # Calculate dataset window offset boundaries
+        # Resolve if the token owner belongs to the "HR" role name
+        is_hr = False
+        current_user_id = None
+        if current_user is not None:
+            current_user_id = current_user.id
+            user_info = await self.repo.get_by_id_with_role(current_user_id)
+            # user_info tuple structure is: (Employee, system_role_name, projects_count)
+            if user_info and len(user_info) > 1:
+                role_name = str(user_info[1]).strip().upper()
+                if role_name == "HR":
+                    is_hr = True
+
         offset = (page - 1) * limit
 
         records, total_count = await self.repo.list_all_with_role(
-            limit=limit,
+            limit=limit, 
             offset=offset,
             identifier_filter=identifier_filter,
-            system_role_id=system_role_id,
+            system_role_id=system_role_id,  # Keeps search query parameter filtering active
             skill_ids=skill_ids,
+            current_user_id=current_user_id,
+            is_hr=is_hr
         )
 
         total_pages = math.ceil(total_count / limit) if limit > 0 else 1
@@ -128,6 +140,8 @@ class EmployeeService:
             "current_page": page,
             "limit": limit,
         }
+
+
 
     async def create(
         self, employee_data: dict[str, Any], changed_by_id: int
