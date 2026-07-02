@@ -1,5 +1,8 @@
+import PermissionGate from "@/entities/auth/components/permission-gate/PermissionGate";
+import { SYSTEM_ROLES } from "@/entities/config/lib/roles";
 import SkillsTable from "@/entities/project/components/skillsTable/SkillsTable";
 import { useGetEmployeeByIdQuery } from "@/features/auth/services/employeeApi";
+import { useGetEmployeeSkillsQuery } from "@/features/auth/services/employeeApi";
 import InfoField from "@/features/employees/components/info-field/InfoField";
 import InterestSection from "@/features/employees/components/interest-section/InterestSection";
 import PageSection from "@/shared/components/ui/section";
@@ -8,7 +11,6 @@ import { Pencil } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 import { useParams } from "react-router";
-import { useGetEmployeeSkillsQuery } from "@/features/auth/services/employeeApi";
 
 import { Button } from "@shared/components/ui/button";
 import { Card, CardContent } from "@shared/components/ui/card";
@@ -18,20 +20,17 @@ export function EmployeeProfile() {
 
   const { emp_id } = useParams();
 
-const currentUser = useSelector(
-  (state: RootState) => state.auth.user
-);
-const employeeId = emp_id ? Number(emp_id) : currentUser?.id;
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const employeeId = emp_id ? Number(emp_id) : currentUser?.id;
 
-const { data: currentEmployee, isLoading } =
-  useGetEmployeeByIdQuery(employeeId!, {
+  const { data: currentEmployee, isLoading } = useGetEmployeeByIdQuery(employeeId!, {
     skip: !employeeId,
   });
-const {data: employeeSkillsApi = [] }=useGetEmployeeSkillsQuery(Number(employeeId))
-console.log(employeeSkillsApi)
-const interestNames = employeeSkillsApi
-  .filter((skill) => skill.is_interest)
-  .map((skill) => skill.name);
+  const { data: employeeSkillsApi = [] } = useGetEmployeeSkillsQuery(Number(employeeId));
+  console.log(employeeSkillsApi);
+  const interestNames = employeeSkillsApi
+    .filter((skill) => skill.is_interest)
+    .map((skill) => skill.name);
 
   return (
     <div className="w-full">
@@ -40,13 +39,15 @@ const interestNames = employeeSkillsApi
         description="View and manage employee information"
         additionalContent={
           <div className="md:flex gap-2">
-            <Button
-              onClick={() => navigate(`/employee/${currentEmployee?.id}/edit`)}
-              className=" px-6 py-6 "
-            >
-              <Pencil className="w-4 h-4" />
-              Edit Profile
-            </Button>
+            <PermissionGate requiredRoles={[SYSTEM_ROLES.HR]}>
+              <Button
+                onClick={() => navigate(`/employee/${currentEmployee?.id}/edit`)}
+                className=" px-6 py-6 "
+              >
+                <Pencil className="w-4 h-4" />
+                Edit Profile
+              </Button>
+            </PermissionGate>
           </div>
         }
       />
@@ -62,7 +63,11 @@ const interestNames = employeeSkillsApi
                     <InfoField label="EMAIL ADDRESS" value={currentEmployee?.email} />
                     <InfoField label="CURRENT ROLE" value={currentEmployee?.system_role_name} />
                     <InfoField label="TOTAL EXPERIENCE" value={currentEmployee?.experience} />
-                    <InfoField type="date" label="DATE OF JOINING" value={currentEmployee?.date_of_joining} />
+                    <InfoField
+                      type="date"
+                      label="DATE OF JOINING"
+                      value={currentEmployee?.date_of_joining}
+                    />
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-extrabold tracking-[0.5px] opacity-60 uppercase">
                         AVAILABILITY STATUS
@@ -72,8 +77,6 @@ const interestNames = employeeSkillsApi
                         <span className="text-base">Available</span>
                       </div>
                     </div>
-
-                   
                   </div>
                 </div>
               </CardContent>
